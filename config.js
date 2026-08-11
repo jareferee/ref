@@ -341,8 +341,28 @@
     return out;
   }
 
+  // No event chosen yet: a neutral statewide identity. Falling back to a
+  // tournament meant /ref/ rendered the DIC crest, DIC weather and polled
+  // DIC games under a heading that said Colorado Referee Hub.
+  var NEUTRAL = {
+    id:       '',
+    path:     'ref',
+    shield:   'CO',
+    name:     'Colorado Referee Hub',
+    full:     'Colorado Referee Hub',
+    subtitle: 'Colorado Soccer Referee Program',
+    accent:   '#7FB8DE',
+    hub:      'jareferee.com/ref',
+    weatherPlace: '',
+    dates:    [], daylbl: {}, venues: [], hqVenues: [], hqFields: [],
+    trim:     [], logos: [], refInfo: [],
+    divisionOrder: [],
+    watermark: ASSETS + 'colorado-referee-program.png',
+    host:     { name: 'Colorado Soccer Referee Program', url: 'https://www.coloradoreferee.com' }
+  };
+
   var R = resolve();
-  var EVENT = R.event || EVENTS[DEFAULT_EVENT] || EVENTS.steamboat;
+  var EVENT = R.event || NEUTRAL;
 
   window.JAR = {
     VERSION: '2026.08.11-a',
