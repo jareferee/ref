@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Page not found</title>
+<meta name="theme-color" content="#0E2438">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --slate:#0E2438; --slate-2:#17334B; --slate-3:#1F4260;
+  --ice:#7FB8DE; --ice-pale:#C5E0F2; --steel:#8E9BA9; --snow:#F2F6F9;
+  --disp:'Barlow Condensed',Impact,sans-serif;
+  --body:'Inter',-apple-system,'Segoe UI',Roboto,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;min-height:100%}
+body{background:var(--slate);color:var(--snow);font-family:var(--body);
+  font-size:15px;line-height:1.55;display:flex;align-items:center;justify-content:center;
+  padding:28px 18px;min-height:100vh}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 90% 50% at 50% -8%,rgba(127,184,222,.15) 0%,transparent 62%)}
+
+.wrap{position:relative;z-index:1;max-width:440px;width:100%;text-align:center}
+.shield{width:52px;height:62px;margin:0 auto 20px;
+  background:linear-gradient(160deg,var(--slate-3),var(--slate-2));
+  border:1.5px solid var(--steel);border-radius:7px 7px 26px 26px/7px 7px 38px 38px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--disp);font-weight:900;font-size:13px;color:var(--ice);letter-spacing:.06em}
+.code{font-family:var(--mono);font-size:11px;letter-spacing:.3em;text-transform:uppercase;
+  color:var(--steel);margin-bottom:10px}
+h1{font-family:var(--disp);font-weight:900;font-size:33px;line-height:1.04;
+  letter-spacing:.02em;text-transform:uppercase;margin:0 0 12px}
+.lede{color:var(--ice-pale);margin:0 0 26px}
+
+.links{display:grid;gap:9px;text-align:left}
+a.row{display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;
+  background:rgba(23,51,75,.5);border:1px solid rgba(127,184,222,.18);
+  border-radius:11px;padding:13px 15px;transition:.15s}
+a.row:hover{border-color:rgba(127,184,222,.42);background:rgba(31,66,96,.55)}
+a.row b{display:block;font-family:var(--disp);font-weight:900;font-size:16px;
+  letter-spacing:.04em;text-transform:uppercase}
+a.row i{display:block;font-style:normal;font-size:12.5px;color:var(--steel);margin-top:1px}
+a.row .chev{margin-left:auto;color:var(--ice);font-size:20px;line-height:1}
+
+.help{margin-top:24px;padding-top:18px;border-top:1px solid rgba(127,184,222,.12);
+  font-size:13px;color:var(--steel);line-height:1.7}
+.help b{color:var(--ice-pale);font-weight:600}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="shield" id="brShield">404</div>
+  <div class="code">Error 404</div>
+  <h1>That page is not here</h1>
+  <p class="lede" id="lede">The link may be mistyped, or it may have moved.</p>
+  <div class="links" id="links"></div>
+  <div class="help" id="help"></div>
+</div>
+
+<script>
+/* One 404 for every repo on this domain.
+
+   It works out where it is from the first path segment and offers links
+   only for that place. It loads nothing and depends on nothing -- a 404
+   that needs a script from elsewhere can 404 again.
+
+   Anything not listed below, internal tooling included, gets the plain
+   version with no links at all. A referee who mistypes a URL should never
+   be handed a door into a back office. Adding a tournament here is one
+   entry; leaving it out is the safe default, not an oversight. */
+(function () {
+  var EVENTS = {
+    dic: {
+      shield: 'DIC',
+      name: 'Denver International Cup',
+      links: [
+        ['', 'Referee hub', 'Check in, game cards, scores, incidents'],
+        ['scoreboard.html', 'Live scores', 'Every game, updated as they finish']
+      ],
+      help: 'Still stuck? Find your <b>site coordinator</b> at the Referee HQ tent.'
+    },
+    steamboat: {
+      shield: 'SMST',
+      name: 'Steamboat Mountain Soccer Tournament',
+      links: [
+        ['', 'Referee hub', 'Check in, game cards, scores, incidents'],
+        ['scoreboard.html', 'Live scores', 'Every game, updated as they finish']
+      ],
+      help: 'Still stuck? Find your <b>site coordinator</b> at the Referee HQ tent.'
+    }
+  };
+
+  var seg = '';
+  try {
+    seg = String(location.pathname || '').split('/').filter(Boolean)[0] || '';
+  } catch (e) {}
+
+  var ev = null, key = null;
+  Object.keys(EVENTS).forEach(function (k) {
+    if (k.toLowerCase() === seg.toLowerCase()) { ev = EVENTS[k]; key = k; }
+  });
+
+  var esc = function (s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  };
+
+  if (!ev) {
+    // Unknown location. Say nothing about what else lives on this domain.
+    document.getElementById('help').textContent =
+      'Check the address, or go back to the page you came from.';
+    return;
+  }
+
+  document.title = 'Page not found \u00b7 ' + ev.name;
+  document.getElementById('brShield').textContent = ev.shield;
+  document.getElementById('lede').textContent =
+    'The link may be mistyped, or it may have moved. Here is the rest of the ' + ev.name + '.';
+
+  document.getElementById('links').innerHTML = ev.links.map(function (l) {
+    return '<a class="row" href="/' + esc(key) + '/' + esc(l[0]) + '">' +
+      '<div><b>' + esc(l[1]) + '</b><i>' + esc(l[2]) + '</i></div>' +
+      '<span class="chev">&rsaquo;</span></a>';
+  }).join('');
+
+  document.getElementById('help').innerHTML = ev.help;
+})();
+
+
+/* ── PAGE VERSION ─────────────────────────────────────────
+   The .gs files carry GCC_VERSION; these pages carried nothing, so there
+   was no way to tell whether a browser was running the current file or a
+   cached one from three deploys ago. Printed in the console and shown in
+   the footer. If this does not match what was last shipped, the page is
+   stale -- hard refresh before reporting a bug. */
+var PAGE_VERSION='2026.08.11-a';
+try{
+  console.log('page '+PAGE_VERSION);
+  var _v=document.createElement('div');
+  _v.textContent='v'+PAGE_VERSION;
+  _v.style.cssText='position:relative;z-index:1;text-align:center;padding:14px 0 20px;'+
+    'font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.1em;'+
+    'color:rgba(142,155,169,.55)';
+  document.body.appendChild(_v);
+}catch(e){}
+</script>
+</body>
+</html>

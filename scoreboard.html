@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Scores</title>
+<meta name="theme-color" content="#0E2438">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --slate:#0E2438; --slate-2:#17334B; --slate-3:#1F4260;
+  --ice:#7FB8DE; --ice-pale:#C5E0F2; --steel:#8E9BA9; --snow:#F2F6F9;
+  --caution:#E0A22B; --flag:#C4472F; --go:#4FA87A;
+  --disp:'Barlow Condensed',Impact,sans-serif;
+  --body:'Inter',-apple-system,'Segoe UI',Roboto,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:var(--slate);color:var(--snow);font-family:var(--body);font-size:15px;line-height:1.5;padding-bottom:64px}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 95% 50% at 50% -6%,rgba(127,184,222,.15) 0%,transparent 62%),
+             radial-gradient(ellipse 70% 45% at 100% 100%,rgba(31,66,96,.42) 0%,transparent 55%)}
+.wrap{position:relative;z-index:1;max-width:720px;margin:0 auto;padding:0 14px}
+
+
+/* SMST shield watermark, drawn in SVG so there is no file to break */
+body::after{
+  content:'';position:fixed;z-index:0;pointer-events:none;
+  top:50%;left:50%;transform:translate(-50%,-50%);
+  width:min(88vw,540px);height:min(88vw,540px);
+  background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20200%20244%22%3E%20%3Cpath%20d%3D%22M14%2032%20L47%209%20L70%2036%20L100%207%20L130%2036%20L153%209%20L186%2032%20L186%20142%20C186%20197%20148%20229%20100%20238%20C52%20229%2014%20197%2014%20142%20Z%22%20fill%3D%22none%22%20stroke%3D%22%237FB8DE%22%20stroke-width%3D%225%22%2F%3E%20%3Cpath%20d%3D%22M27%2045%20L52%2028%20L71%2050%20L100%2026%20L129%2050%20L148%2028%20L173%2045%20L173%20140%20C173%20186%20142%20213%20100%20221%20C58%20213%2027%20186%2027%20140%20Z%22%20fill%3D%22none%22%20stroke%3D%22%237FB8DE%22%20stroke-width%3D%222%22%20opacity%3D%22.6%22%2F%3E%20%3Cpath%20d%3D%22M36%20141%20L74%2084%20L97%20114%20L125%2072%20L164%20141%20Z%22%20fill%3D%22%237FB8DE%22%20opacity%3D%22.85%22%2F%3E%20%3Ccircle%20cx%3D%22100%22%20cy%3D%22176%22%20r%3D%2227%22%20fill%3D%22none%22%20stroke%3D%22%237FB8DE%22%20stroke-width%3D%224%22%2F%3E%20%3Cpath%20d%3D%22M100%20158%20L112%20167%20L107%20181%20L93%20181%20L88%20167%20Z%22%20fill%3D%22%237FB8DE%22%20opacity%3D%22.7%22%2F%3E%20%3C%2Fsvg%3E");
+  background-repeat:no-repeat;background-position:center;background-size:contain;
+  opacity:.045;
+}
+@media (max-width:520px){ body::after{ opacity:.055 } }
+
+/* JAReferee credit */
+.jaref{margin-top:22px;padding:18px 0 4px;text-align:center;
+  border-top:1px solid rgba(127,184,222,.12)}
+.jaref a{display:inline-flex;align-items:center;gap:10px;text-decoration:none;color:inherit}
+.jaref img{width:26px;height:26px;display:block;border:0;opacity:.92}
+.jaref .txt{text-align:left;line-height:1.25}
+.jaref .txt b{display:block;font-family:var(--disp);font-weight:900;font-size:16px;
+  letter-spacing:.13em;text-transform:uppercase;color:var(--ice-pale)}
+.jaref .txt i{display:block;font-style:normal;font-family:var(--mono);font-size:8.5px;
+  letter-spacing:.13em;text-transform:uppercase;color:var(--steel);margin-top:2px}
+.jaref .site{display:block;font-family:var(--mono);font-size:9px;color:var(--steel);
+  letter-spacing:.09em;margin-top:9px}
+.jaref .site a{color:var(--ice)}
+
+/* header */
+.top{position:sticky;top:0;z-index:30;background:rgba(14,36,56,.94);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid rgba(127,184,222,.2)}
+.top-in{max-width:720px;margin:0 auto;padding:11px 14px 0}
+.brand{display:flex;align-items:center;gap:11px;margin-bottom:10px}
+.shield{width:36px;height:42px;flex-shrink:0;
+  background:linear-gradient(160deg,var(--slate-3),var(--slate-2));
+  border:1.5px solid var(--steel);border-radius:5px 5px 18px 18px/5px 5px 26px 26px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--disp);font-weight:900;font-size:8.5px;color:var(--ice);letter-spacing:.05em}
+.brand h1{margin:0;font-family:var(--disp);font-weight:900;font-size:20px;
+  letter-spacing:.05em;text-transform:uppercase;line-height:1.02}
+.brand .sub{font-family:var(--mono);font-size:9.5px;color:var(--steel);letter-spacing:.06em;margin-top:2px}
+.live{margin-left:auto;display:flex;align-items:center;gap:5px;
+  font-family:var(--mono);font-size:9.5px;color:var(--steel);white-space:nowrap}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--go);animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.28}}
+
+/* day tabs */
+.days{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:1px solid rgba(127,184,222,.14)}
+.day{appearance:none;border:0;background:transparent;cursor:pointer;padding:10px 4px 9px;
+  color:var(--steel);font-family:var(--body);border-bottom:2.5px solid transparent;transition:.16s}
+.day b{display:block;font-family:var(--disp);font-weight:800;font-size:16px;letter-spacing:.07em;text-transform:uppercase;line-height:1}
+.day i{display:block;font-style:normal;font-family:var(--mono);font-size:9.5px;margin-top:3px;opacity:.75}
+.day[aria-selected="true"]{color:var(--ice);border-bottom-color:var(--ice)}
+.day:focus-visible{outline:2px solid var(--ice-pale);outline-offset:-3px}
+
+/* weather strip, the signature */
+.wx{margin:0;border-bottom:1px solid rgba(127,184,222,.14);
+  background:rgba(23,51,75,.5);cursor:pointer;transition:background .2s}
+.wx:hover{background:rgba(23,51,75,.72)}
+.wx-in{max-width:720px;margin:0 auto;padding:9px 14px;display:flex;align-items:center;gap:9px}
+.wx-ico{font-size:15px;line-height:1}
+.wx-txt{flex:1;min-width:0;font-size:12.5px}
+.wx-txt b{font-family:var(--disp);font-weight:800;font-size:13px;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--go);margin-right:7px}
+.wx-txt span{color:var(--steel)}
+.wx-more{font-family:var(--mono);font-size:9.5px;color:var(--ice);white-space:nowrap}
+.wx.alert{background:rgba(196,71,47,.2);border-bottom-color:rgba(196,71,47,.5)}
+.wx.alert .wx-txt b{color:#F0A897}
+.wx-body{display:none;border-bottom:1px solid rgba(127,184,222,.14);background:rgba(9,25,40,.55)}
+.wx-body.on{display:block}
+.wx-body-in{max-width:720px;margin:0 auto;padding:13px 14px 15px}
+.wx-body h3{font-family:var(--disp);font-weight:800;font-size:12px;letter-spacing:.17em;
+  text-transform:uppercase;color:var(--ice);margin:0 0 6px}
+.wx-body h3+h3{margin-top:13px}
+.wx-body p{margin:0;font-size:12.5px;line-height:1.6;color:var(--ice-pale)}
+.wx-body b{color:#fff}
+
+/* filters */
+.filters{display:flex;gap:6px;flex-wrap:wrap;padding:10px 0 0}
+.filters button{appearance:none;cursor:pointer;white-space:nowrap;flex-shrink:0;
+  font-family:var(--disp);font-weight:700;font-size:14px;letter-spacing:.08em;text-transform:uppercase;
+  background:rgba(23,51,75,.6);color:var(--steel);
+  border:1.5px solid rgba(127,184,222,.22);border-radius:99px;padding:7px 14px;transition:.16s}
+.filters button[aria-pressed="true"]{background:var(--ice);color:var(--slate);border-color:var(--ice)}
+
+/* counts */
+.counts{display:flex;gap:16px;padding:11px 2px 3px;font-family:var(--mono);font-size:10.5px;color:var(--steel)}
+.counts b{color:var(--ice-pale);font-weight:700}
+
+/* group */
+.grp{margin-top:20px}
+.grp-h{display:flex;align-items:baseline;gap:9px;margin-bottom:8px}
+.grp-h h2{margin:0;font-family:var(--disp);font-weight:800;font-size:14px;
+  letter-spacing:.17em;text-transform:uppercase;color:var(--ice)}
+.grp-h .rule{flex:1;height:1px;background:rgba(127,184,222,.18)}
+.grp-h .n{font-family:var(--mono);font-size:10px;color:var(--steel)}
+
+/* game row */
+.g{display:grid;grid-template-columns:52px 1fr auto;gap:11px;align-items:center;
+  padding:11px 12px;border-radius:10px;background:rgba(23,51,75,.42);
+  border:1px solid rgba(127,184,222,.11);margin-bottom:7px}
+.g.final{background:rgba(23,51,75,.26)}
+.g.livegame{border-color:rgba(79,168,122,.45);background:rgba(79,168,122,.08)}
+.g.cxl{opacity:.5}
+.g-time{font-family:var(--mono);font-size:11.5px;color:var(--ice);text-align:center;line-height:1.3}
+.g-time i{display:block;font-style:normal;font-size:8.5px;color:var(--steel);margin-top:2px}
+.g-teams{min-width:0}
+.g-t{display:flex;align-items:baseline;gap:8px;font-size:14.5px;line-height:1.32}
+.g-t span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.g-t b{font-family:var(--disp);font-weight:900;font-size:19px;line-height:1;min-width:16px;text-align:right}
+.g-t.win b{color:var(--ice-pale)}
+.g-t.win span{font-weight:600}
+.g-meta{font-family:var(--mono);font-size:9.5px;color:var(--steel);margin-top:4px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.g-stat{font-family:var(--disp);font-weight:800;font-size:10.5px;letter-spacing:.11em;
+  text-transform:uppercase;text-align:right;white-space:nowrap;color:var(--steel)}
+.g-stat.f{color:var(--ice)}
+.g-stat.l{color:var(--go)}
+.flagged{display:inline-block;margin-left:5px;color:var(--caution);font-size:11px}
+
+.empty{text-align:center;padding:44px 18px;color:var(--steel);font-size:14px}
+.empty b{display:block;font-family:var(--disp);font-weight:800;font-size:19px;
+  letter-spacing:.09em;text-transform:uppercase;color:var(--ice-pale);margin-bottom:6px}
+
+/* footer */
+.foot{margin:34px 0 0;padding:18px 0 26px;border-top:1px solid rgba(127,184,222,.14)}
+.note{background:rgba(23,51,75,.4);border-left:2px solid var(--caution);
+  border-radius:0 9px 9px 0;padding:12px 14px;margin-bottom:14px}
+.note b{display:block;font-family:var(--disp);font-weight:800;font-size:12.5px;
+  letter-spacing:.13em;text-transform:uppercase;color:var(--caution);margin-bottom:4px}
+.note p{margin:0;font-size:12.5px;color:var(--ice-pale);line-height:1.55}
+.foot-b{text-align:center;font-family:var(--mono);font-size:9.5px;color:var(--steel);line-height:1.7}
+.foot-b a{color:var(--ice);text-decoration:none}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:400px){
+  .g{grid-template-columns:46px 1fr auto;gap:9px;padding:10px}
+  .g-t{font-size:13.5px}
+  .g-t b{font-size:17px}
+}
+
+/* Every page declares viewport-fit=cover, so the sticky header sits under
+   the notch and under Safari's own controls. Pad by the safe area and give
+   the back control a 44px tap target -- the Apple minimum. */
+.top{ padding-top:calc(11px + env(safe-area-inset-top,0px)) !important; }
+.top-in{ padding-left:calc(15px + env(safe-area-inset-left,0px));
+         padding-right:calc(15px + env(safe-area-inset-right,0px)); }
+.back{ margin-left:10px;flex-shrink:0;text-decoration:none;
+  border:1.5px solid rgba(127,184,222,.3);color:var(--ice);border-radius:8px;
+  min-height:44px;min-width:64px;display:inline-flex;align-items:center;justify-content:center;
+  padding:0 14px;font-family:var(--disp);font-weight:800;font-size:12px;
+  letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
+.back:hover{ border-color:var(--ice) }
+
+/* Toolbar: how the board is grouped, and a search for a single game */
+.tools{display:flex;gap:9px;align-items:center;flex-wrap:wrap;padding:14px 0 2px}
+.seg{display:flex;gap:0;border:1.5px solid rgba(127,184,222,.24);border-radius:99px;overflow:hidden;flex-shrink:0}
+.seg button{appearance:none;cursor:pointer;border:0;background:transparent;color:var(--steel);
+  font-family:var(--disp);font-weight:700;font-size:13px;letter-spacing:.09em;
+  text-transform:uppercase;padding:9px 15px;transition:.16s;min-height:40px}
+.seg button[aria-pressed="true"]{background:var(--ice);color:var(--slate)}
+.qbox{flex:1;min-width:190px;background:rgba(9,25,40,.72);
+  border:1.5px solid rgba(127,184,222,.24);border-radius:99px;color:var(--snow);
+  font-family:var(--body);font-size:15px;padding:10px 16px;outline:none;min-height:40px}
+.qbox:focus{border-color:var(--ice)}
+.qbox::placeholder{color:var(--steel)}
+.hit{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--steel);padding:8px 0 0}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="top-in">
+    <div class="brand">
+      <div class="shield" id="brShield">&nbsp;</div>
+      <div>
+        <h1 id="brName">Referee Hub</h1>
+        <div class="sub" id="brSub"></div>
+      </div>
+      <div class="live"><span class="dot"></span><span id="upd">live</span></div>
+      <a class="back" href="index.html">Hub</a>
+    </div>
+  </div>
+  <div class="days" role="tablist" id="days"></div>
+</div>
+
+<div class="wx" id="wxStrip" onclick="toggleWx()">
+  <div class="wx-in">
+    <span class="wx-ico" id="wxIco">☀️</span>
+    <span class="wx-txt"><b id="wxState">Fields open</b><span id="wxDesc">checking conditions</span></span>
+    <span class="wx-more" id="wxMore">policy ▾</span>
+  </div>
+</div>
+<div class="wx-body" id="wxBody">
+  <div class="wx-body-in">
+    <h3>Lightning</h3>
+    <p>Lightning within a <b>10 mile radius</b> stops all games at that location with <b>one long blast of a horn</b>. Everyone leaves the fields immediately and waits in a vehicle or off site.</p>
+    <p style="margin-top:6px">A full <b>30 minutes</b> must pass with no strikes before the all clear. <b>Every new strike resets the 30 minutes.</b> The all clear is a horn blast. Do not return to the fields until you hear it.</p>
+    <h3>Delays</h3>
+    <p>A game that has passed halftime is called <b>final</b> after 60 minutes of delay. If a delay runs past 60 minutes, any game already at or beyond halftime is final at the time it stopped.</p>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="tools">
+    <div class="seg" id="grpSeg">
+      <button aria-pressed="true"  onclick="setGroup('division',this)">By division</button>
+      <button aria-pressed="false" onclick="setGroup('time',this)">By time</button>
+    </div>
+    <input id="q" class="qbox" type="search" autocomplete="off"
+           placeholder="Game number or team…" oninput="setQuery(this.value)">
+  </div>
+  <div class="filters" id="filters"></div>
+  <div class="filters" id="brackets" style="display:none"></div>
+  <div class="filters" id="sites" style="display:none"></div>
+
+  <div class="counts" id="counts"></div>
+  <div id="board"></div>
+
+  <div class="foot">
+    <div class="foot-b">
+      Scores are posted by the match referee and confirmed by tournament staff.<br>
+      <span id="brHost"></span><br>
+      <a href="rap/">Sideline conduct and referee respect</a>
+    </div>
+  <div class="jaref">
+    <a href="https://jareferee.com" target="_blank" rel="noopener">
+      <img src="assets/brand/jareferee-mark-light.png"
+           alt="JAReferee" width="26" height="26">
+      <span class="txt"><b>JAReferee</b><i>Referee Operations</i></span>
+    </a>
+    <span class="site">Gameday Command Center · <a href="https://jareferee.com" target="_blank" rel="noopener">jareferee.com</a></span>
+  </div>
+
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script>
+/* ── everything tournament-specific comes from config.js ── */
+var EV    = (window.JAR && JAR.EVENT) || {};
+
+/* config.js is what tells a page which tournament it is. When it does not
+   load -- opened outside its folder, a bad upload, a cached 404 -- the
+   page rendered a blank shell reading "Colorado Referee Hub" with no
+   venues and no explanation. Say so instead of guessing. */
+if (!window.JAR) {
+  try {
+    var _cfgWarn = function(){
+      var b=document.createElement('div');
+      b.style.cssText='position:relative;z-index:5;padding:14px 16px;background:#7A1A0E;'+
+        'color:#fff;font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-size:14px;'+
+        'line-height:1.5;text-align:center';
+      b.innerHTML='<b>Configuration did not load.</b><br>'+
+        'This page cannot tell which tournament it belongs to, so nothing below is real. '+
+        'Open it from its own web address rather than as a file, and check that '+
+        'config.js sits beside it.';
+      document.body.insertBefore(b, document.body.firstChild);
+    };
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',_cfgWarn);
+    else _cfgWarn();
+  } catch(e){}
+}
+
+var EVENT = (window.JAR && JAR.id) || 'steamboat';
+var BACKEND = (window.JAR && JAR.BACKEND) || 'https://script.google.com/macros/s/AKfycbxQXvVq-gtGfUvgXF3NJXkFU_4aVlqFclU0bF0B0dQWbpjb42tstU7UnbKLf5DFP3PY/exec';
+var REFRESH = 30000;
+
+// Opening day is today when today is one of the event days, otherwise the
+// most recent day that has passed. Never a hardcoded date.
+function openingDay(){
+  var d=EV.dates||[]; if(!d.length) return '';
+  var n=new Date(), m=n.getMonth()+1, dd=n.getDate();
+  var t=n.getFullYear()+'-'+(m<10?'0':'')+m+'-'+(dd<10?'0':'')+dd;
+  if(d.indexOf(t)>=0) return t;
+  var past=null; for(var i=0;i<d.length;i++) if(d[i]<=t) past=d[i];
+  return past||d[0];
+}
+
+var S = { date:openingDay(), band:'all', bracket:'all', site:'all',
+          group:'division', q:'', byDate:{}, offline:false };
+
+function setGroup(g,btn){
+  S.group=g;
+  var p=btn.parentNode.querySelectorAll('button');
+  for(var i=0;i<p.length;i++) p[i].setAttribute('aria-pressed', p[i]===btn?'true':'false');
+  render();
+}
+
+var _qTimer=null;
+function setQuery(v){
+  S.q=v;
+  // Typing on a phone should not re-render on every keystroke.
+  if(_qTimer) clearTimeout(_qTimer);
+  _qTimer=setTimeout(function(){
+    // The pills are meaningless while a search is active, so dim them
+    // rather than leave a filter that is not being applied looking live.
+    var f=document.getElementById('filters'), b=document.getElementById('brackets'),
+        sv=document.getElementById('sites');
+    var dim=String(S.q||'').trim()?'.45':'1';
+    [f,b,sv].forEach(function(el){ if(el) el.style.opacity=dim; });
+    render();
+  },180);
+}
+
+function renderDays(){
+  var box=document.getElementById('days'); if(!box) return;
+  box.innerHTML=(EV.dates||[]).map(function(x){
+    var p=(EV.daylbl||{})[x]||[x,''];
+    return '<button class="day" role="tab" aria-selected="'+(x===S.date)+'" '+
+           'onclick="pickDay(\''+x+'\',this)"><b>'+p[0]+'</b><i>'+(p[1]||'')+'</i></button>';
+  }).join('');
+}
+
+// Age groups and brackets are read off the event's division list. Steamboat
+// has four age bands, DIC eleven. Hardcoding either shows a filter that
+// matches nothing, which reads as "no games" to a parent.
+function ageBands(){
+  var seen={},out=[];
+  (EV.divisionOrder||[]).forEach(function(d){
+    var m=String(d).match(/^(HS|U\d{1,2}(?:\/U?\d{1,2})?)/);
+    if(m&&!seen[m[1]]){ seen[m[1]]=1; out.push(m[1]); }
+  });
+  return out;
+}
+function brackets(){
+  var seen={},out=[];
+  (EV.divisionOrder||[]).forEach(function(d){
+    var m=String(d).match(/\b(Gold|Silver|Bronze|Premier)\b/);
+    if(m&&!seen[m[1]]){ seen[m[1]]=1; out.push(m[1]); }
+  });
+  return out;
+}
+function pill(active,fn,val,label){
+  return '<button aria-pressed="'+active+'" onclick="'+fn+'('+JSON.stringify(val).replace(/"/g,'&quot;')+',this)">'+label+'</button>';
+}
+function setPressed(btn){
+  var p=btn.parentNode.querySelectorAll('button');
+  for(var i=0;i<p.length;i++) p[i].setAttribute('aria-pressed', p[i]===btn?'true':'false');
+}
+function renderFilters(){
+  var f=document.getElementById('filters');
+  if(f){
+    f.innerHTML=pill(S.band==='all','pickBand','all','All')+
+      ageBands().map(function(b){ return pill(S.band===b,'pickBand',b,b); }).join('');
+  }
+  var br=document.getElementById('brackets');
+  if(br){
+    var list=brackets();
+    if(list.length<2){ br.style.display='none'; }
+    else{
+      br.style.display='';
+      br.innerHTML=pill(S.bracket==='all','pickBracket','all','All')+
+        list.map(function(b){ return pill(S.bracket===b,'pickBracket',b,b); }).join('');
+    }
+  }
+  // Site pills. Two venues and 43 games at one of them is a lot of
+  // scrolling for a coordinator who only cares about their own site.
+  var sv=document.getElementById('sites');
+  if(sv){
+    var vs=(window.JAR&&JAR.playVenues)?JAR.playVenues():(EV.venues||[]);
+    if(vs.length<2){ sv.style.display='none'; }
+    else{
+      sv.style.display='';
+      sv.innerHTML=pill(S.site==='all','pickSite','all','All sites')+
+        vs.map(function(v){
+          var short=(window.JAR&&JAR.short)?JAR.short(v):v;
+          return pill(S.site===v,'pickSite',v,short);
+        }).join('');
+    }
+  }
+}
+function pickBracket(b,btn){ S.bracket=b; setPressed(btn); render(); }
+function pickSite(v,btn){ S.site=v; setPressed(btn); render(); }
+
+function paintWatermark(){
+  var css;
+  if(EV.watermark){ css='url("'+EV.watermark+'")'; }
+  else{
+    var a=EV.accent||'#7FB8DE';
+    var svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 244">'+
+      '<path d="M14 32 L47 9 L70 36 L100 7 L130 36 L153 9 L186 32 L186 142 '+
+        'C186 197 148 229 100 238 C52 229 14 197 14 142 Z" fill="none" stroke="'+a+'" stroke-width="5"/>'+
+      '<path d="M36 132 L74 75 L97 105 L125 63 L164 132 Z" fill="'+a+'" opacity=".85"/>'+
+      '<text x="100" y="192" text-anchor="middle" font-family="Impact,sans-serif" '+
+        'font-size="46" font-weight="900" fill="'+a+'">'+String(EV.shield||'').slice(0,4)+'</text></svg>';
+    css='url("data:image/svg+xml,'+encodeURIComponent(svg)+'")';
+  }
+  var st=document.createElement('style');
+  st.textContent='body::after{background-image:'+css+'}';
+  document.head.appendChild(st);
+}
+
+function paintBrand(){
+  try{
+    document.title='Scores \u00b7 '+(EV.full||'');
+    var sh=document.getElementById('brShield'); if(sh) sh.textContent=EV.shield||'';
+    var bn=document.getElementById('brName');   if(bn) bn.textContent=EV.name||'';
+    var bs=document.getElementById('brSub');    if(bs) bs.textContent=(EV.subtitle||'').toUpperCase();
+    var bh=document.getElementById('brHost');
+    if(bh&&EV.host) bh.innerHTML=(EV.subtitle||'')+' \u00b7 <a href="'+EV.host.url+'">'+EV.host.name+'</a>';
+    if(EV.accent) document.documentElement.style.setProperty('--accent',EV.accent);
+  }catch(e){}
+}
+
+var ORDER = (EV.divisionOrder && EV.divisionOrder.length) ? EV.divisionOrder : [];
+
+/* No sample data. This board is public: an invented score shown as real
+   is worse than an empty board. If the endpoint cannot be reached the
+   board says offline and shows nothing. */
+
+
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+
+function mins(t){
+  var m=String(t||'').match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if(!m) return 9999;
+  var h=+m[1], mi=+m[2], ap=m[3].toUpperCase();
+  if(ap==='PM'&&h!==12)h+=12; if(ap==='AM'&&h===12)h=0;
+  return h*60+mi;
+}
+
+function pickDay(d,btn){
+  S.date=d;
+  document.querySelectorAll('.day').forEach(function(b){b.setAttribute('aria-selected',b===btn);});
+  render(); load(d);
+}
+function pickBand(b,btn){
+  S.band=b;
+  document.querySelectorAll('#filters button').forEach(function(x){x.setAttribute('aria-pressed',x===btn);});
+  render();
+}
+function toggleWx(){
+  var body=document.getElementById('wxBody');
+  var on=body.classList.toggle('on');
+  document.getElementById('wxMore').textContent = on ? 'policy ▴' : 'policy ▾';
+}
+
+function load(d){
+  fetch(BACKEND+'?action=eventScores&date='+encodeURIComponent(d))
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(res && res.status==='ok' && res.data && res.data.length){
+        S.byDate[d]=res.data.map(function(g){
+          return {t:g.time,v:g.venue,f:g.field,d:g.division,h:g.home,a:g.away,
+                  hs:g.homeScore,as:g.awayScore,
+                  st:(g.homeScore==null?'':(g.status||'Final')),
+                  n:g.gameNumber,fl:g.flagged,cx:g.canceled};
+        });
+        S.offline=false;
+      } else if(!S.byDate[d]){
+        S.byDate[d]=[]; S.offline=true;
+      }
+      stamp(); render();
+    })
+    .catch(function(){
+      if(!S.byDate[d]){ S.byDate[d]=[]; S.offline=true; }
+      stamp(); render();
+    });
+}
+
+function stamp(){
+  var n=new Date(), h=n.getHours(), m=n.getMinutes();
+  var ap=h>=12?'PM':'AM'; h=h%12||12;
+  document.getElementById('upd').textContent =
+    (S.offline?'offline \u00b7 ':'') + h+':'+(m<10?'0'+m:m)+' '+ap;
+}
+
+function render(){
+  var all = S.byDate[S.date] || [];
+  // A search overrides the pills. Someone typing a game number wants that
+  // game, not that game if it happens to be in the division they last tapped.
+  var q=String(S.q||'').trim().toLowerCase();
+  var list = all.filter(function(g){
+    if(q){
+      var hay=(String(g.n||'')+' '+String(g.h||'')+' '+String(g.a||'')+' '+
+               String(g.f||'')+' '+String(g.d||'')).toLowerCase();
+      return hay.indexOf(q)>=0;
+    }
+    var d=String(g.d||'');
+    if(S.band!=='all'    && d.indexOf(S.band)!==0)      return false;
+    if(S.bracket!=='all' && d.indexOf(S.bracket)<0)     return false;
+    if(S.site!=='all'    && String(g.v||'')!==S.site)   return false;
+    return true;
+  });
+
+  // Counts describe what is on screen. Reading them off `all` under an
+  // active filter showed the whole day's total over a filtered board.
+  var fin=0,lv=0,up=0;
+  list.forEach(function(g){
+    if(g.st==='live') lv++; else if(g.hs!=null) fin++; else up++;
+  });
+  document.getElementById('counts').innerHTML =
+    '<span><b>'+list.length+'</b> games</span>'+
+    '<span><b>'+fin+'</b> final</span>'+
+    (lv?'<span><b>'+lv+'</b> in progress</span>':'')+
+    '<span><b>'+up+'</b> to play</span>';
+
+  var board=document.getElementById('board');
+  if(!list.length){
+    board.innerHTML = q
+      ? '<div class="empty"><b>No match</b>Nothing on this day matches \u201c'+esc(S.q)+'\u201d.</div>'
+      : '<div class="empty"><b>Nothing here yet</b>Scores post as games finish.</div>';
+    return;
+  }
+
+  // Grouped by division for a parent looking for their child's bracket,
+  // or by kickoff time for a tournament director cross-referencing a slot.
+  var groups={}, keys;
+  if(S.group==='time' && !q){
+    list.forEach(function(g){ (groups[g.t]=groups[g.t]||[]).push(g); });
+    keys=Object.keys(groups).sort(function(a,b){ return mins(a)-mins(b); });
+  } else {
+    list.forEach(function(g){ (groups[g.d]=groups[g.d]||[]).push(g); });
+    keys=Object.keys(groups).sort(function(a,b){
+      var ia=ORDER.indexOf(a), ib=ORDER.indexOf(b);
+      return (ia<0?99:ia)-(ib<0?99:ib);
+    });
+  }
+
+  board.innerHTML = keys.map(function(k){
+    var gs=groups[k].slice().sort(function(a,b){
+      return (S.group==='time'&&!q)
+        ? String(a.f||'').localeCompare(String(b.f||''))   // by field within a time slot
+        : mins(a.t)-mins(b.t);
+    });
+    return '<div class="grp"><div class="grp-h"><h2>'+esc(k)+'</h2>'+
+      '<div class="rule"></div><span class="n">'+gs.length+'</span></div>'+
+      gs.map(row).join('')+'</div>';
+  }).join('');
+}
+
+function row(g){
+  var played = g.hs!=null && g.as!=null;
+  var isLive = g.st==='live';
+  var cls = 'g'+(g.cx?' cxl':(isLive?' livegame':(played?' final':'')));
+  var hw = played && g.hs>g.as, aw = played && g.as>g.hs;
+  var stat = g.cx ? 'Cancelled' : isLive ? 'In progress' : played ? 'Final' : 'Upcoming';
+  var statCls = isLive?'g-stat l':(played?'g-stat f':'g-stat');
+
+  return '<div class="'+cls+'">'+
+    '<div class="g-time">'+esc(g.t)+'<i>'+esc(g.n||'')+'</i></div>'+
+    '<div class="g-teams">'+
+      '<div class="g-t'+(hw?' win':'')+'"><span>'+esc(g.h)+'</span><b>'+(played?g.hs:'')+'</b></div>'+
+      '<div class="g-t'+(aw?' win':'')+'"><span>'+esc(g.a)+'</span><b>'+(played?g.as:'')+'</b></div>'+
+      '<div class="g-meta">'+esc(g.v)+(g.f?' · '+esc(g.f):'')+
+        (g.fl?'<span class="flagged" title="Tournament staff notified">&#9873;</span>':'')+'</div>'+
+    '</div>'+
+    '<div class="'+statCls+'">'+stat+'</div>'+
+  '</div>';
+}
+
+function loadWx(){
+  fetch(BACKEND+'?action=weather&venue='+encodeURIComponent(EV.weatherPlace||'')+'&date='+encodeURIComponent(S.date))
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(!res||res.status!=='ok'||!res.data) return;
+      var c=res.data.current||{}, dl=res.data.daily||{};
+      var temp=c.temperature_2m!=null?Math.round(c.temperature_2m)+'°':'';
+      var wind=c.wind_speed_10m!=null?Math.round(c.wind_speed_10m)+' mph':'';
+      var pc=dl.precipChance!=null?dl.precipChance+'% rain':'';
+      var code=c.weather_code;
+      var storm = code!=null && code>=95;
+      var ico = storm?'⛈️':(code>=61&&code<=82)?'🌧️':(code>=1&&code<=3)?'⛅':'☀️';
+      document.getElementById('wxIco').textContent=ico;
+      document.getElementById('wxDesc').textContent =
+        (EV.weatherPlace?EV.weatherPlace+' \u00b7 ':'')+[temp,wind,pc].filter(Boolean).join(' \u00b7 ');
+      var strip=document.getElementById('wxStrip');
+      if(storm){
+        strip.classList.add('alert');
+        document.getElementById('wxState').textContent='Storms in the area';
+      } else {
+        strip.classList.remove('alert');
+        document.getElementById('wxState').textContent='Fields open';
+      }
+    }).catch(function(){});
+}
+
+paintBrand(); paintWatermark(); renderDays(); renderFilters();
+render(); stamp();
+load(S.date); loadWx();
+setInterval(function(){ load(S.date); }, REFRESH);
+setInterval(loadWx, 10*60*1000);
+
+
+/* ── PAGE VERSION ─────────────────────────────────────────
+   The .gs files carry GCC_VERSION; these pages carried nothing, so there
+   was no way to tell whether a browser was running the current file or a
+   cached one from three deploys ago. Printed in the console and shown in
+   the footer. If this does not match what was last shipped, the page is
+   stale -- hard refresh before reporting a bug. */
+var PAGE_VERSION='2026.08.11-a';
+try{
+  console.log('page '+PAGE_VERSION);
+  var _v=document.createElement('div');
+  _v.textContent='v'+PAGE_VERSION;
+  _v.style.cssText='position:relative;z-index:1;text-align:center;padding:14px 0 20px;'+
+    'font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.1em;'+
+    'color:rgba(142,155,169,.55)';
+  document.body.appendChild(_v);
+}catch(e){}
+</script>
+</body>
+</html>

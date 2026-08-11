@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Game cards</title>
+<meta name="theme-color" content="#0E2438">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --slate:#0E2438; --slate-2:#17334B; --slate-3:#1F4260;
+  --ice:#7FB8DE; --ice-pale:#C5E0F2; --steel:#8E9BA9; --snow:#F2F6F9;
+  --caution:#E0A22B; --flag:#C4472F; --go:#4FA87A;
+  --disp:'Barlow Condensed',Impact,sans-serif;
+  --body:'Inter',-apple-system,'Segoe UI',Roboto,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:var(--slate);color:var(--snow);font-family:var(--body);font-size:15px;line-height:1.55}
+.wrap{max-width:720px;margin:0 auto;padding:0 16px 60px}
+
+.top{position:sticky;top:0;z-index:20;background:rgba(14,36,56,.95);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(127,184,222,.2);padding:11px 0}
+.top-in{max-width:720px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:11px}
+.shield{width:34px;height:40px;flex-shrink:0;background:linear-gradient(160deg,var(--slate-3),var(--slate-2));
+  border:1.5px solid var(--steel);border-radius:5px 5px 18px 18px/5px 5px 26px 26px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--disp);font-weight:900;font-size:8px;color:var(--ice);letter-spacing:.05em}
+.top h1{margin:0;font-family:var(--disp);font-weight:900;font-size:19px;
+  letter-spacing:.06em;text-transform:uppercase;line-height:1.05}
+.top .s{font-family:var(--mono);font-size:9px;color:var(--steel);letter-spacing:.07em;margin-top:2px}
+.x{margin-left:auto;appearance:none;background:transparent;border:1.5px solid rgba(127,184,222,.3);
+  color:var(--ice);border-radius:8px;padding:7px 11px;cursor:pointer;text-decoration:none;
+  font-family:var(--disp);font-weight:800;font-size:12px;letter-spacing:.1em;text-transform:uppercase}
+
+.ctl{margin-top:18px}
+.lbl{font-family:var(--disp);font-weight:800;font-size:11px;letter-spacing:.19em;
+  text-transform:uppercase;color:var(--steel);margin-bottom:7px}
+.pinrow{display:flex;gap:9px}
+.pinrow input{flex:1;background:rgba(9,25,40,.72);border:1.5px solid rgba(127,184,222,.24);
+  border-radius:9px;color:var(--snow);font-family:var(--mono);font-size:18px;
+  letter-spacing:.3em;padding:12px 14px;outline:none;text-align:center}
+.pinrow button,.go{appearance:none;border:0;cursor:pointer;border-radius:9px;background:var(--ice);
+  color:var(--slate);font-family:var(--disp);font-weight:900;font-size:16px;
+  letter-spacing:.09em;text-transform:uppercase;padding:0 20px}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{appearance:none;cursor:pointer;font-family:var(--disp);font-weight:700;font-size:13px;
+  letter-spacing:.07em;text-transform:uppercase;background:rgba(23,51,75,.6);color:var(--steel);
+  border:1.5px solid rgba(127,184,222,.22);border-radius:99px;padding:8px 14px;transition:.15s}
+.seg button[aria-pressed="true"]{background:var(--ice);color:var(--slate);border-color:var(--ice)}
+.print{width:100%;margin-top:16px;padding:15px;font-size:19px}
+.err{color:#F0A897;font-size:13px;margin-top:9px;min-height:18px}
+.note{margin-top:14px;padding:13px 15px;border-radius:10px;font-size:13px;line-height:1.6;
+  background:rgba(224,162,43,.09);border-left:2px solid var(--caution);color:var(--ice-pale)}
+.note b{display:block;font-family:var(--disp);font-weight:800;font-size:12.5px;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--caution);margin-bottom:4px}
+.count{font-family:var(--mono);font-size:11px;color:var(--steel);margin-top:12px}
+
+/* ── the cards ── */
+#sheet{margin-top:20px}
+.card{background:#fff;color:#111;border-radius:6px;padding:12px 13px;margin-bottom:12px;
+  font-family:var(--body);page-break-inside:avoid;break-inside:avoid}
+.c-top{display:flex;align-items:flex-start;gap:9px;border-bottom:2px solid #111;padding-bottom:7px}
+.c-brand{font-family:var(--disp);font-weight:900;font-size:12px;letter-spacing:.09em;
+  text-transform:uppercase;line-height:1.05;flex:1}
+.c-brand span{display:block;font-family:var(--mono);font-weight:500;font-size:7.5px;
+  letter-spacing:.11em;color:#555;margin-top:2px}
+.c-num{font-family:var(--mono);font-weight:700;font-size:13px;text-align:right;white-space:nowrap}
+.c-num span{display:block;font-weight:500;font-size:8.5px;color:#555;margin-top:2px}
+.c-meta{display:flex;flex-wrap:wrap;gap:0 14px;font-size:10px;color:#333;
+  padding:6px 0;border-bottom:1px solid #bbb}
+.c-meta b{font-weight:700;color:#111}
+.c-teams{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:8px}
+.c-team h4{margin:0 0 4px;font-family:var(--disp);font-weight:900;font-size:13px;
+  letter-spacing:.03em;line-height:1.12;text-transform:uppercase}
+.c-team .side{font-family:var(--mono);font-size:7.5px;letter-spacing:.12em;color:#666;
+  text-transform:uppercase;display:block;margin-bottom:1px}
+.rost{width:100%;border-collapse:collapse;font-size:9.5px}
+.rost td{border-bottom:1px solid #ddd;padding:2px 3px;height:15px}
+.rost td.n{width:20px;font-family:var(--mono);font-weight:700;text-align:center;
+  border-right:1px solid #ddd;color:#333}
+.rost td.g{width:34px;border-left:1px solid #ddd}
+.rost tr.hd td{border-bottom:1.5px solid #111;font-family:var(--mono);font-size:7px;
+  letter-spacing:.08em;text-transform:uppercase;color:#555;height:auto;padding-bottom:2px}
+.c-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:9px}
+.box{border:1px solid #999;border-radius:3px;padding:5px 7px}
+.box h5{margin:0 0 4px;font-family:var(--mono);font-size:7.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:#555}
+.score{display:flex;align-items:center;justify-content:space-around;font-family:var(--disp);
+  font-weight:900;font-size:12px}
+.score .b{width:38px;height:30px;border:1.5px solid #111;border-radius:3px}
+.mis{width:100%;border-collapse:collapse;font-size:8.5px}
+.mis td{border:1px solid #ccc;height:14px;padding:1px 3px}
+.mis tr.hd td{background:#eee;font-family:var(--mono);font-size:6.5px;letter-spacing:.06em;
+  text-transform:uppercase;color:#555;height:auto}
+.c-sign{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:9px;
+  padding-top:7px;border-top:1px solid #bbb}
+.sig{font-size:8.5px}
+.sig .r{font-family:var(--mono);font-size:7px;letter-spacing:.09em;text-transform:uppercase;color:#666}
+.sig .nm{font-weight:600;min-height:12px}
+.sig .ln{border-bottom:1px solid #111;height:15px;margin-top:1px}
+.c-foot{margin-top:7px;padding-top:5px;border-top:1px solid #bbb;
+  font-family:var(--mono);font-size:7px;letter-spacing:.05em;color:#666;
+  display:flex;justify-content:space-between;gap:8px}
+
+@media print{
+  @page{size:letter portrait;margin:8mm}
+  body{background:#fff;color:#000}
+  .top,.ctl,.note,.count,.err,.jaref{display:none!important}
+  .wrap{max-width:none;padding:0}
+  #sheet{margin:0}
+  .card{border:1px solid #999;border-radius:0;margin:0 0 6mm;padding:5mm}
+}
+.jaref{margin-top:26px;padding:16px 0 4px;text-align:center;border-top:1px solid rgba(127,184,222,.12)}
+.jaref a{display:inline-flex;align-items:center;gap:9px;text-decoration:none;color:inherit}
+.jaref img{width:22px;height:22px;border:0;opacity:.9}
+.jaref b{font-family:var(--disp);font-weight:900;font-size:14px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--ice-pale)}
+
+/* Every page declares viewport-fit=cover, so the sticky header sits under
+   the notch and under Safari's own controls. On a Mac window the traffic
+   lights land on top of it. Pad by the safe area and give the back control
+   a full 44px tap target -- the Apple minimum, which none of these met. */
+.top, .ctx{ padding-top:calc(11px + env(safe-area-inset-top,0px)) !important; }
+.top-in, .ctx-in{
+  padding-left:calc(15px + env(safe-area-inset-left,0px));
+  padding-right:calc(15px + env(safe-area-inset-right,0px));
+}
+.x, .back{
+  min-height:44px; min-width:64px;
+  display:inline-flex; align-items:center; justify-content:center;
+  padding:0 14px;
+}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="top-in">
+    <div class="shield" id="brShield">&nbsp;</div>
+    <div><h1>Game cards</h1><div class="s">PRINT · TWO PER SHEET</div></div>
+    <a class="x" href="index.html">Back</a>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="ctl" id="gate">
+    <div class="lbl">Staff PIN</div>
+    <div class="pinrow">
+      <input type="tel" id="pin" maxlength="4" inputmode="numeric" placeholder="PIN"
+             onkeydown="if(event.key==='Enter')unlock()">
+      <button onclick="unlock()">Enter</button>
+    </div>
+    <div class="err" id="err"></div>
+  </div>
+
+  <div id="picker" style="display:none">
+    <div class="ctl">
+      <div class="lbl">Day</div>
+      <div class="seg" id="days"></div>
+    </div>
+    <div class="ctl">
+      <div class="lbl">Venue</div>
+      <div class="seg" id="venues"></div>
+    </div>
+    <button class="go print" onclick="window.print()">Print these cards</button>
+    <div class="count" id="count"></div>
+    <div class="note" id="rnote" style="display:none"></div>
+  </div>
+
+  <div id="sheet"></div>
+
+  <div class="jaref">
+    <a href="https://jareferee.com" target="_blank" rel="noopener">
+      <img src="assets/brand/jareferee-mark-light.png"
+           alt="JAReferee" width="22" height="22"><b>JAReferee</b>
+    </a>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script>
+/* ── branding from config.js ─────────────────────────────
+   Nothing tournament-specific is hardcoded on this page. */
+var EV    = (window.JAR && JAR.EVENT) || {};
+
+/* config.js is what tells a page which tournament it is. When it does not
+   load -- opened outside its folder, a bad upload, a cached 404 -- the
+   page rendered a blank shell reading "Colorado Referee Hub" with no
+   venues and no explanation. Say so instead of guessing. */
+if (!window.JAR) {
+  try {
+    var _cfgWarn = function(){
+      var b=document.createElement('div');
+      b.style.cssText='position:relative;z-index:5;padding:14px 16px;background:#7A1A0E;'+
+        'color:#fff;font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-size:14px;'+
+        'line-height:1.5;text-align:center';
+      b.innerHTML='<b>Configuration did not load.</b><br>'+
+        'This page cannot tell which tournament it belongs to, so nothing below is real. '+
+        'Open it from its own web address rather than as a file, and check that '+
+        'config.js sits beside it.';
+      document.body.insertBefore(b, document.body.firstChild);
+    };
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',_cfgWarn);
+    else _cfgWarn();
+  } catch(e){}
+}
+
+var EVENT = (window.JAR && JAR.id) || 'steamboat';
+function jarBrand(extra){
+  try{
+    document.title = (extra? extra+' \u00b7 ':'') + (EV.full||'Referee Hub');
+    var sh=document.getElementById('brShield'); if(sh) sh.textContent=EV.shield||'';
+    if(EV.accent) document.documentElement.style.setProperty('--accent',EV.accent);
+  }catch(e){}
+}
+
+var BACKEND = (window.JAR && JAR.BACKEND) || 'https://script.google.com/macros/s/AKfycbxQXvVq-gtGfUvgXF3NJXkFU_4aVlqFclU0bF0B0dQWbpjb42tstU7UnbKLf5DFP3PY/exec';
+var DATES=(EV.dates)||[];
+function dayLbl(d){ return (window.JAR&&JAR.dayLabel)?JAR.dayLabel(d):d; }
+var ROWS=16;   // roster lines per team when we have no data
+
+var S={pin:'',date:DATES[0],venue:'',venues:[]};
+
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+
+function unlock(){
+  var pin=(document.getElementById('pin').value||'').trim();
+  var err=document.getElementById('err'); err.textContent='';
+  if(pin.length<4){ err.textContent='Four digits.'; return; }
+  S.pin=pin;
+  load(function(ok){
+    if(!ok){ err.textContent='That PIN cannot print cards.'; return; }
+    document.getElementById('gate').style.display='none';
+    document.getElementById('picker').style.display='block';
+  });
+}
+
+function load(cb){
+  var q='?action=gameCards&event='+encodeURIComponent(EVENT)+'&pin='+encodeURIComponent(S.pin)+'&date='+encodeURIComponent(S.date);
+  if(S.venue) q+='&venue='+encodeURIComponent(S.venue);
+  fetch(BACKEND+q).then(function(r){return r.json();}).then(function(res){
+    if(!res||res.status!=='ok'){ if(cb)cb(false); return; }
+    S.venues=res.venues||[];
+    renderPickers();
+    renderCards(res);
+    if(cb)cb(true);
+  }).catch(function(){ if(cb)cb(false); });
+}
+
+function renderPickers(){
+  document.getElementById('days').innerHTML=DATES.map(function(d){
+    return '<button aria-pressed="'+(d===S.date)+'" onclick="setDay(\''+d+'\')">'+dayLbl(d)+'</button>';
+  }).join('');
+  document.getElementById('venues').innerHTML=
+    '<button aria-pressed="'+(!S.venue)+'" onclick="setVenue(\'\')">All</button>'+
+    ((window.JAR&&JAR.playVenues)?JAR.playVenues():S.venues).map(function(v){
+      var short=(window.JAR&&JAR.short)?JAR.short(v):v;
+      return '<button aria-pressed="'+(v===S.venue)+'" onclick="setVenue('+
+        JSON.stringify(v).replace(/"/g,'&quot;')+')">'+esc(short)+'</button>';
+    }).join('');
+}
+function setDay(d){ S.date=d; load(); }
+function setVenue(v){ S.venue=v; load(); }
+
+function renderCards(res){
+  var games=res.data||[];
+  document.getElementById('count').textContent=
+    games.length+' card'+(games.length===1?'':'s')+
+    (res.haveRosters?' · '+res.matched+' with rosters':'');
+
+  var note=document.getElementById('rnote');
+  if(!res.haveRosters){
+    note.style.display='block';
+    note.innerHTML='<b>No rosters loaded</b>Cards print with blank numbered lines for the '+
+      'coach to fill in. To print names instead, paste the Playmetrics export into the '+
+      '<b style="display:inline;font-size:13px">ROSTERS</b> sheet as TEAM, JERSEY, PLAYER, PASS_ID. '+
+      'Run diagRosterMatch in Apps Script for the exact team names to match.';
+  } else if(res.matched<res.total){
+    note.style.display='block';
+    note.innerHTML='<b>'+(res.total-res.matched)+' of '+res.total+' cards have no roster</b>'+
+      'Those print blank lines. Run diagRosterMatch to see which teams are missing, and '+
+      'use the TEAM_NAMES sheet if Playmetrics spells one differently to Assignr.';
+  } else note.style.display='none';
+
+  document.getElementById('sheet').innerHTML=games.map(card).join('');
+}
+
+function rosterRows(list){
+  var out='<tr class="hd"><td class="n">#</td><td>Player</td><td class="g">Goals</td></tr>';
+  var n=Math.max(ROWS,list.length);
+  for(var i=0;i<n;i++){
+    var p=list[i];
+    out+='<tr><td class="n">'+(p?esc(p.jersey):'')+'</td>'+
+         '<td>'+(p?esc(p.player):'')+'</td><td class="g"></td></tr>';
+  }
+  return out;
+}
+
+function misconductRows(n){
+  var out='<tr class="hd"><td>Min</td><td>#</td><td>Name</td><td>Code</td></tr>';
+  for(var i=0;i<n;i++) out+='<tr><td></td><td></td><td></td><td></td></tr>';
+  return out;
+}
+
+function card(g){
+  return '<div class="card">'+
+    '<div class="c-top">'+
+      '<div class="c-brand">'+esc(EV.cardBrand||'')+
+        '<span>'+esc(EV.cardSub||'')+'</span></div>'+
+      '<div class="c-num">#'+esc(g.gameNumber)+'<span>'+esc(g.time)+'</span></div>'+
+    '</div>'+
+
+    '<div class="c-meta">'+
+      '<span><b>Date</b> '+esc(g.date)+'</span>'+
+      '<span><b>Venue</b> '+esc(g.venue)+'</span>'+
+      '<span><b>Field</b> '+esc(g.field||'—')+'</span>'+
+      '<span><b>Division</b> '+esc(g.division)+'</span>'+
+    '</div>'+
+
+    '<div class="c-teams">'+
+      '<div class="c-team"><span class="side">Home</span><h4>'+esc(g.home)+'</h4>'+
+        '<table class="rost">'+rosterRows(g.homeRoster)+'</table></div>'+
+      '<div class="c-team"><span class="side">Away</span><h4>'+esc(g.away)+'</h4>'+
+        '<table class="rost">'+rosterRows(g.awayRoster)+'</table></div>'+
+    '</div>'+
+
+    '<div class="c-grid">'+
+      '<div class="box"><h5>Score</h5>'+
+        '<div class="score"><span>H</span><div class="b"></div>'+
+          '<span>A</span><div class="b"></div></div></div>'+
+      '<div class="box"><h5>Cautions and send-offs</h5>'+
+        '<table class="mis">'+misconductRows(3)+'</table></div>'+
+    '</div>'+
+
+    '<div class="c-sign">'+
+      '<div class="sig"><div class="r">Referee</div><div class="nm">'+esc(g.crew.cr||'')+'</div><div class="ln"></div></div>'+
+      '<div class="sig"><div class="r">AR1</div><div class="nm">'+esc(g.crew.ar1||'')+'</div><div class="ln"></div></div>'+
+      '<div class="sig"><div class="r">AR2</div><div class="nm">'+esc(g.crew.ar2||'')+'</div><div class="ln"></div></div>'+
+    '</div>'+
+
+    '<div class="c-foot">'+
+      '<span>Complete this card fully, then file your game report in Assignr.</span>'+
+      '<span>'+esc(EV.hub||'jareferee.com')+'</span>'+
+    '</div>'+
+  '</div>';
+}
+
+
+/* boot */
+try{ jarBrand('Game cards');  }catch(e){}
+
+
+/* ── PAGE VERSION ─────────────────────────────────────────
+   The .gs files carry GCC_VERSION; these pages carried nothing, so there
+   was no way to tell whether a browser was running the current file or a
+   cached one from three deploys ago. Printed in the console and shown in
+   the footer. If this does not match what was last shipped, the page is
+   stale -- hard refresh before reporting a bug. */
+var PAGE_VERSION='2026.08.11-a';
+try{
+  console.log('page '+PAGE_VERSION);
+  var _v=document.createElement('div');
+  _v.textContent='v'+PAGE_VERSION;
+  _v.style.cssText='position:relative;z-index:1;text-align:center;padding:14px 0 20px;'+
+    'font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.1em;'+
+    'color:rgba(142,155,169,.55)';
+  document.body.appendChild(_v);
+}catch(e){}
+</script>
+</body>
+</html>

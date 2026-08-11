@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Game card</title>
+<meta name="theme-color" content="#0E2438">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --slate:#0E2438; --slate-2:#17334B; --slate-3:#1F4260;
+  --ice:#7FB8DE; --ice-pale:#C5E0F2; --steel:#8E9BA9; --snow:#F2F6F9;
+  --caution:#E0A22B; --flag:#C4472F; --go:#4FA87A;
+  --disp:'Barlow Condensed',Impact,sans-serif;
+  --body:'Inter',-apple-system,'Segoe UI',Roboto,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:var(--slate);color:var(--snow);font-family:var(--body);
+  font-size:15px;line-height:1.5;padding-bottom:96px}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 90% 50% at 50% -8%,rgba(127,184,222,.14) 0%,transparent 60%)}
+.wrap{position:relative;z-index:1;max-width:620px;margin:0 auto;padding:0 15px}
+
+.ctx{position:sticky;top:0;z-index:20;background:rgba(14,36,56,.95);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid rgba(127,184,222,.2);padding:11px 0}
+.ctx-in{max-width:620px;margin:0 auto;padding:0 15px;display:flex;gap:11px;align-items:center}
+.shield{width:34px;height:40px;flex-shrink:0;background:linear-gradient(160deg,var(--slate-3),var(--slate-2));
+  border:1.5px solid var(--steel);border-radius:5px 5px 18px 18px/5px 5px 26px 26px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--disp);font-weight:900;font-size:8px;color:var(--ice);letter-spacing:.05em}
+.ctx-m{flex:1;min-width:0}
+.ctx-n{font-family:var(--mono);font-size:10px;color:var(--ice)}
+.ctx-t{font-family:var(--disp);font-weight:800;font-size:17px;line-height:1.1;margin:1px 0 2px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ctx-w{font-size:10.5px;color:var(--steel)}
+.x{appearance:none;background:transparent;border:1.5px solid rgba(127,184,222,.3);color:var(--ice);
+  border-radius:8px;padding:7px 11px;cursor:pointer;text-decoration:none;
+  font-family:var(--disp);font-weight:800;font-size:12px;letter-spacing:.1em;text-transform:uppercase}
+
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:16px}
+.tabs button{appearance:none;cursor:pointer;border-radius:11px;padding:12px 8px;
+  background:rgba(23,51,75,.55);border:1.5px solid rgba(127,184,222,.2);color:var(--steel);
+  transition:.15s;text-align:left}
+.tabs button b{display:block;font-family:var(--disp);font-weight:900;font-size:16px;
+  letter-spacing:.03em;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tabs button i{display:block;font-style:normal;font-family:var(--mono);font-size:10px;margin-top:4px;opacity:.85}
+.tabs button[aria-pressed="true"]{background:var(--ice);color:var(--slate);border-color:var(--ice)}
+
+.bulk{display:flex;gap:7px;margin-top:12px}
+.bulk button{flex:1;appearance:none;cursor:pointer;border-radius:9px;padding:10px 8px;
+  background:transparent;border:1.5px solid rgba(127,184,222,.25);color:var(--ice);
+  font-family:var(--disp);font-weight:800;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase}
+.bulk button:hover{background:rgba(127,184,222,.12)}
+
+.plist{margin-top:13px}
+.p{display:flex;align-items:center;gap:11px;border-radius:11px;padding:10px 12px;margin-bottom:7px;
+  background:rgba(23,51,75,.4);border:1.5px solid rgba(127,184,222,.12);cursor:pointer;transition:.13s}
+.p:hover{border-color:rgba(127,184,222,.35)}
+.p.in{border-color:rgba(79,168,122,.55);background:rgba(79,168,122,.11)}
+.p.blocked{border-color:rgba(196,71,47,.6);background:rgba(196,71,47,.11)}
+.p.seen{border-color:rgba(224,162,43,.55);background:rgba(224,162,43,.09)}
+.p.cleared{border-color:rgba(79,168,122,.5)}
+.lamp{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.lamp.red{background:var(--flag);box-shadow:0 0 7px rgba(196,71,47,.7)}
+.lamp.amber{background:var(--caution);box-shadow:0 0 7px rgba(224,162,43,.6)}
+.lamp.green{background:var(--go);box-shadow:0 0 7px rgba(79,168,122,.6)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:11px;font-family:var(--mono);
+  font-size:9.5px;letter-spacing:.05em;color:var(--steel);text-transform:uppercase}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{display:inline-block}
+.tick{width:30px;height:30px;flex-shrink:0;border-radius:8px;border:2px solid rgba(127,184,222,.35);
+  display:flex;align-items:center;justify-content:center;font-size:16px;color:transparent;transition:.13s}
+.p.in .tick{background:var(--go);border-color:var(--go);color:#05261A}
+.jz{width:52px;flex-shrink:0;background:rgba(9,25,40,.75);border:1.5px solid rgba(127,184,222,.22);
+  border-radius:8px;color:var(--snow);text-align:center;padding:7px 4px;outline:none;
+  font-family:var(--disp);font-weight:900;font-size:19px}
+.jz:focus{border-color:var(--ice)}
+.jz.moved{border-color:var(--caution);color:var(--caution)}
+.pn{flex:1;min-width:0}
+.pn b{display:block;font-size:15px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pn i{display:block;font-style:normal;font-family:var(--mono);font-size:9px;margin-top:2px;letter-spacing:.06em}
+.pn i.warn{color:var(--caution)} .pn i.ok{color:var(--go)} .pn i.no{color:#F0A897}
+
+.addbtn{width:100%;appearance:none;cursor:pointer;border-radius:11px;padding:13px;margin-top:4px;
+  background:transparent;border:1.5px dashed rgba(127,184,222,.35);color:var(--ice);
+  font-family:var(--disp);font-weight:800;font-size:14px;letter-spacing:.08em;text-transform:uppercase}
+.addbtn:hover{background:rgba(127,184,222,.09)}
+.addrow{display:flex;gap:8px;margin-top:8px}
+.addrow input.n{width:60px;text-align:center;font-family:var(--disp);font-weight:900;font-size:19px}
+.addrow input{background:rgba(9,25,40,.75);border:1.5px solid rgba(127,184,222,.24);border-radius:9px;
+  color:var(--snow);font-family:var(--body);font-size:15px;padding:10px 12px;outline:none;flex:1}
+.addrow input:focus{border-color:var(--ice)}
+.addrow button{appearance:none;border:0;cursor:pointer;border-radius:9px;background:var(--ice);
+  color:var(--slate);font-family:var(--disp);font-weight:900;font-size:14px;
+  letter-spacing:.08em;text-transform:uppercase;padding:0 16px}
+
+.warnbox{margin-top:13px;padding:13px 15px;border-radius:11px;font-size:13px;line-height:1.6;
+  background:rgba(224,162,43,.09);border-left:2px solid var(--caution);color:var(--ice-pale)}
+.warnbox b{display:block;font-family:var(--disp);font-weight:800;font-size:12.5px;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--caution);margin-bottom:4px}
+.empty{text-align:center;padding:34px 16px;color:var(--steel);font-size:14px}
+.empty b{display:block;font-family:var(--disp);font-weight:800;font-size:18px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--ice-pale);margin-bottom:6px}
+
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:rgba(14,36,56,.96);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-top:1px solid rgba(127,184,222,.22);padding:12px 15px calc(12px + env(safe-area-inset-bottom))}
+.bar-in{max-width:620px;margin:0 auto;display:flex;gap:10px;align-items:center}
+.bar .m{flex:1;min-width:0}
+.bar .m b{display:block;font-family:var(--disp);font-weight:800;font-size:15px;
+  letter-spacing:.07em;text-transform:uppercase;line-height:1}
+.bar .m i{display:block;font-style:normal;font-family:var(--mono);font-size:10px;color:var(--steel);margin-top:3px}
+.save{appearance:none;border:0;cursor:pointer;border-radius:10px;background:var(--ice);color:var(--slate);
+  font-family:var(--disp);font-weight:900;font-size:17px;letter-spacing:.09em;text-transform:uppercase;padding:13px 24px}
+.save:disabled{opacity:.5;cursor:not-allowed}
+.err{color:#F0A897;font-size:13px;margin-top:9px;min-height:18px}
+.jaref{margin-top:26px;padding:16px 0 4px;text-align:center;border-top:1px solid rgba(127,184,222,.12)}
+.jaref a{display:inline-flex;align-items:center;gap:9px;text-decoration:none;color:inherit}
+.jaref img{width:22px;height:22px;border:0;opacity:.9}
+.jaref b{font-family:var(--disp);font-weight:900;font-size:14px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--ice-pale)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* Every page declares viewport-fit=cover, so the sticky header sits under
+   the notch and under Safari's own controls. On a Mac window the traffic
+   lights land on top of it. Pad by the safe area and give the back control
+   a full 44px tap target -- the Apple minimum, which none of these met. */
+.top, .ctx{ padding-top:calc(11px + env(safe-area-inset-top,0px)) !important; }
+.top-in, .ctx-in{
+  padding-left:calc(15px + env(safe-area-inset-left,0px));
+  padding-right:calc(15px + env(safe-area-inset-right,0px));
+}
+.x, .back{
+  min-height:44px; min-width:64px;
+  display:inline-flex; align-items:center; justify-content:center;
+  padding:0 14px;
+}
+</style>
+</head>
+<body>
+
+<div class="ctx">
+  <div class="ctx-in">
+    <div class="shield" id="brShield">&nbsp;</div>
+    <div class="ctx-m">
+      <div class="ctx-n" id="cNum">Game card</div>
+      <div class="ctx-t" id="cTeams">Loading…</div>
+      <div class="ctx-w" id="cWhere">—</div>
+    </div>
+    <button class="x" onclick="history.back()">Close</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="tabs">
+    <button id="tHome" aria-pressed="true"  onclick="setSide('home')"><b id="hName">Home</b><i id="hCount">—</i></button>
+    <button id="tAway" aria-pressed="false" onclick="setSide('away')"><b id="aName">Away</b><i id="aCount">—</i></button>
+  </div>
+
+  <div class="bulk">
+    <button onclick="markAll(true)">All present</button>
+    <button onclick="markAll(false)">Clear all</button>
+  </div>
+
+  <div class="legend"><span><i class="lamp green"></i>Cleared to play</span><span><i class="lamp amber"></i>Being reviewed</span><span><i class="lamp red"></i>Cannot play</span></div>
+  <div class="plist" id="list"></div>
+
+  <button class="addbtn" id="addBtn" onclick="showAdd()">+ Player not on the roster</button>
+  <div id="addForm" style="display:none">
+    <div class="addrow">
+      <input class="n" type="text" id="addNum" inputmode="numeric" placeholder="#">
+      <input type="text" id="addName" placeholder="Last, First"
+             onkeydown="if(event.key==='Enter')addPlayer()">
+      <button onclick="addPlayer()">Add</button>
+    </div>
+    <div class="warnbox" style="margin-top:9px">
+      <b>Pending approval</b>
+      A write-in is not cleared to play. It goes straight to the tournament director. You have done
+      your part by recording it, the decision is theirs.
+    </div>
+  </div>
+
+  <div class="warnbox" id="staleBox" style="display:none">
+    <b id="staleTitle">Showing a saved copy</b>
+    <span id="staleWhen"></span>
+  </div>
+
+  <div class="warnbox" id="noRoster" style="display:none">
+    <b>No roster loaded</b>
+    Nothing has been imported for these teams yet. Add players as you check them in, or use the
+    paper card. Everything you enter here is kept either way.
+  </div>
+
+  <div class="err" id="err"></div>
+
+  <div class="jaref">
+    <a href="https://jareferee.com" target="_blank" rel="noopener">
+      <img src="assets/brand/jareferee-mark-light.png"
+           alt="JAReferee" width="22" height="22"><b>JAReferee</b>
+    </a>
+  </div>
+</div>
+
+<div class="bar">
+  <div class="bar-in">
+    <div class="m"><b id="barN">—</b><i id="barS">Tap a player to mark them present</i></div>
+    <button class="save" id="saveBtn" onclick="save()">Save</button>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script>
+/* ── branding from config.js ─────────────────────────────
+   Nothing tournament-specific is hardcoded on this page. */
+var EV    = (window.JAR && JAR.EVENT) || {};
+
+/* config.js is what tells a page which tournament it is. When it does not
+   load -- opened outside its folder, a bad upload, a cached 404 -- the
+   page rendered a blank shell reading "Colorado Referee Hub" with no
+   venues and no explanation. Say so instead of guessing. */
+if (!window.JAR) {
+  try {
+    var _cfgWarn = function(){
+      var b=document.createElement('div');
+      b.style.cssText='position:relative;z-index:5;padding:14px 16px;background:#7A1A0E;'+
+        'color:#fff;font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-size:14px;'+
+        'line-height:1.5;text-align:center';
+      b.innerHTML='<b>Configuration did not load.</b><br>'+
+        'This page cannot tell which tournament it belongs to, so nothing below is real. '+
+        'Open it from its own web address rather than as a file, and check that '+
+        'config.js sits beside it.';
+      document.body.insertBefore(b, document.body.firstChild);
+    };
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',_cfgWarn);
+    else _cfgWarn();
+  } catch(e){}
+}
+
+var EVENT = (window.JAR && JAR.id) || 'steamboat';
+function jarBrand(extra){
+  try{
+    document.title = (extra? extra+' \u00b7 ':'') + (EV.full||'Referee Hub');
+    var sh=document.getElementById('brShield'); if(sh) sh.textContent=EV.shield||'';
+    if(EV.accent) document.documentElement.style.setProperty('--accent',EV.accent);
+  }catch(e){}
+}
+
+var BACKEND = (window.JAR && JAR.BACKEND) || 'https://script.google.com/macros/s/AKfycbxQXvVq-gtGfUvgXF3NJXkFU_4aVlqFclU0bF0B0dQWbpjb42tstU7UnbKLf5DFP3PY/exec';
+var P=new URLSearchParams(location.search);
+var S={gameId:P.get('gameId')||'', date:P.get('date')||'', by:P.get('by')||'',
+       side:'home', game:null, home:[], away:[], dirty:false};
+
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function cur(){ return S.side==='home' ? S.home : S.away; }
+
+// ── OFFLINE ROSTER CACHE ──────────────────────────────────────────
+// The middle school has no signal worth the name. A roster is small and,
+// once the tournament director freezes it, it does not change -- so the
+// last good copy is almost always the right copy. Every storage call is
+// wrapped: Safari private mode throws on setItem, and a referee at a
+// field must never lose their card to a storage error.
+var CACHE_KEY='gcc:roster:';
+var CACHE_MAX_MS=36*60*60*1000;          // a tournament weekend, not forever
+
+function cacheSave(res){
+  try{
+    if(!res||res.status!=='ok'||!window.localStorage) return;
+    localStorage.setItem(CACHE_KEY+S.gameId,
+      JSON.stringify({t:Date.now(), res:res}));
+  }catch(e){}
+}
+
+function cacheLoad(){
+  try{
+    if(!window.localStorage) return null;
+    var raw=localStorage.getItem(CACHE_KEY+S.gameId);
+    if(!raw) return null;
+    var box=JSON.parse(raw);
+    if(!box||!box.res) return null;
+    if(Date.now()-box.t > CACHE_MAX_MS) return null;
+    return box;
+  }catch(e){ return null; }
+}
+
+function stamp(ms){
+  try{
+    var d=new Date(ms), h=d.getHours(), m=d.getMinutes();
+    var ap=h>=12?'PM':'AM'; h=(h%12)||12;
+    return h+':'+(m<10?'0'+m:m)+' '+ap;
+  }catch(e){ return ''; }
+}
+
+// One render path for a live payload and a cached one, so an offline card
+// looks and behaves exactly like an online one apart from the banner.
+function applyRoster(res, cachedAt){
+  S.game=res.game; S.home=res.home||[]; S.away=res.away||[];
+  var g=res.game||{};
+  document.getElementById('cNum').textContent='#'+(g.gameNumber||'')+' · '+(g.division||'');
+  document.getElementById('cTeams').textContent=(g.home||'')+' vs '+(g.away||'');
+  document.getElementById('cWhere').textContent=
+    [g.venue,g.field,g.time].filter(Boolean).join(' · ');
+  document.getElementById('hName').textContent=g.home||'';
+  document.getElementById('aName').textContent=g.away||'';
+  document.getElementById('noRoster').style.display=res.haveRoster?'none':'block';
+
+  var box=document.getElementById('staleBox');
+  if(cachedAt){
+    document.getElementById('staleWhen').textContent=
+      'No signal, so this is the roster as it was at '+stamp(cachedAt)+
+      '. Everything you tap is kept on this phone and will save itself '+
+      'once you are back in range.';
+    box.style.display='block';
+  } else {
+    box.style.display='none';
+  }
+  render();
+}
+
+function load(){
+  fetch(BACKEND+'?action=gameRoster&gameId='+encodeURIComponent(S.gameId)+
+        '&date='+encodeURIComponent(S.date))
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(!res||res.status!=='ok'){
+        var c=cacheLoad();
+        if(c){ applyRoster(c.res, c.t); return; }
+        document.getElementById('cTeams').textContent='Could not load';
+        document.getElementById('err').textContent=(res&&res.message)||'Game not found.';
+        return;
+      }
+      cacheSave(res);
+      applyRoster(res, 0);
+    })
+    .catch(function(){
+      var c=cacheLoad();
+      if(c){ applyRoster(c.res, c.t); return; }
+      document.getElementById('cTeams').textContent='Offline';
+      document.getElementById('err').textContent=
+        'No signal, and no saved copy of this card on this phone. '+
+        'Open it once in range and it will be here next time.';
+    });
+}
+
+function setSide(s){
+  S.side=s;
+  document.getElementById('tHome').setAttribute('aria-pressed',s==='home');
+  document.getElementById('tAway').setAttribute('aria-pressed',s==='away');
+  render();
+}
+
+// Green means this player may take the field. Red means they may not.
+// Anyone on the roster is green. Only write-ins can be anything else.
+function eligibility(p){
+  if(p.source!=='writein') return {lamp:'green',cls:'cleared',tone:'ok',label:'On the roster'};
+  if(p.approval==='approved') return {lamp:'green',cls:'cleared',tone:'ok',label:'Write-in · cleared to play'};
+  if(p.approval==='denied')   return {lamp:'red',  cls:'blocked',tone:'no', label:'Write-in · cannot play'};
+  if(p.approval==='seen')     return {lamp:'amber',cls:'seen',   tone:'warn',label:'Write-in · director is looking at it'};
+  return {lamp:'red',cls:'blocked',tone:'no',label:'Write-in · cannot play until approved'};
+}
+
+function render(){
+  var list=cur();
+  var el=document.getElementById('list');
+  if(!list.length){
+    el.innerHTML='<div class="empty"><b>No players yet</b>Add them as you check them in.</div>';
+  } else {
+    el.innerHTML=list.map(function(p,i){
+      var st=eligibility(p);
+      var cls='p'+(p.present?' in':'')+' '+st.cls;
+      var moved=p.source==='roster'&&p.rosterJersey&&p.jersey&&p.jersey!==p.rosterJersey;
+      var tag='<i class="'+st.tone+'">'+st.label+'</i>';
+      if(p.source==='roster'&&moved) tag='<i class="warn">Roster says '+esc(p.rosterJersey)+'</i>';
+      return '<div class="'+cls+'" onclick="toggle('+i+')">'+
+        '<div class="tick">✓</div>'+
+        '<input class="jz'+(moved?' moved':'')+'" value="'+esc(p.jersey||'')+'" '+
+          'inputmode="numeric" maxlength="3" onclick="event.stopPropagation()" '+
+          'oninput="setJersey('+i+',this.value)">'+
+        '<div class="pn"><b>'+esc(p.player)+'</b>'+tag+'</div>'+
+        '<div class="lamp '+st.lamp+'" title="'+esc(st.label)+'"></div>'+
+      '</div>';
+    }).join('');
+  }
+  counts();
+}
+
+function counts(){
+  var h=S.home.filter(function(p){return p.present;}).length;
+  var a=S.away.filter(function(p){return p.present;}).length;
+  document.getElementById('hCount').textContent=h+' of '+S.home.length+' present';
+  document.getElementById('aCount').textContent=a+' of '+S.away.length+' present';
+  var blocked=S.home.concat(S.away).filter(function(p){
+    return eligibility(p).lamp==='red';}).length;
+  var review=S.home.concat(S.away).filter(function(p){
+    return eligibility(p).lamp==='amber';}).length;
+  document.getElementById('barN').textContent=(h+a)+' present';
+  document.getElementById('barS').textContent = blocked
+    ? blocked+' player'+(blocked===1?'':'s')+' cannot play yet'
+    : review
+      ? review+' being reviewed by the director'
+      : (S.dirty?'Unsaved changes':'Tap a player to mark them present');
+}
+
+function toggle(i){ var p=cur()[i]; if(!p) return; p.present=!p.present; S.dirty=true; render(); }
+function setJersey(i,v){ var p=cur()[i]; if(!p) return; p.jersey=String(v).replace(/\D/g,'').slice(0,3); S.dirty=true; counts(); }
+function markAll(v){ cur().forEach(function(p){ p.present=v; }); S.dirty=true; render(); }
+
+function showAdd(){
+  document.getElementById('addForm').style.display='block';
+  document.getElementById('addBtn').style.display='none';
+  document.getElementById('addNum').focus();
+}
+
+function addPlayer(){
+  var num=document.getElementById('addNum').value.replace(/\D/g,'').slice(0,3);
+  var name=document.getElementById('addName').value.trim();
+  var err=document.getElementById('err'); err.textContent='';
+  if(!name){ err.textContent='A name is needed for a write-in.'; return; }
+  if(cur().some(function(p){ return p.player.toLowerCase()===name.toLowerCase(); })){
+    err.textContent='That name is already on this side.'; return;
+  }
+  cur().push({player:name,jersey:num,rosterJersey:'',passId:'',
+              present:true,source:'writein',approval:'pending'});
+  document.getElementById('addNum').value='';
+  document.getElementById('addName').value='';
+  S.dirty=true; render();
+  document.getElementById('addName').focus();
+}
+
+function save(){
+  var btn=document.getElementById('saveBtn');
+  var err=document.getElementById('err'); err.textContent='';
+  btn.disabled=true; btn.textContent='Saving…';
+
+  var players=[];
+  ['home','away'].forEach(function(side){
+    (side==='home'?S.home:S.away).forEach(function(p){
+      players.push({side:side,player:p.player,jersey:p.jersey,
+                    rosterJersey:p.rosterJersey,passId:p.passId,
+                    present:!!p.present,source:p.source});
+    });
+  });
+
+  fetch(BACKEND,{method:'POST',body:JSON.stringify({
+    action:'savePlayers', gameId:S.gameId, date:S.date,
+    checkedBy:S.by, players:players
+  })}).then(function(r){return r.json();}).then(function(res){
+    btn.disabled=false; btn.textContent='Save';
+    if(res&&res.status==='ok'){
+      S.dirty=false;
+      btn.textContent='Saved';
+      setTimeout(function(){ btn.textContent='Save'; },1600);
+      counts();
+      if(res.pending) err.textContent=res.message;
+    } else err.textContent=(res&&res.message)||'Could not save.';
+  }).catch(function(){
+    btn.disabled=false; btn.textContent='Save';
+    err.textContent='No signal. Nothing was lost, try again in a moment.';
+  });
+}
+
+window.addEventListener('beforeunload',function(e){
+  if(S.dirty){ e.preventDefault(); e.returnValue=''; }
+});
+
+// Poll while the card is open so a director's decision shows up here
+setInterval(function(){
+  if(!S.gameId || S.dirty) return;
+  fetch(BACKEND+'?action=gameRoster&gameId='+encodeURIComponent(S.gameId)+
+        '&date='+encodeURIComponent(S.date))
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(!res||res.status!=='ok'||S.dirty) return;
+      cacheSave(res);
+      S.home=res.home||[]; S.away=res.away||[];
+      document.getElementById('staleBox').style.display='none';
+      render();
+    }).catch(function(){});
+},30000);
+
+if(!S.gameId){
+  document.getElementById('cTeams').textContent='No game';
+  document.getElementById('err').textContent='Open this from one of your games.';
+} else load();
+
+
+/* boot */
+try{ jarBrand('Game card');  }catch(e){}
+
+
+/* ── PAGE VERSION ─────────────────────────────────────────
+   The .gs files carry GCC_VERSION; these pages carried nothing, so there
+   was no way to tell whether a browser was running the current file or a
+   cached one from three deploys ago. Printed in the console and shown in
+   the footer. If this does not match what was last shipped, the page is
+   stale -- hard refresh before reporting a bug. */
+var PAGE_VERSION='2026.08.11-a';
+try{
+  console.log('page '+PAGE_VERSION);
+  var _v=document.createElement('div');
+  _v.textContent='v'+PAGE_VERSION;
+  _v.style.cssText='position:relative;z-index:1;text-align:center;padding:14px 0 20px;'+
+    'font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.1em;'+
+    'color:rgba(142,155,169,.55)';
+  document.body.appendChild(_v);
+}catch(e){}
+</script>
+</body>
+</html>

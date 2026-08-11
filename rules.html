@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Tournament rules</title>
+<meta name="theme-color" content="#0E2438">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --slate:#0E2438; --slate-2:#17334B; --slate-3:#1F4260;
+  --ice:#7FB8DE; --ice-pale:#C5E0F2; --steel:#8E9BA9; --snow:#F2F6F9;
+  --caution:#E0A22B; --flag:#C4472F; --go:#4FA87A;
+  --disp:'Barlow Condensed',Impact,sans-serif;
+  --body:'Inter',-apple-system,'Segoe UI',Roboto,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:var(--slate);color:var(--snow);font-family:var(--body);
+  font-size:15px;line-height:1.55;padding-bottom:70px}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 90% 50% at 50% -8%,rgba(127,184,222,.14) 0%,transparent 60%)}
+.wrap{position:relative;z-index:1;max-width:620px;margin:0 auto;padding:0 15px}
+
+.ctx{position:sticky;top:0;z-index:20;background:rgba(14,36,56,.96);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid rgba(127,184,222,.2);padding:11px 0}
+.ctx-in{max-width:620px;margin:0 auto;padding:0 15px;display:flex;gap:11px;align-items:center}
+.shield{width:34px;height:40px;flex-shrink:0;background:linear-gradient(160deg,var(--slate-3),var(--slate-2));
+  border:1.5px solid var(--steel);border-radius:5px 5px 18px 18px/5px 5px 26px 26px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--disp);font-weight:900;font-size:8px;color:var(--ice);letter-spacing:.05em}
+.ctx h1{margin:0;font-family:var(--disp);font-weight:900;font-size:19px;
+  letter-spacing:.06em;text-transform:uppercase;line-height:1.05}
+.ctx .s{font-family:var(--mono);font-size:9px;color:var(--steel);letter-spacing:.07em;margin-top:2px}
+.back{margin-left:auto;appearance:none;background:transparent;
+  border:1.5px solid rgba(127,184,222,.3);color:var(--ice);border-radius:8px;
+  padding:7px 12px;text-decoration:none;font-family:var(--disp);font-weight:800;
+  font-size:12px;letter-spacing:.1em;text-transform:uppercase}
+
+h2{font-family:var(--disp);font-weight:900;font-size:15px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--steel);margin:26px 0 9px;
+  display:flex;align-items:center;gap:11px}
+h2::after{content:'';flex:1;height:1px;background:rgba(127,184,222,.16)}
+
+/* on-field quick reference */
+.quick{margin-top:18px;border:1.5px solid rgba(127,184,222,.34);border-radius:13px;
+  background:linear-gradient(165deg,rgba(31,66,96,.5),rgba(23,51,75,.32));padding:4px 15px 13px}
+.quick .qh{font-family:var(--disp);font-weight:900;font-size:13px;letter-spacing:.17em;
+  text-transform:uppercase;color:var(--ice);margin:13px 0 3px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:8px}
+.tile{background:rgba(9,25,40,.5);border:1px solid rgba(127,184,222,.16);
+  border-radius:9px;padding:9px 11px}
+.tile b{display:block;font-family:var(--disp);font-weight:900;font-size:22px;
+  line-height:1.1;color:var(--snow)}
+.tile i{display:block;font-style:normal;font-family:var(--mono);font-size:9px;
+  letter-spacing:.09em;text-transform:uppercase;color:var(--steel);margin-top:2px}
+.warn{margin-top:11px;padding:10px 13px;border-radius:9px;font-size:13.5px;
+  background:rgba(224,162,43,.1);border-left:2.5px solid var(--caution);color:var(--ice-pale)}
+.warn b{display:block;font-family:var(--disp);font-weight:800;font-size:12.5px;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--caution);margin-bottom:3px}
+
+.card{background:rgba(23,51,75,.4);border:1px solid rgba(127,184,222,.14);
+  border-radius:11px;padding:13px 15px;margin-bottom:10px}
+.card h3{margin:0 0 7px;font-family:var(--disp);font-weight:900;font-size:16px;
+  letter-spacing:.05em;text-transform:uppercase;color:var(--ice-pale)}
+.card p{margin:0 0 8px}
+.card p:last-child{margin-bottom:0}
+.card ul{margin:0 0 8px;padding-left:19px}
+.card li{margin-bottom:5px}
+.card strong{color:var(--snow)}
+.k{font-family:var(--mono);font-size:12px;color:var(--ice);
+  background:rgba(9,25,40,.55);border-radius:4px;padding:1px 5px}
+
+.susp{width:100%;border-collapse:collapse;font-size:14px;margin-top:4px}
+.susp td{padding:7px 4px;border-bottom:1px solid rgba(127,184,222,.12);vertical-align:top}
+.susp tr:last-child td{border-bottom:0}
+.susp td.c{width:64px;font-family:var(--mono);font-size:12px;color:var(--ice);white-space:nowrap}
+.susp td.n{width:88px;font-family:var(--disp);font-weight:800;font-size:13px;
+  letter-spacing:.06em;text-transform:uppercase;color:var(--caution)}
+
+.foot{margin-top:26px;padding-top:15px;border-top:1px solid rgba(127,184,222,.12);
+  font-size:12.5px;color:var(--steel);text-align:center;line-height:1.7}
+.foot a{color:var(--ice)}
+
+/* Every page declares viewport-fit=cover, so the sticky header sits under
+   the notch and under Safari's own controls. On a Mac window the traffic
+   lights land on top of it. Pad by the safe area and give the back control
+   a full 44px tap target -- the Apple minimum, which none of these met. */
+.top, .ctx{ padding-top:calc(11px + env(safe-area-inset-top,0px)) !important; }
+.top-in, .ctx-in{
+  padding-left:calc(15px + env(safe-area-inset-left,0px));
+  padding-right:calc(15px + env(safe-area-inset-right,0px));
+}
+.x, .back{
+  min-height:44px; min-width:64px;
+  display:inline-flex; align-items:center; justify-content:center;
+  padding:0 14px;
+}
+</style>
+</head>
+<body>
+
+<div class="ctx">
+  <div class="ctx-in">
+    <div class="shield" id="brShield">&nbsp;</div>
+    <div><h1>Tournament rules</h1><div class="s" id="brSub">REFEREES</div></div>
+    <a class="back" href="index.html">Back</a>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="quick">
+    <div class="qh">On the field</div>
+
+    <div class="grid">
+      <div class="tile"><b>30 min</b><i>9v9 halves &middot; U11 U12</i></div>
+      <div class="tile"><b>35 min</b><i>11v11 halves &middot; U13 up</i></div>
+      <div class="tile"><b>5 min</b><i>half time</i></div>
+      <div class="tile"><b>None</b><i>added time</i></div>
+    </div>
+
+    <div class="warn">
+      <b>No time added</b>
+      There is no allowance for time lost, including injuries. Do not add time to a half.
+      The Tournament Director may approve it only for a serious injury taking more than
+      five minutes to clear the field. You may <strong>shorten</strong> halves to keep the
+      schedule on time.
+    </div>
+
+    <div class="qh">Minimum to start</div>
+    <div class="grid">
+      <div class="tile"><b>7</b><i>players &middot; 11v11</i></div>
+      <div class="tile"><b>6</b><i>players &middot; 9v9</i></div>
+    </div>
+
+    <div class="warn">
+      <b>U11 &mdash; no heading</b>
+      Deliberate heading is not permitted in U11 flights, per US Soccer.
+      U11 and U12 play 9v9 including the goalkeeper. Some U12 teams opted up
+      and play 11v11 in the U13 bracket.
+    </div>
+  </div>
+
+  <h2>Substitutions</h2>
+  <div class="card">
+    <p>Not free substitution. Restarts where a substitution may be made:</p>
+    <ul>
+      <li>Prior to a throw-in <strong>in your favour</strong></li>
+      <li>Prior to a goal kick, <strong>either team</strong></li>
+      <li>Following a goal, <strong>either team</strong></li>
+      <li>Following an injury to a player from <strong>either team</strong></li>
+      <li>At half time</li>
+      <li>On the <strong>opposing team's</strong> throw-in, but only if that team also has a player at the halfway line</li>
+    </ul>
+    <p>All substitution opportunities are at the discretion of the referee in charge.</p>
+  </div>
+
+  <h2>Equipment</h2>
+  <div class="card">
+    <ul>
+      <li>Shin guards required. Socks, matching colour, pulled over them.</li>
+      <li><strong>Hard casts are not allowed.</strong> Wrapping a cast in foam or bubble wrap does not make it legal. Soft casts and braces need a waiver from the Tournament Director.</li>
+      <li><strong>No earrings of any kind. Taping over earrings or any dangerous accessory is not permitted.</strong> This includes hair control devices with hard parts.</li>
+      <li>Matching jerseys and shorts. Jerseys tucked in, numbered, no two players the same number.</li>
+    </ul>
+    <p>Home team is listed first, supplies the match ball, and wears <strong>light or white</strong>.
+       Away wears <strong>dark</strong>. On a colour conflict, <strong>the home team changes</strong>.</p>
+    <p>Teams on the same side of the field. Spectators opposite.
+       Teams report to the field 15 minutes before kickoff.</p>
+  </div>
+
+  <h2>Send-offs and suspensions</h2>
+  <div class="card">
+    <p>All red and yellow cards are reported to the Tournament Director.
+       Minimum suspension by send-off code:</p>
+    <table class="susp">
+      <tr><td class="c">2CT</td><td class="n">1 game</td><td>Second caution in the same game</td></tr>
+      <tr><td class="c">DGF</td><td class="n">1 game</td><td>Denying an obvious goal-scoring opportunity by a foul</td></tr>
+      <tr><td class="c">DGH</td><td class="n">1 game</td><td>Denying a goal or opportunity by deliberately handling</td></tr>
+      <tr><td class="c">AL</td><td class="n">2 games</td><td>Offensive, insulting or abusive language or gestures</td></tr>
+      <tr><td class="c">SFP</td><td class="n">2 games</td><td>Serious foul play</td></tr>
+      <tr><td class="c">VC</td><td class="n">Rest of event</td><td>Violent conduct</td></tr>
+      <tr><td class="c">S</td><td class="n">Rest of event</td><td>Spitting at an opponent or any other person</td></tr>
+    </table>
+    <p>These are minimums. The discipline committee may suspend for longer, and the
+       <strong>Tournament Director has final say on any suspension</strong>. All red cards
+       are reported to the state association of the player's team.</p>
+    <p>File every send-off through the <a href="index.html">hub</a> so the sit-out list is
+       accurate for the next day.</p>
+  </div>
+
+  <h2>Harassment and game termination</h2>
+  <div class="card">
+    <p><strong>Harassment of officials or players will not be tolerated.</strong>
+       You may suspend the game if you judge it necessary. Where it comes from spectators,
+       remind the coaches that they are responsible for the behaviour of their parents
+       and supporters. If it cannot be stopped, you have the authority to terminate.</p>
+    <p>The result of a terminated game is decided by the Tournament Director &mdash;
+       a winner declared, a forfeit, or a full replay.</p>
+  </div>
+
+  <h2>Weather</h2>
+  <div class="card">
+    <p>Before kickoff the Tournament Director decides whether a game is played.
+       <strong>Once it has started the decision to continue rests with the referee.</strong></p>
+    <p>If you suspend for weather, the tournament committee decides when it restarts.
+       A <strong>second stoppage terminates the game automatically</strong>.</p>
+    <p>A terminated game counts as complete if <strong>one half has elapsed</strong> &mdash;
+       the score at stoppage stands. Terminated before half, it restarts at the point of
+       delay with the same score, at the Tournament Director's discretion.</p>
+  </div>
+
+  <h2>Scoring, forfeits and protests</h2>
+  <div class="card">
+    <p><span class="k">3</span> win &nbsp; <span class="k">1</span> draw &nbsp; <span class="k">0</span> loss</p>
+    <p>A forfeit is recorded <strong>5&ndash;0</strong> to the opposing team, worth 3 points.
+       Same for a team caught playing an ineligible player on a second team.</p>
+    <p>Semi-finals and finals go <strong>straight to kicks from the penalty mark</strong>
+       if level at the end of regulation. No extra time.</p>
+    <p><strong>All referee decisions are final. No protests are allowed</strong> except on
+       player eligibility or an incorrectly reported score.</p>
+  </div>
+
+  <h2>Rosters</h2>
+  <div class="card">
+    <p>Maximum 22 players for U13&ndash;U19, 16 for U11 and U12. Up to 4 guest players and
+       up to 6 club pass players. All players need a current, valid USYSA or US Club pass.</p>
+    <p><strong>No roster changes after registration.</strong> A player may play for only one
+       team in the tournament.</p>
+  </div>
+
+  <div class="foot">
+    Summarised for referees from the Denver International Cup tournament rules.<br>
+    Anything not covered here is decided by the Tournament Director, whose decisions are final.<br>
+    Find them at Tournament Headquarters.
+  </div>
+
+</div>
+
+<script src="config.js"></script>
+<script>
+var EV = (window.JAR && JAR.EVENT) || {};
+
+/* config.js is what tells a page which tournament it is. When it does not
+   load -- opened outside its folder, a bad upload, a cached 404 -- the
+   page rendered a blank shell reading "Colorado Referee Hub" with no
+   venues and no explanation. Say so instead of guessing. */
+if (!window.JAR) {
+  try {
+    var _cfgWarn = function(){
+      var b=document.createElement('div');
+      b.style.cssText='position:relative;z-index:5;padding:14px 16px;background:#7A1A0E;'+
+        'color:#fff;font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-size:14px;'+
+        'line-height:1.5;text-align:center';
+      b.innerHTML='<b>Configuration did not load.</b><br>'+
+        'This page cannot tell which tournament it belongs to, so nothing below is real. '+
+        'Open it from its own web address rather than as a file, and check that '+
+        'config.js sits beside it.';
+      document.body.insertBefore(b, document.body.firstChild);
+    };
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',_cfgWarn);
+    else _cfgWarn();
+  } catch(e){}
+}
+
+try{
+  document.title = 'Tournament rules \u00b7 ' + (EV.full || '');
+  var sh = document.getElementById('brShield'); if (sh) sh.textContent = EV.shield || '';
+  var sb = document.getElementById('brSub');    if (sb) sb.textContent = (EV.name || '').toUpperCase();
+  if (EV.accent) document.documentElement.style.setProperty('--accent', EV.accent);
+}catch(e){}
+
+
+/* ── PAGE VERSION ─────────────────────────────────────────
+   The .gs files carry GCC_VERSION; these pages carried nothing, so there
+   was no way to tell whether a browser was running the current file or a
+   cached one from three deploys ago. Printed in the console and shown in
+   the footer. If this does not match what was last shipped, the page is
+   stale -- hard refresh before reporting a bug. */
+var PAGE_VERSION='2026.08.11-a';
+try{
+  console.log('page '+PAGE_VERSION);
+  var _v=document.createElement('div');
+  _v.textContent='v'+PAGE_VERSION;
+  _v.style.cssText='position:relative;z-index:1;text-align:center;padding:14px 0 20px;'+
+    'font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.1em;'+
+    'color:rgba(142,155,169,.55)';
+  document.body.appendChild(_v);
+}catch(e){}
+</script>
+</body>
+</html>
