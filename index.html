@@ -622,6 +622,44 @@ textarea.fin{resize:vertical;line-height:1.5}
 .evtx i{display:block;font-style:normal;font-size:12.5px;color:var(--steel);margin-top:2px;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .evgo{flex:0 0 auto;color:var(--ice);font-size:24px;line-height:1}
+
+/* ══ DESKTOP, STAFF ONLY ══════════════════════════════════
+   A referee uses this one-handed at a field, so 660px is right for them
+   and stays right on any screen. A site coordinator works a laptop at
+   the HQ tent with 380 games to watch, and a single narrow column down
+   the middle wastes most of the display.
+
+   Only the staff board widens. Every referee-facing screen keeps the
+   phone layout on purpose -- a wide column of games is harder to scan
+   with a thumb, not easier. */
+@media (min-width: 1000px) {
+  body.staffwide .wrap{ max-width:1180px }
+  body.staffwide .top-in{ max-width:1180px }
+
+  /* Games in two columns. Three is too many -- a row already holds a
+     time, teams, crew and up to four buttons. */
+  body.staffwide #staffBody{
+    display:grid; grid-template-columns:1fr 1fr; gap:0 16px; align-items:start }
+  body.staffwide #staffBody .vsec{ grid-column:1 / -1 }
+  body.staffwide #staffBody .spent{ grid-column:1 / -1 }
+
+  /* The four tiles stay on one line rather than wrapping to two. */
+  body.staffwide .stats{ grid-template-columns:repeat(4,1fr) }
+
+  /* Filters and tabs have room to breathe. */
+  body.staffwide .vtabs{ justify-content:flex-start }
+  body.staffwide .vtabs button{ flex:0 0 auto; min-width:150px }
+
+  /* Modals were sized for a phone held at arm's length. */
+  body.staffwide .modal{ max-width:560px }
+  body.staffwide .m-b{ max-height:70vh }
+}
+
+/* A staff member on a laptop expects a pointer target, not a thumb one. */
+@media (min-width:1000px) and (hover:hover) {
+  body.staffwide .gm{ transition:border-color .15s }
+  body.staffwide .gm:hover{ border-color:rgba(127,184,222,.4) }
+}
 </style>
 </head>
 <body>
@@ -696,6 +734,10 @@ textarea.fin{resize:vertical;line-height:1.5}
     <i>Most officials here are teenagers, several working their first match. If you were asked to leave a game, this page gets you back on the sideline.</i>
     <span class="arrow">Read it &#9656;</span>
   </a>
+
+  <button class="qrow" id="hSwitch" onclick="changeEvent()" style="display:none;margin-top:14px">
+    <b>Not at <span id="hSwitchName"></span>?</b><i>change</i><span class="chev">&#8250;</span>
+  </button>
 
   <div class="quiet">
     <button class="qrow" onclick="goRefPick()">
@@ -962,6 +1004,16 @@ function paintBrand(){
     try { document.documentElement.style.setProperty('--accent', EV.accent); } catch(e){}
   }
 
+  // The switcher belongs on the front door, not on /skyline/ where the
+  // URL is the answer.
+  var sw=document.getElementById('hSwitch');
+  if(sw){
+    var onRef=false;
+    try{ onRef = String(location.pathname||'').indexOf('/ref')>=0; }catch(e){}
+    sw.style.display = (onRef && window.JAR && JAR.resolved) ? '' : 'none';
+    setTxt('hSwitchName', EV.name||'');
+  }
+
   var rap=document.getElementById('hRap');
   if(rap) rap.style.display = EV.rapUrl ? '' : 'none';
   var rul=document.getElementById('hRules');
@@ -1089,6 +1141,14 @@ function pickEvent(id){
   if(window.JAR&&JAR.setEvent) JAR.setEvent(id);
 }
 
+// Back to the picker. Clearing the stored choice matters: without it the
+// reload resolves straight back into the tournament they just left.
+function changeEvent(){
+  try{ if(window.JAR&&JAR.forgetEvent) JAR.forgetEvent(); }catch(e){}
+  var base=String(location.pathname||'');
+  location.href = base.indexOf('/ref')>=0 ? base : '/ref/';
+}
+
 function paintVenues(){
   var box=document.getElementById('hVenues'); if(!box) return;
   var list=EV.venueInfo||[];
@@ -1132,6 +1192,12 @@ function post(body){
   return fetch(BACKEND,{method:'POST',body:JSON.stringify(body)}).then(function(r){return r.json();});
 }
 function show(id){
+  // Leaving the staff board returns to the phone layout, so a referee
+  // signing in after a coordinator does not inherit the wide grid.
+  try{
+    if(id!=='s-staff') document.body.classList.remove('staffwide');
+    else if(S.staff) document.body.classList.add('staffwide');
+  }catch(e){}
   ['s-event','s-home','s-pick','s-ref','s-staff'].forEach(function(x){
     document.getElementById(x).classList.toggle('on',x===id);});
   document.getElementById('backBtn').style.display = id==='s-home' ? 'none' : 'inline-block';
@@ -1702,6 +1768,7 @@ function refreshBadges(){
 
 function renderStats(s){
   try{ showEodFor(S.staff&&S.staff.role); }catch(e){}
+  try{ document.body.classList.add('staffwide'); }catch(e){}
   if(s) S.stats=s; else s=S.stats;
   if(!s) return;
 
@@ -2414,7 +2481,7 @@ function loadWx(){
 
 try{ var saved=localStorage.getItem('jar-ref-'+EVENT); if(saved) S.refName=saved; }catch(e){}
 loadWx();
-setInterval(function(){ if(!hidden()) loadWx(); },10*60*1000);
+setInterval(function(){ if(!idle()) loadWx(); },10*60*1000);
 
 /* ══ POLLING ══════════════════════════════════════════════
    Site coordinators leave this open on a phone for twelve hours. The
@@ -2435,6 +2502,11 @@ function hidden(){
   try{ return document.visibilityState==='hidden'; }catch(e){ return false; }
 }
 
+// Nothing should reach the backend before a tournament is chosen. On the
+// picker screen the hub was still fetching weather for Broomfield and
+// polling DIC's board every 45 seconds.
+function idle(){ return hidden() || needEventPick(); }
+
 var _lastTouch=Date.now();
 ['scroll','touchstart','pointerdown','keydown'].forEach(function(ev){
   window.addEventListener(ev,function(){ _lastTouch=Date.now(); },{passive:true});
@@ -2447,7 +2519,7 @@ function boardTick(){
   var want=(idle>300000)?BOARD_SLOW:BOARD_FAST;
   if(want!==_boardEvery){ _boardEvery=want; scheduleBoard(); return; }
 
-  if(hidden()) return;
+  if(idle()) return;
   if(!document.getElementById('s-staff').classList.contains('on')) return;
   if(document.querySelector('.mbg.on')) return;   // a modal is open
   if(idle<12000) return;                          // still reading
@@ -2463,7 +2535,7 @@ scheduleBoard();
 // Coming back to the page should feel current straight away rather than
 // waiting out whatever remained of the interval.
 document.addEventListener('visibilitychange',function(){
-  if(hidden()) return;
+  if(idle()) return;
   _lastTouch=Date.now();
   _boardEvery=BOARD_FAST; scheduleBoard();
   try{
@@ -2580,7 +2652,7 @@ function emgPoll(){
     if(fresh){ sirenStart(); showEmgTakeover(fresh); }
   }).catch(function(){});
 }
-setInterval(function(){ if(!hidden()) emgPoll(); },15000);
+setInterval(function(){ if(!idle()) emgPoll(); },15000);
 
 
 /* boot */
