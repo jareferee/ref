@@ -1184,12 +1184,23 @@ function mins(t){var m=String(t||'').match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
   if(!m)return 9999;var h=+m[1],mi=+m[2],ap=m[3].toUpperCase();
   if(ap==='PM'&&h!==12)h+=12; if(ap==='AM'&&h===12)h=0; return h*60+mi;}
 function nowMins(){var n=new Date();return n.getHours()*60+n.getMinutes();}
+// Every request names its event. Three tournaments share 13-16 August,
+// and without this the backend resolved the date to whichever sorts
+// first -- Players Cup and Skyline both showed Broomfield Shootout games.
+// JAR.id is '' on the unresolved hub, so nothing is sent there.
+function withEvent(o){
+  var out={}, k;
+  for(k in (o||{})) if(Object.prototype.hasOwnProperty.call(o,k)) out[k]=o[k];
+  if(out.event==null && window.JAR && JAR.id) out.event=JAR.id;
+  return out;
+}
 function api(action,params){
-  var q=Object.keys(params||{}).map(function(k){return k+'='+encodeURIComponent(params[k]);}).join('&');
+  var p=withEvent(params);
+  var q=Object.keys(p).map(function(k){return k+'='+encodeURIComponent(p[k]);}).join('&');
   return fetch(BACKEND+'?action='+action+(q?'&'+q:'')).then(function(r){return r.json();});
 }
 function post(body){
-  return fetch(BACKEND,{method:'POST',body:JSON.stringify(body)}).then(function(r){return r.json();});
+  return fetch(BACKEND,{method:'POST',body:JSON.stringify(withEvent(body))}).then(function(r){return r.json();});
 }
 function show(id){
   // Leaving the staff board returns to the phone layout, so a referee
@@ -2673,7 +2684,7 @@ try {
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.08.11-a';
+var PAGE_VERSION='2026.08.11-c';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
