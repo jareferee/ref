@@ -1566,10 +1566,14 @@ function bump(gameId,patch){
   S.myGames.forEach(function(g){ if(g.gameId===gameId) for(var k in patch) g[k]=patch[k]; });
 }
 
-// Assignr's own Notes panel carries a "Game Scoring Assistant" link that
-// opens PlayMetrics on this exact game. Referees have been posting here and
-// then hunting for that link separately. Surfacing it on the card is the
-// whole round trip in two taps.
+// Assignr's Notes panel carries a "Game Scoring Assistant" link that opens
+// PlayMetrics on this exact game. It is not only scores: that page also
+// carries both squad lists with shirt numbers, and the staff list with
+// roles -- head coach, assistant, team manager. A referee walking up to a
+// sideline can see who the registered coach actually is.
+//
+// Labelled for what it does rather than where it goes. Nobody taps a
+// button marked "PlayMetrics" hoping to find a roster.
 //
 // Blank until Assignr publishes it on match day, and blank on anything
 // cached before then, so the button only appears when the link really works.
@@ -1577,7 +1581,7 @@ function pmBtn(g, cls){
   if(!g || !g.scoreUrl) return '';
   return '<a class="btn '+(cls||'ghost')+'" target="_blank" rel="noopener" '+
          'style="text-align:center;text-decoration:none" href="'+esc(g.scoreUrl)+'">'+
-         'PlayMetrics score \u2197</a>';
+         'Score & rosters \u2197</a>';
 }
 
 function openScore(gameId,mode){
@@ -2746,7 +2750,7 @@ try {
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.08.13-b';
+var PAGE_VERSION='2026.08.13-c';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
