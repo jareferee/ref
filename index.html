@@ -835,6 +835,33 @@ textarea.fin{resize:vertical;line-height:1.5}
   </div>
 </div>
 
+<!-- Referee feedback, from a site coordinator or a referee coach -->
+<div class="mbg" id="fbBg" onclick="if(event.target===this)closeModal('fbBg')">
+  <div class="modal">
+    <div class="m-h"><b>Feedback for a referee</b><i id="fbWhen">&mdash;</i></div>
+    <div class="m-b">
+      <label class="fl">Which official</label>
+      <select id="fbWho" class="fin"></select>
+
+      <label class="fl" style="margin-top:13px">What the referee will read</label>
+      <textarea class="fin" id="fbPublic" rows="4"
+        placeholder="What they did well, and one thing to work on. Written to them, not about them."></textarea>
+      <div class="hint">A referee coach reads and approves this before it is sent. Nothing goes straight out.</div>
+
+      <label class="fl" style="margin-top:13px">Private &mdash; staff only</label>
+      <textarea class="fin" id="fbPrivate" rows="3"
+        placeholder="Anything staff should know that the referee should not read."></textarea>
+      <div class="hint">Never sent to the referee. Seen by Deanna and the referee coaches.</div>
+
+      <div class="err" id="fbErr"></div>
+    </div>
+    <div class="m-f">
+      <button class="btn ghost" onclick="closeModal('fbBg')">Cancel</button>
+      <button class="btn ice" onclick="saveFeedback(this)">Save feedback</button>
+    </div>
+  </div>
+</div>
+
 <!-- End of day report -->
 <div class="mbg" id="eodBg" onclick="if(event.target===this)closeModal('eodBg')">
   <div class="modal">
@@ -1662,6 +1689,9 @@ function doAuth(){
   post({action:'auth',pin:pin}).then(function(r){
     if(r&&r.status==='ok'){
       S.pin=pin; S.staff=r;
+      // handleAuth already decides this per role. Site coordinators,
+      // referee coaches and admin get it; a team coach does not.
+      S.canFeedback = !!r.canLeaveFeedback;
       if(r.role==='coach'||!r.caps){ err.textContent='That PIN has no tournament access.'; return; }
       document.getElementById('pin').value='';
       document.getElementById('staffName').textContent=r.name||'Staff';
@@ -2351,7 +2381,76 @@ function staffRow(g,caps,spent){
           '<button class="btn ghost" onclick="openField(\''+g.gameId+'\')">Move field</button>'+
         '</div>'
       : '')+
+    // Feedback sits with the crew actions rather than the score actions,
+    // because it is about the people on the card, not the result.
+    (S.canFeedback && (g.crew||[]).length
+      ? '<div class="gm-acts" style="margin-top:7px">'+
+          '<button class="btn ghost" onclick="openFeedback(\''+g.gameId+'\')">Leave feedback</button>'+
+        '</div>'
+      : '')+
   '</div>';
+}
+
+/* ══ REFEREE FEEDBACK ═════════════════════════════════════
+   Notes only. No scores.
+   A site coordinator watches a lot of football and sees things a referee
+   coach never gets to, but they are not assessing anyone -- a number from
+   someone who watched four minutes of a game while fixing a net would sit
+   in the same column as a National coach's considered rating. So the
+   ratings are left empty and handleObservation writes '' rather than 0,
+   which keeps the average clean.
+
+   Everything written here lands in OBSERVATIONS as pending and goes
+   through the same coach review as any other note before a referee sees
+   a word of it. */
+function openFeedback(gameId){
+  var g=(S.board||[]).filter(function(x){return x.gameId===gameId;})[0];
+  if(!g) return;
+  S.fbGame=g;
+
+  var opts=(g.crew||[]).filter(function(c){return c.name;}).map(function(c){
+    return '<option value="'+esc(c.name)+'" data-pos="'+esc(c.pos||'')+'">'+
+           esc(c.pos||'')+' \u00b7 '+esc(c.name)+'</option>';
+  }).join('');
+  document.getElementById('fbWho').innerHTML=opts||'<option value="">No crew assigned</option>';
+
+  document.getElementById('fbWhen').textContent=
+    '#'+(g.gameNumber||'')+' \u00b7 '+(g.time||'')+' \u00b7 '+
+    ((window.JAR&&JAR.short)?JAR.short(g.venue):g.venue)+(g.field?' \u00b7 '+g.field:'');
+  document.getElementById('fbPublic').value='';
+  document.getElementById('fbPrivate').value='';
+  document.getElementById('fbErr').textContent='';
+  document.getElementById('fbBg').classList.add('on');
+}
+
+function saveFeedback(btn){
+  var g=S.fbGame; if(!g) return;
+  var sel=document.getElementById('fbWho');
+  var who=sel.value;
+  var pos=sel.selectedIndex>=0 && sel.options[sel.selectedIndex]
+        ? sel.options[sel.selectedIndex].getAttribute('data-pos') : '';
+  var pub=document.getElementById('fbPublic').value.trim();
+  var prv=document.getElementById('fbPrivate').value.trim();
+  var err=document.getElementById('fbErr');
+
+  if(!who){ err.textContent='Pick which official this is about.'; return; }
+  if(!pub && !prv){ err.textContent='Write something in one of the two boxes.'; return; }
+
+  btn.disabled=true; btn.textContent='Saving\u2026';
+  post({action:'observation', pin:S.pin,
+        refName:who, officialRole:pos,
+        raterName:(S.staff&&S.staff.name)||'Staff',
+        raterRole:(S.staff&&S.staff.role)||'sc',
+        gameId:g.gameId, date:S.date, field:g.field||'',
+        ageGroup:g.division||'', kickoffTime:g.time||'',
+        notesPublic:pub, notesPrivate:prv})
+  .then(function(r){
+    btn.disabled=false; btn.textContent='Save feedback';
+    if(r&&r.status==='ok'){ closeModal('fbBg'); alert('Saved. A referee coach will review it before it reaches '+who+'.'); }
+    else err.textContent=(r&&r.message)||'Could not save.';
+  })
+  .catch(function(){ btn.disabled=false; btn.textContent='Save feedback';
+                     err.textContent='No signal. Try again in a moment.'; });
 }
 
 /* ══ CREW AND FIELD CHANGES ═══════════════════════════════
@@ -2750,7 +2849,7 @@ try {
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.08.13-c';
+var PAGE_VERSION='2026.08.13-d';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
