@@ -911,6 +911,11 @@ textarea.fin{resize:vertical;line-height:1.5}
   <div class="modal">
     <div class="m-h"><b>What is happening?</b><i id="sosWho">Site staff are alerted immediately</i></div>
     <div class="m-b">
+      <div style="margin-bottom:13px">
+        <div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;
+                    color:var(--steel);margin-bottom:6px">Where are you?</div>
+        <select id="sosVenue" class="fin"></select>
+      </div>
       <div class="reasons">
         <button onclick="sendSos('Medical')"><b>Medical</b><i>Injury that needs more than a sideline can give</i></button>
         <button onclick="sendSos('Referee safety')"><b>Referee safety</b><i>A referee is being threatened or is not safe</i></button>
@@ -2472,18 +2477,59 @@ function confirmNow(gameId,btn){
 
 /* ── emergency ── */
 function openRap(){ document.getElementById('rapBg').classList.add('on'); }
-function openSos(){ document.getElementById('sosBg').classList.add('on'); }
+// Venue is what routes the alert. Without it nothing can be narrowed --
+// not to the coordinator on duty, not to the unstaffed responders -- so it
+// goes to everyone. That is the safe direction and the loudest one.
+//
+// A referee working a game has a venue already. A referee at the hub
+// between games, or off duty entirely, does not, so they pick one. The
+// current game is preselected and can be corrected: a referee who has
+// walked to another field is exactly the person most likely to need this.
+function openSos(){
+  var sel = document.getElementById('sosVenue');
+  if (sel) {
+    var g = sosGame();
+    var here = g ? g.venue : '';
+    var vs = (EV.venues || []).slice();
+    if (here && vs.indexOf(here) < 0) vs.unshift(here);
+    var html = '';
+    vs.forEach(function(v){
+      html += '<option value="' + esc(v) + '"' + (v === here ? ' selected' : '') + '>' +
+              esc(v) + '</option>';
+    });
+    // Last resort, and honest about what it costs.
+    html += '<option value="">I am not sure \u2014 alert everyone</option>';
+    sel.innerHTML = html;
+  }
+  document.getElementById('sosBg').classList.add('on');
+}
+
+// The game a referee is at or about to start. 110 minutes covers a full
+// match plus the walk off.
+function sosGame(){
+  var g = null, now = nowMins();
+  (S.myGames || []).forEach(function(x){ if (!g && mins(x.time) + 110 >= now) g = x; });
+  return g;
+}
 function sendSos(reason){
-  var g=null, now=nowMins();
-  S.myGames.forEach(function(x){ if(!g && mins(x.time)+110>=now) g=x; });
+  var g = sosGame();
+  var sel = document.getElementById('sosVenue');
+  var venue = sel ? sel.value : (g ? g.venue : '');
+  // Field only belongs to the game. If they picked a different venue, the
+  // field number would point staff at the wrong end of the wrong park.
+  var sameVenue = g && venue && venue === g.venue;
   var body={action:'emergency',reason:reason,
             refName:S.refName||(S.staff&&S.staff.name)||'Unidentified',
-            venue:g?g.venue:'', field:g?g.field:'',
-            gameId:g?g.gameId:'', gameNumber:g?g.gameNumber:''};
+            venue:venue, field:sameVenue?g.field:'',
+            gameId:sameVenue?g.gameId:'', gameNumber:sameVenue?g.gameNumber:''};
   closeModal('sosBg');
   if(S.demo){ alert('Sample mode. Nothing was sent.\n\nLive, this alerts '+((EV.alertWho)||'site staff')+' instantly.'); return; }
   post(body).then(function(r){
-    alert(r&&r.status==='ok'
+    // The backend now says whether anything actually left -- by email or by
+    // text. Overwriting that with a cheerful fixed string told a referee in
+    // trouble that someone was coming when nothing had been sent.
+    if (r && r.status === 'ok' && r.message) { alert(r.message); return; }
+    alert(r && r.status === 'ok'
       ? 'Alert sent.\n\nStay where you are. Someone is on the way.'
       : 'Could not send. Find your site coordinator at the Referee HQ tent, or call them directly.');
   }).catch(function(){ alert('No signal. Go to the Referee HQ tent and find your site coordinator.'); });
@@ -2700,7 +2746,7 @@ try {
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.08.13-a';
+var PAGE_VERSION='2026.08.13-b';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
