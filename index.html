@@ -1446,6 +1446,7 @@ function renderRef(){
         '<button class="btn ice" onclick="openScore(\''+next.gameId+'\')">'+
           (next.scoreStatus?'Edit score':'Post score')+'</button>'+
       '</div>'+
+      (next.scoreUrl?'<div class="next-acts" style="margin-top:8px">'+pmBtn(next,'ice')+'</div>':'')+
       '<div class="next-acts" style="margin-top:8px">'+
         '<a class="btn ice" style="text-align:center;text-decoration:none" href="'+rosterHref(next)+'">Game card &amp; roster</a>'+
         '<a class="btn ghost" style="text-align:center;text-decoration:none" href="'+incHref(next)+'">Incident report</a>'+
@@ -1512,6 +1513,7 @@ function gameRow(g){
       (g.checkedIn?'<button class="btn done" disabled>✓ In</button>'
                   :'<button class="btn go" onclick="checkIn(\''+g.gameId+'\')">Check in</button>')+
       '<button class="btn ghost" onclick="openScore(\''+g.gameId+'\')">'+(done?'Edit score':'Score')+'</button>'+
+      pmBtn(g)+
     '</div>'+
     '<div class="gm-acts" style="margin-top:7px">'+
       '<a class="btn ghost" style="text-align:center;text-decoration:none" href="'+rosterHref(g)+'">Game card &amp; roster</a>'+
@@ -1557,6 +1559,20 @@ function checkIn(gameId){
 }
 function bump(gameId,patch){
   S.myGames.forEach(function(g){ if(g.gameId===gameId) for(var k in patch) g[k]=patch[k]; });
+}
+
+// Assignr's own Notes panel carries a "Game Scoring Assistant" link that
+// opens PlayMetrics on this exact game. Referees have been posting here and
+// then hunting for that link separately. Surfacing it on the card is the
+// whole round trip in two taps.
+//
+// Blank until Assignr publishes it on match day, and blank on anything
+// cached before then, so the button only appears when the link really works.
+function pmBtn(g, cls){
+  if(!g || !g.scoreUrl) return '';
+  return '<a class="btn '+(cls||'ghost')+'" target="_blank" rel="noopener" '+
+         'style="text-align:center;text-decoration:none" href="'+esc(g.scoreUrl)+'">'+
+         'PlayMetrics score \u2197</a>';
 }
 
 function openScore(gameId,mode){
@@ -1875,7 +1891,7 @@ function renderMissing(){
         '<div class="crew"><span class="cw">'+esc(x.crew||'no crew assigned')+'</span></div>'+
         '<div class="gm-meta" style="margin-top:5px;opacity:.75">'+esc(x.because)+'</div>'+
         '<div class="gm-acts">'+
-          '<button class="btn ice" onclick="openScore(\''+x.gameId+'\',\'staff\')">Enter score</button>'+
+          '<button class="btn ice" onclick="openScore(\''+x.gameId+'\',\'staff\')">Enter score</button>'+pmBtn(x)+
         '</div></div>';
     }).join('');
 }
@@ -2304,9 +2320,9 @@ function staffRow(g,caps,spent){
              g.homeScore+' – '+g.awayScore+'</button>'+
            '<button class="btn ghost" onclick="openScore(\''+g.gameId+'\',\'staff\')">Edit</button>';
     } else if(!g.scoreStatus){
-      acts='<button class="btn ice" onclick="openScore(\''+g.gameId+'\',\'staff\')">Enter score</button>';
+      acts='<button class="btn ice" onclick="openScore(\''+g.gameId+'\',\'staff\')">Enter score</button>'+pmBtn(g);
     } else {
-      acts='<button class="btn ghost" onclick="openScore(\''+g.gameId+'\',\'staff\')">Edit score</button>';
+      acts='<button class="btn ghost" onclick="openScore(\''+g.gameId+'\',\'staff\')">Edit score</button>'+pmBtn(g);
     }
   }
 
@@ -2684,7 +2700,7 @@ try {
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.08.11-c';
+var PAGE_VERSION='2026.08.13-a';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
