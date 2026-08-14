@@ -1959,7 +1959,14 @@ function renderSusp(){
     return '<div class="sx'+(done?' done':'')+'">'+
       '<div class="sx-h"><b>'+head+'</b>'+
         '<span class="sx-badge'+(done?' ok':'')+'">'+(done?'Served':prog)+'</span></div>'+
-      '<div class="sx-m">'+esc(x.team||'')+(x.division?' \u00b7 '+esc(x.division):'')+'</div>'+
+      // The shirt number matters as much as the name -- it is what a
+      // coordinator can check against a team sheet at the field.
+      '<div class="sx-m">'+esc(x.team||'(team not recorded)')+
+        (x.num?' \u00b7 #'+esc(x.num):'')+
+        (x.division?' \u00b7 '+esc(x.division):'')+'</div>'+
+      ((x.home||x.away)
+        ? '<div class="sx-m">'+esc(x.home||'?')+' v '+esc(x.away||'?')+'</div>'
+        : '')+
       '<div class="sx-m">'+esc(x.code||'')+(x.codeMeaning?' \u00b7 '+esc(x.codeMeaning):'')+
         ' \u00b7 '+esc(x.date||'')+(x.gameNumber?' \u00b7 #'+esc(x.gameNumber):'')+
         (x.field?' \u00b7 '+esc(x.field):'')+'</div>'+
@@ -2865,7 +2872,7 @@ try {
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.08.14-a';
+var PAGE_VERSION='2026.08.14-b';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
