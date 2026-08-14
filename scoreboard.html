@@ -465,8 +465,22 @@ function toggleWx(){
   document.getElementById('wxMore').textContent = on ? 'policy ▴' : 'policy ▾';
 }
 
+// Every request names its event.
+//
+// This page knew which tournament it was -- JAR.id, line 293 -- and never
+// said so. The backend resolves an event from the date, and three run on
+// 13-16 August, so it fell back to whichever sorts first and served
+// Broomfield Shootout games under the Players Cup banner.
+//
+// Only sent when config.js actually resolved an event. The 'steamboat'
+// default on EVENT is a display fallback and must not be sent as fact.
+function evParam(){
+  var id = (window.JAR && JAR.id) || '';
+  return id ? '&event='+encodeURIComponent(id) : '';
+}
+
 function load(d){
-  fetch(BACKEND+'?action=eventScores&date='+encodeURIComponent(d))
+  fetch(BACKEND+'?action=eventScores&date='+encodeURIComponent(d)+evParam())
     .then(function(r){return r.json();})
     .then(function(res){
       if(res && res.status==='ok' && res.data && res.data.length){
@@ -580,7 +594,7 @@ function row(g){
 }
 
 function loadWx(){
-  fetch(BACKEND+'?action=weather&venue='+encodeURIComponent(EV.weatherPlace||'')+'&date='+encodeURIComponent(S.date))
+  fetch(BACKEND+'?action=weather&venue='+encodeURIComponent(EV.weatherPlace||'')+'&date='+encodeURIComponent(S.date)+evParam())
     .then(function(r){return r.json();})
     .then(function(res){
       if(!res||res.status!=='ok'||!res.data) return;
@@ -618,7 +632,7 @@ setInterval(loadWx, 10*60*1000);
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.08.11-a';
+var PAGE_VERSION='2026.08.14-a';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
