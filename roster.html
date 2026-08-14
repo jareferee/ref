@@ -241,6 +241,18 @@ if (!window.JAR) {
   } catch(e){}
 }
 
+// Every request names its event, and only when config.js resolved one.
+//
+// The backend works out which tournament a date belongs to, and three run
+// on 13-16 August, so without this it falls back to whichever sorts first
+// and serves another tournament's games. The 'steamboat' default below is
+// a display fallback -- sending it as fact is how a page ends up
+// confidently showing the wrong event.
+function evParam(){
+  var id = (window.JAR && JAR.id) || '';
+  return id ? '&event='+encodeURIComponent(id) : '';
+}
+function evId(){ return (window.JAR && JAR.id) || ''; }
 var EVENT = (window.JAR && JAR.id) || 'steamboat';
 function jarBrand(extra){
   try{
@@ -324,7 +336,7 @@ function applyRoster(res, cachedAt){
 
 function load(){
   fetch(BACKEND+'?action=gameRoster&gameId='+encodeURIComponent(S.gameId)+
-        '&date='+encodeURIComponent(S.date))
+        '&date='+encodeURIComponent(S.date)+evParam())
     .then(function(r){return r.json();})
     .then(function(res){
       if(!res||res.status!=='ok'){
@@ -447,7 +459,7 @@ function save(){
   });
 
   fetch(BACKEND,{method:'POST',body:JSON.stringify({
-    action:'savePlayers', gameId:S.gameId, date:S.date,
+    action:'savePlayers', event:evId(), gameId:S.gameId, date:S.date,
     checkedBy:S.by, players:players
   })}).then(function(r){return r.json();}).then(function(res){
     btn.disabled=false; btn.textContent='Save';
@@ -472,7 +484,7 @@ window.addEventListener('beforeunload',function(e){
 setInterval(function(){
   if(!S.gameId || S.dirty) return;
   fetch(BACKEND+'?action=gameRoster&gameId='+encodeURIComponent(S.gameId)+
-        '&date='+encodeURIComponent(S.date))
+        '&date='+encodeURIComponent(S.date)+evParam())
     .then(function(r){return r.json();})
     .then(function(res){
       if(!res||res.status!=='ok'||S.dirty) return;
@@ -499,7 +511,7 @@ try{ jarBrand('Game card');  }catch(e){}
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.08.11-a';
+var PAGE_VERSION='2026.08.14-a';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
