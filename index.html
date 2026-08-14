@@ -812,6 +812,11 @@ textarea.fin{resize:vertical;line-height:1.5}
   </div>
   <div class="stats" id="staffStats"></div>
   <div id="staffSelf" style="display:none"></div>
+  <div class="search" id="staffSearchBox" style="margin:10px 0 2px">
+    <input id="staffSearch" type="search" inputmode="search" autocomplete="off"
+      placeholder="Search game number, referee, team or player"
+      oninput="onStaffSearch(this.value)">
+  </div>
   <div class="vtabs" id="staffSites" style="display:none"></div>
   <div id="staffBody"></div>
 </div>
@@ -1912,12 +1917,36 @@ function loadMissing(){
   }).catch(function(){ el.innerHTML='<div class="empty"><b>No signal</b>Try again.</div>'; });
 }
 
+// Split out of loadIncidents so a search can re-render without refetching.
+function renderIncidentsList(){
+  var el=document.getElementById('staffBody');
+  var list=S.incidents||[];
+  if(!list.length){
+    el.innerHTML='<div class="empty"><b>Nothing reported</b>No incidents filed for this day. Good sign.</div>';
+    return;
+  }
+  if(S.q) list=list.filter(function(i){
+    return matchQ([i.gameNumber,i.personName,i.personNum,i.personTeam,i.home,i.away,
+                   i.venue,i.field,i.code,i.type,i.submittedBy].join(' '));
+  });
+  if(!list.length){ el.innerHTML=noHits('incidents'); return; }
+  var caps=(S.staff&&S.staff.caps)||{};
+  el.innerHTML='<div class="sec">'+list.map(function(i){return incRow(i,caps);}).join('')+'</div>';
+}
+
 function renderMissing(){
   var el=document.getElementById('staffBody');
   var list=S.missing||[];
   if(!list.length){
     el.innerHTML='<div class="empty"><b>All caught up</b>Every finished game has a score.</div>';
     return; }
+  if(S.q){
+    list=list.filter(function(x){
+      return matchQ([x.gameNumber,x.home,x.away,x.venue,x.field,x.time,
+                     (x.crew||[]).map(function(c){return c.name;}).join(' ')].join(' '));
+    });
+    if(!list.length){ el.innerHTML=noHits('late scores'); return; }
+  }
   el.innerHTML='<div class="hint" style="margin-bottom:12px">A score is late once the next '+
       'game on that field has been underway for 30 minutes.</div>'+
     list.map(function(x){
@@ -1950,6 +1979,13 @@ function renderSusp(){
   var list=S.susp||[];
   if(!list.length){
     el.innerHTML='<div class="empty"><b>No suspensions</b>Nothing outstanding at this event.</div>'; return; }
+  if(S.q){
+    list=list.filter(function(x){
+      return matchQ([x.gameNumber,x.name,x.num,x.team,x.home,x.away,
+                     x.venue,x.field,x.code,x.division].join(' '));
+    });
+    if(!list.length){ el.innerHTML=noHits('suspensions'); return; }
+  }
   var isAdmin=(S.staff&&S.staff.role==='admin');
   el.innerHTML=list.map(function(x,i){
     var done=x.complete;
@@ -2032,12 +2068,7 @@ function loadIncidents(){
     }
     S.incidents=r.data||[];
     badge('incBadge',S.incidents.filter(function(i){return i.status==='open';}).length);
-    if(!S.incidents.length){
-      el.innerHTML='<div class="empty"><b>Nothing reported</b>No incidents filed for this day. Good sign.</div>';
-      return;
-    }
-    var caps=(S.staff&&S.staff.caps)||{};
-    el.innerHTML='<div class="sec">'+S.incidents.map(function(i){return incRow(i,caps);}).join('')+'</div>';
+    renderIncidentsList();
   }).catch(function(){
     el.innerHTML='<div class="empty"><b>Offline</b>Cannot reach the server.</div>';
   });
@@ -2245,6 +2276,46 @@ function selfCheckin(gameId,btn){
              alert('Could not reach the server.'); });
 }
 
+/* ══ SEARCH ═══════════════════════════════════════════════
+   One box across every tab. A coordinator holding a game card, or a
+   referee on the phone reading out a number, should not have to know
+   which venue chip to press first -- searching clears the site filter
+   so the game is found wherever it is.
+
+   Filters what is already loaded. No request, no waiting, and an empty
+   box behaves exactly as before. */
+function matchQ(hay){
+  var q=(S.q||'').trim().toLowerCase();
+  if(!q) return true;
+  return String(hay||'').toLowerCase().indexOf(q)>=0;
+}
+
+// Everything worth matching a row on, joined once.
+function gameHay(g){
+  return [g.gameNumber,g.gameId,g.home,g.away,g.division,g.venue,g.field,g.time,
+          (g.crew||[]).map(function(c){return c.name;}).join(' ')].join(' ');
+}
+
+function onStaffSearch(v){
+  S.q=v||'';
+  // A number typed while a single site is selected would otherwise look
+  // like no result. Searching means searching everywhere.
+  if(S.q && S.site!=='all'){
+    S.site='all';
+    renderStaffSites();
+    renderStats();
+  }
+  if(S.view==='games')          renderStaff();
+  else if(S.view==='incidents') renderIncidentsList();
+  else if(S.view==='missing')   renderMissing();
+  else if(S.view==='sitout')    renderSusp();
+}
+
+function noHits(what){
+  return '<div class="empty"><b>Nothing matches \u201c'+esc(S.q)+'\u201d</b>'+
+         'No '+what+' on this day match that. Check the day tabs above.</div>';
+}
+
 function renderStaffSites(){
   var box=document.getElementById('staffSites'); if(!box) return;
   var vs=staffVenues();
@@ -2281,14 +2352,16 @@ function renderStaff(){
   // them, but they never belong in a list of games.
   var board=S.board.filter(function(g){ return !g.staffSlot; });
   if(S.site!=='all') board=board.filter(function(g){ return String(g.venue||'')===S.site; });
+  if(S.q) board=board.filter(function(g){ return matchQ(gameHay(g)); });
   renderSelfCheckin();
 
   var live=board.filter(function(g){ return !isSpent(g); });
   var spent=board.filter(isSpent);
 
   if(!board.length){
-    el.innerHTML='<div class="empty"><b>Nothing at '+esc((window.JAR&&JAR.short)?JAR.short(S.site):S.site)+
-      '</b>No games at this site today.</div>'; return; }
+    el.innerHTML = S.q ? noHits('games')
+      : '<div class="empty"><b>Nothing at '+esc((window.JAR&&JAR.short)?JAR.short(S.site):S.site)+
+        '</b>No games at this site today.</div>'; return; }
 
   var byVenue={};
   live.forEach(function(g){ (byVenue[g.venue]=byVenue[g.venue]||[]).push(g); });
@@ -2872,7 +2945,7 @@ try {
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.08.14-b';
+var PAGE_VERSION='2026.08.14-c';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
