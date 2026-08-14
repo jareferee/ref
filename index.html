@@ -2051,12 +2051,28 @@ function incRow(i,caps){
   return '<div class="'+cls+'">'+
     '<div class="inc-top">'+(i.code?'<span class="inc-code">'+esc(i.code)+'</span>':'')+
       '<span class="inc-who">'+esc(i.personName)+'</span></div>'+
-    '<div class="inc-meta">'+[i.type,i.personTeam,i.gameNumber?'#'+i.gameNumber:'',i.venue,i.field]
-      .filter(Boolean).map(esc).join(' · ')+'</div>'+
+    // "Home" is not a team. When the incident carries the fixture, resolve
+    // it to the actual club so a sit-out can be enforced against the right
+    // side. A blank game number means the report was filed with no game
+    // attached, which is worth showing rather than hiding.
+    '<div class="inc-meta">'+[i.type, incTeam(i), i.gameNumber?'#'+i.gameNumber:'(no game)',
+      i.venue, i.field].filter(Boolean).map(esc).join(' · ')+'</div>'+
+    ((i.home||i.away)
+      ? '<div class="inc-meta">'+esc(i.home||'?')+' v '+esc(i.away||'?')+'</div>'
+      : '')+
     '<div class="inc-narr" onclick="this.classList.toggle(\'open\')">'+esc(i.narrative)+'</div>'+
     '<div class="inc-tags">'+tags+'</div>'+
     '<div class="inc-meta" style="margin:8px 0 0">Filed by '+esc(i.submittedBy||'unknown')+'</div>'+
     act+'</div>';
+}
+
+// The form records Home or Away. The fixture knows the clubs, so turn one
+// into the other where we can.
+function incTeam(i){
+  var t=String(i.personTeam||'').trim();
+  if(/^home$/i.test(t) && i.home) return i.home;
+  if(/^away$/i.test(t) && i.away) return i.away;
+  return t;
 }
 
 function closeInc(rowNum){
@@ -2849,7 +2865,7 @@ try {
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.08.13-d';
+var PAGE_VERSION='2026.08.15-a';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
