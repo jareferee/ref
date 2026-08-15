@@ -460,6 +460,25 @@ body::after{
 .demo{background:var(--caution);color:#2A1D02;font-family:var(--disp);font-weight:800;
   font-size:12px;letter-spacing:.15em;text-transform:uppercase;text-align:center;padding:6px;display:none}
 .demo.on{display:block}
+
+/* Bulletins. A lightning delay has to be seen by somebody looking at their
+   own game list, so this sits above everything on every screen and does
+   not scroll away. Severity decides the colour; urgent gets a pulse
+   because a coloured strip is easy to read past when you are wet and in a
+   hurry. */
+.blt{position:sticky;top:0;z-index:60;display:none}
+.blt.on{display:block}
+.blt-item{padding:11px 15px;border-bottom:1px solid rgba(0,0,0,.22)}
+.blt-item b{display:block;font-family:var(--disp);font-weight:900;font-size:15px;
+  letter-spacing:.09em;text-transform:uppercase;line-height:1.2}
+.blt-item i{display:block;font-style:normal;font-size:13.5px;line-height:1.45;margin-top:3px}
+.blt-item .who{display:block;font-family:var(--mono);font-size:9.5px;
+  letter-spacing:.09em;opacity:.72;margin-top:5px}
+.blt-urgent{background:var(--flag);color:#fff;animation:bltPulse 2.4s ease-in-out infinite}
+.blt-warn{background:var(--caution);color:#2A1D02}
+.blt-info{background:var(--slate-3);color:var(--snow);border-bottom:1px solid rgba(127,184,222,.28)}
+@keyframes bltPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.24)}}
+@media (prefers-reduced-motion:reduce){.blt-urgent{animation:none}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 
 /* emergency takeover */
@@ -664,6 +683,8 @@ textarea.fin{resize:vertical;line-height:1.5}
 </head>
 <body>
 
+<div class="blt" id="bltBar"></div>
+
 <div class="demo" id="demoBar">Sample data · backend not reachable</div>
 
 <div class="top">
@@ -803,6 +824,8 @@ textarea.fin{resize:vertical;line-height:1.5}
   <a class="handout" href="cards.html" style="display:block;text-align:center;text-decoration:none;margin-top:14px">Print game cards</a>
   <button class="handout" id="eodBtn" onclick="openEod()"
           style="display:none;width:100%;text-align:center;margin-top:9px">End of day report</button>
+  <button class="handout" id="bltBtn" onclick="openBulletin()"
+          style="display:none;width:100%;text-align:center;margin-top:9px">Post a bulletin</button>
   <div class="vtabs" id="vtabs">
     <button aria-pressed="true"  onclick="setView('games',this)">Games</button>
     <button aria-pressed="false" onclick="setView('incidents',this)">Incidents<span class="badge" id="incBadge" style="display:none">0</span></button>
@@ -836,6 +859,37 @@ textarea.fin{resize:vertical;line-height:1.5}
     <div class="m-f">
       <button class="btn ghost" onclick="closeModal('crewBg')">Cancel</button>
       <button class="btn ice" onclick="saveCrew(this)">Save the change</button>
+    </div>
+  </div>
+</div>
+
+<!-- Post a bulletin to everyone on the hub -->
+<div class="mbg" id="bltBg" onclick="if(event.target===this)closeModal('bltBg')">
+  <div class="modal">
+    <div class="m-h"><b>Post a bulletin</b><i id="bltScope">&mdash;</i></div>
+    <div class="m-b">
+      <label class="fl">How serious</label>
+      <select id="bltSev" class="fin">
+        <option value="urgent">Urgent &mdash; stop play, clear the fields</option>
+        <option value="warn">Warning &mdash; act on this soon</option>
+        <option value="info" selected>Information</option>
+      </select>
+
+      <label class="fl" style="margin-top:13px">Headline</label>
+      <input class="fin" id="bltTitle" maxlength="60"
+        placeholder="Lightning delay &mdash; clear the fields">
+
+      <label class="fl" style="margin-top:13px">Detail</label>
+      <textarea class="fin" id="bltBody" rows="3"
+        placeholder="Go to your car. Nothing restarts until this is cleared here."></textarea>
+
+      <div class="hint">Everyone on the hub sees this at the top of their screen until
+        you clear it. It does not text or email anybody.</div>
+      <div class="err" id="bltErr"></div>
+    </div>
+    <div class="m-f">
+      <button class="btn ghost" onclick="closeModal('bltBg')">Cancel</button>
+      <button class="btn ice" onclick="saveBulletin(this)">Post it</button>
     </div>
   </div>
 </div>
@@ -1484,6 +1538,7 @@ function filterRefs(){
 
 function pickRef(name){
   S.refName=name;
+  loadBulletins();
   try{ localStorage.setItem('jar-ref-'+EVENT,name); }catch(e){}
   show('s-ref');
   var h=new Date().getHours();
@@ -1777,6 +1832,9 @@ function setDay(d){ S.date=d; renderDays(); loadBoard(); }
 
 function loadBoard(){
   loadStaffMessage();
+  loadBulletins();
+  var bb=document.getElementById('bltBtn');
+  if(bb) bb.style.display = bltCan() ? 'block' : 'none';
   refreshBadges();
   if(S.view==='incidents'){ loadIncidents(); }
   else if(S.view==='sitout'){ loadSitOut(); }
@@ -2553,6 +2611,84 @@ function staffRow(g,caps,spent){
   '</div>';
 }
 
+/* ══ BULLETINS ════════════════════════════════════════════
+   Lightning arrived on Friday and there was no way to tell forty referees
+   spread across three venues to get off the fields. The backend already
+   stored announcements, with date, venue and event scoping; nothing
+   displayed them and nothing checked who was posting.
+
+   Polled on the same 15 second beat as the emergency check, because the
+   thing this exists for is weather that moves. */
+function bltCan(){
+  var r=(S.staff&&S.staff.role)||'';
+  // Site coordinators next, scoped to their own venue -- the backend
+  // already filters on venue, so that is a change here, not there.
+  return r==='admin';
+}
+
+function renderBulletins(){
+  var bar=document.getElementById('bltBar');
+  var list=S.bulletins||[];
+  if(!list.length){ bar.className='blt'; bar.innerHTML=''; return; }
+  bar.className='blt on';
+  bar.innerHTML=list.map(function(b){
+    var sev=(b.severity==='urgent'||b.severity==='warn')?b.severity:'info';
+    return '<div class="blt-item blt-'+sev+'">'+
+      '<b>'+esc(b.title||'')+'</b>'+
+      (b.body?'<i>'+esc(b.body)+'</i>':'')+
+      '<span class="who">'+esc(b.venue||'All venues')+
+        (b.postedBy?' \u00b7 '+esc(b.postedBy):'')+
+        (bltCan()?' \u00b7 <a href="#" onclick="clearBulletin('+
+          JSON.stringify(b.timestamp).replace(/"/g,'&quot;')+
+          ');return false;" style="color:inherit;text-decoration:underline">clear</a>':'')+
+      '</span></div>';
+  }).join('');
+}
+
+function loadBulletins(){
+  api('announcements',{date:S.date}).then(function(r){
+    if(r&&r.status==='ok'){ S.bulletins=r.data||[]; renderBulletins(); }
+  }).catch(function(){});
+}
+
+function openBulletin(){
+  if(!bltCan()) return;
+  document.getElementById('bltScope').textContent=(EV.name||'')+' \u00b7 all venues';
+  document.getElementById('bltTitle').value='';
+  document.getElementById('bltBody').value='';
+  document.getElementById('bltErr').textContent='';
+  document.getElementById('bltBg').classList.add('on');
+}
+
+function saveBulletin(btn){
+  var title=document.getElementById('bltTitle').value.trim();
+  var err=document.getElementById('bltErr');
+  if(!title){ err.textContent='Write a headline. That is what people read first.'; return; }
+  btn.disabled=true; btn.textContent='Posting\u2026';
+  post({action:'postAnnouncement', pin:S.pin,
+        title:title,
+        bodyText:document.getElementById('bltBody').value.trim(),
+        severity:document.getElementById('bltSev').value,
+        event:(window.JAR&&JAR.id)||'',
+        postedBy:(S.staff&&S.staff.name)||'Staff',
+        startDate:S.date, endDate:S.date})
+  .then(function(r){
+    btn.disabled=false; btn.textContent='Post it';
+    if(r&&r.status==='ok'){ closeModal('bltBg'); loadBulletins(); }
+    else err.textContent=(r&&r.message)||'Could not post it.';
+  })
+  .catch(function(){ btn.disabled=false; btn.textContent='Post it';
+                     err.textContent='No signal. Try again in a moment.'; });
+}
+
+function clearBulletin(ts){
+  if(!bltCan()) return;
+  if(!confirm('Clear this bulletin for everyone?')) return;
+  post({action:'clearAnnouncement', pin:S.pin, timestamp:ts})
+    .then(function(){ loadBulletins(); })
+    .catch(function(){});
+}
+
 /* ══ MANUAL CHECK IN ══════════════════════════════════════
    Ten referees could not find their own name on Thursday, and a phone
    with no battery cannot check anybody in at all. A coordinator standing
@@ -3051,6 +3187,8 @@ function emgPoll(){
   }).catch(function(){});
 }
 setInterval(function(){ if(!idle()) emgPoll(); },15000);
+// Same beat. Weather moves faster than a 45 second board refresh.
+setInterval(function(){ if(!idle()) loadBulletins(); },15000);
 
 
 /* boot */
@@ -3071,7 +3209,7 @@ try {
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.08.14-d';
+var PAGE_VERSION='2026.08.14-e';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
