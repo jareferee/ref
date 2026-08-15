@@ -528,6 +528,14 @@ body::after{
 .sitwarn span{display:block;font-size:13.5px;color:var(--snow);margin-bottom:3px}
 .sitwarn i{display:block;font-style:normal;font-size:12px;color:#F0A897;margin-top:4px}
 .gm.hassit{border-color:rgba(196,71,47,.45)}
+/* A suspension has to be visible before the card is opened or scrolled.
+   The banner explains; this says there is something to read. */
+.sitpill{display:inline-flex;align-items:center;gap:5px;background:var(--flag);
+  color:#fff;border-radius:99px;padding:2px 9px;margin-left:7px;
+  font-family:var(--disp);font-weight:900;font-size:10.5px;letter-spacing:.1em;
+  text-transform:uppercase;vertical-align:middle;white-space:nowrap}
+.sitpill::before{content:'';width:8px;height:11px;border-radius:1.5px;background:#fff;
+  display:inline-block}
 
 /* End of day report + suspension cards */
 .fl{display:block;font-family:var(--disp);font-weight:800;font-size:11px;
@@ -1655,7 +1663,7 @@ function gameRow(g){
           '</b><i>#'+esc(g.gameNumber)+'</i></div>'+
         '<span class="gm-badge out">'+esc(pay)+'</span></div>'+
       '<div class="gm-match" style="text-decoration:line-through">'+
-        esc(withClub(g.homeClub,g.home))+' vs '+esc(withClub(g.awayClub,g.away))+'</div>'+
+        esc(withClub(g.homeClub,g.home))+' vs '+esc(withClub(g.awayClub,g.away))+sitPill(g)+'</div>'+
       '<div class="gm-meta">'+esc(g.venue)+(g.field?' · '+esc(g.field):'')+
         ' · '+esc(g.division)+'</div>'+
     '</div>';
@@ -1671,7 +1679,8 @@ function gameRow(g){
     '<div class="gm-top"><div class="pos-sm">'+esc(g.position)+'</div>'+
       '<div class="gm-when"><b>'+esc(g.time)+'</b><i class="gnum">#'+esc(g.gameNumber)+'</i></div>'+
       badge+'</div>'+
-    '<div class="gm-match"><span class="gm-teams">'+esc(withClub(g.homeClub,g.home))+' vs '+esc(withClub(g.awayClub,g.away))+'</span>'+score+'</div>'+
+    '<div class="gm-match"><span class="gm-teams">'+esc(withClub(g.homeClub,g.home))+' vs '+esc(withClub(g.awayClub,g.away))+
+      sitPill(g)+'</span>'+score+'</div>'+
     '<div class="gm-meta">'+esc(g.venue)+(g.field?' \u00b7 '+esc(g.field):'')+' \u00b7 '+esc(g.division)+
       (g.stage?' <span class="stage'+(g.kicks?' kicks':'')+'">'+esc(g.stage)+'</span>':'')+'</div>'+
     '<div class="gm-acts">'+
@@ -2590,12 +2599,19 @@ function sitOutsFor(g){
     if(!S.sitOuts||!S.sitOuts.length) return [];
     var h=_tkey_(g.home), a=_tkey_(g.away);
     if(!h&&!a) return [];
-    return S.sitOuts.filter(function(x){
-      var t=_tkey_(x.team); if(t.length<4) return false;
-      // Do not warn on the game the card came from.
-      if(x.gameNumber && String(x.gameNumber)===String(g.gameNumber)) return false;
+    var hit=function(t){
+      if(!t||t.length<4) return false;
       return (h&&(h.indexOf(t)>=0||t.indexOf(h)>=0)) ||
              (a&&(a.indexOf(t)>=0||t.indexOf(a)>=0));
+    };
+    return S.sitOuts.filter(function(x){
+      // Never warn on the game the send-off happened in.
+      if(x.gameNumber && String(x.gameNumber)===String(g.gameNumber)) return false;
+      // The person's own team is the direct match. Where the report only
+      // recorded Home or Away, the fixture it came from still names both
+      // clubs -- either of them appearing here is the same club, so match
+      // on those as well rather than losing the suspension entirely.
+      return hit(_tkey_(x.team)) || hit(_tkey_(x.homeTeam)) || hit(_tkey_(x.awayTeam));
     });
   }catch(e){ return []; }
 }
@@ -2603,6 +2619,14 @@ function sitOutsFor(g){
 // Referee rows carry sitOuts from the server. Staff rows match locally
 // against the sit out list the board already fetched. Same banner either
 // way, so the wording a referee sees is the wording a coordinator sees.
+// Says there is a suspension without saying who. Sits on the fixture line
+// so it is on screen before the card is opened or scrolled past.
+function sitPill(g){
+  var n=((g && g.sitOuts && g.sitOuts.length) ? g.sitOuts : sitOutsFor(g)).length;
+  if(!n) return '';
+  return '<span class="sitpill">sit out'+(n>1?' \u00d7'+n:'')+'</span>';
+}
+
 function sitOutBanner(g){
   var hits=(g && g.sitOuts && g.sitOuts.length) ? g.sitOuts : sitOutsFor(g);
   if(!hits.length) return '';
@@ -2649,7 +2673,8 @@ function staffRow(g,caps,spent){
     '<div class="gm-top"><div class="gm-when"><b>'+esc(g.time)+'</b>'+
       '<i class="gnum">#'+esc(g.gameNumber)+'</i>'+
       (g.field?'<i class="gfield">'+esc(g.field)+'</i>':'')+'</div>'+badge+'</div>'+
-    '<div class="gm-match"><span class="gm-teams">'+esc(withClub(g.homeClub,g.home))+' vs '+esc(withClub(g.awayClub,g.away))+'</span>'+score+'</div>'+
+    '<div class="gm-match"><span class="gm-teams">'+esc(withClub(g.homeClub,g.home))+' vs '+esc(withClub(g.awayClub,g.away))+
+      sitPill(g)+'</span>'+score+'</div>'+
     '<div class="gm-meta">'+esc(g.division)+
       (g.stage?' <span class="stage'+(g.kicks?' kicks':'')+'">'+esc(g.stage)+'</span>':'')+
       (g.flagged?' \u00b7 \u2691 staff attention':'')+'</div>'+
@@ -3293,7 +3318,7 @@ try {
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.08.15-d';
+var PAGE_VERSION='2026.08.15-e';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
