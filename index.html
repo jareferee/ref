@@ -1583,14 +1583,14 @@ function renderRef(){
     var g=S.myGames[i];
     if(g.canceled) continue;
     if(g.scoreStatus) continue;
-    if(mins(g.time)+110 >= now){ next=g; break; }
+    if(mins(g.time)+gameWindow(g) >= now){ next=g; break; }
   }
   if(!next) next=S.myGames.filter(function(g){
     return !g.scoreStatus && !g.canceled; })[0]||null;
 
   var html='';
   if(next){
-    var live = mins(next.time)<=now && mins(next.time)+110>=now;
+    var live = mins(next.time)<=now && mins(next.time)+gameLen(next)>=now;
     html+='<div class="next">'+
       '<div class="k">'+(live?'Happening now':'Up next')+'</div>'+
       '<div class="next-top">'+
@@ -2338,11 +2338,44 @@ function keepScroll(fn){
 // A game is spent once it has kicked off, been scored and confirmed, and has
 // nothing flagged outstanding. Those drop out of the way so the top of the
 // board is always the games that still need someone.
+/* How long a game actually lasts.
+
+   Everything used a flat 110 minutes, which is roughly right for an 11v11
+   U13 and wrong for everything younger. A U9 game with 25 minute halves is
+   finished in under an hour and sat on the coordinator's live board for
+   another fifty minutes after that.
+
+   From the tournament rules: 35 minute halves at U13 and up, 30 at U11 and
+   U12 in 9v9, 25 below that. Five minute half time, no added time.
+
+   The grace on top is for the walk off and posting the score, not for the
+   match. Anything with no readable age falls back to the longest, because
+   showing a finished game for too long is a smaller error than filing a
+   live one under Done. */
+var HALF_MIN_  = { u9:25, u10:25, u11:30, u12:30 };   // anything else 35
+var HALF_TIME_ = 5;
+var POST_GRACE_ = 30;
+
+function gameAge(g){
+  var m=/\bu\s?(\d{1,2})\b/i.exec(String((g&&(g.division||g.ageGroup||g.gameType))||''));
+  return m?Number(m[1]):0;
+}
+
+// Kickoff to final whistle.
+function gameLen(g){
+  var a=gameAge(g);
+  var half=(a && HALF_MIN_['u'+a]) ? HALF_MIN_['u'+a] : 35;
+  return half*2 + HALF_TIME_;
+}
+
+// Kickoff to "this should be dealt with by now".
+function gameWindow(g){ return gameLen(g) + POST_GRACE_; }
+
 function isSpent(g){
   if(g.canceled) return true;
   if(g.flagged) return false;
   if(g.scoreStatus!=='Final') return false;
-  return mins(g.time)+110 < nowMins();
+  return mins(g.time)+gameWindow(g) < nowMins();
 }
 
 // Venue filter for the staff board. Deanna opens Saturday to 100 games
@@ -3005,7 +3038,7 @@ function openSos(){
 // match plus the walk off.
 function sosGame(){
   var g = null, now = nowMins();
-  (S.myGames || []).forEach(function(x){ if (!g && mins(x.time) + 110 >= now) g = x; });
+  (S.myGames || []).forEach(function(x){ if (!g && mins(x.time) + gameWindow(x) >= now) g = x; });
   return g;
 }
 function sendSos(reason){
@@ -3260,7 +3293,7 @@ try {
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.08.15-c';
+var PAGE_VERSION='2026.08.15-d';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
