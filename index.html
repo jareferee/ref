@@ -474,9 +474,12 @@ body::after{
 .blt-item i{display:block;font-style:normal;font-size:13.5px;line-height:1.45;margin-top:3px}
 .blt-item .who{display:block;font-family:var(--mono);font-size:9.5px;
   letter-spacing:.09em;opacity:.72;margin-top:5px}
+/* Slate blue read as part of the furniture and got looked straight past.
+   Traffic lights instead: red stops play, gold means act soon, green is
+   news. None of them is a colour this interface uses for chrome. */
 .blt-urgent{background:var(--flag);color:#fff;animation:bltPulse 2.4s ease-in-out infinite}
 .blt-warn{background:var(--caution);color:#2A1D02}
-.blt-info{background:var(--slate-3);color:var(--snow);border-bottom:1px solid rgba(127,184,222,.28)}
+.blt-info{background:var(--go);color:#04241A}
 @keyframes bltPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.24)}}
 @media (prefers-reduced-motion:reduce){.blt-urgent{animation:none}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -2621,9 +2624,11 @@ function staffRow(g,caps,spent){
    thing this exists for is weather that moves. */
 function bltCan(){
   var r=(S.staff&&S.staff.role)||'';
-  // Site coordinators next, scoped to their own venue -- the backend
-  // already filters on venue, so that is a change here, not there.
-  return r==='admin';
+  // A tournament director decides whether play stops, so they must be able
+  // to say so without finding an administrator first. Site coordinators
+  // next, scoped to their own venue -- the backend already filters on
+  // venue, so that is a change here, not there.
+  return r==='admin' || r==='director';
 }
 
 function renderBulletins(){
@@ -3209,7 +3214,7 @@ try {
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.08.14-e';
+var PAGE_VERSION='2026.08.14-f';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
