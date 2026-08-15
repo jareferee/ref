@@ -1286,6 +1286,17 @@ function paintLogos(H){
   }).join('');
 }
 
+// "North U14B Academy Blue EAL" does not identify a side at a ten venue
+// tournament. Assignr holds the club separately from the team, so show it
+// in front the way PlayMetrics does. Silent when there is no club, and
+// when the team name already begins with it.
+function withClub(club, team){
+  club=String(club||'').trim(); team=String(team||'').trim();
+  if(!club) return team;
+  if(team.toLowerCase().indexOf(club.toLowerCase())===0) return team;
+  return club+' \u00b7 '+team;
+}
+
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){
   return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function mins(t){var m=String(t||'').match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
@@ -1644,7 +1655,7 @@ function gameRow(g){
           '</b><i>#'+esc(g.gameNumber)+'</i></div>'+
         '<span class="gm-badge out">'+esc(pay)+'</span></div>'+
       '<div class="gm-match" style="text-decoration:line-through">'+
-        esc(g.home)+' vs '+esc(g.away)+'</div>'+
+        esc(withClub(g.homeClub,g.home))+' vs '+esc(withClub(g.awayClub,g.away))+'</div>'+
       '<div class="gm-meta">'+esc(g.venue)+(g.field?' · '+esc(g.field):'')+
         ' · '+esc(g.division)+'</div>'+
     '</div>';
@@ -1660,7 +1671,7 @@ function gameRow(g){
     '<div class="gm-top"><div class="pos-sm">'+esc(g.position)+'</div>'+
       '<div class="gm-when"><b>'+esc(g.time)+'</b><i class="gnum">#'+esc(g.gameNumber)+'</i></div>'+
       badge+'</div>'+
-    '<div class="gm-match"><span class="gm-teams">'+esc(g.home)+' vs '+esc(g.away)+'</span>'+score+'</div>'+
+    '<div class="gm-match"><span class="gm-teams">'+esc(withClub(g.homeClub,g.home))+' vs '+esc(withClub(g.awayClub,g.away))+'</span>'+score+'</div>'+
     '<div class="gm-meta">'+esc(g.venue)+(g.field?' \u00b7 '+esc(g.field):'')+' \u00b7 '+esc(g.division)+
       (g.stage?' <span class="stage'+(g.kicks?' kicks':'')+'">'+esc(g.stage)+'</span>':'')+'</div>'+
     '<div class="gm-acts">'+
@@ -1743,8 +1754,8 @@ function openScore(gameId,mode){
   document.getElementById('scTitle').textContent = S.scMode==='staff'?'Confirm score':'Final score';
   document.getElementById('scSub').textContent =
     '#'+(g.gameNumber||'')+' · '+(g.venue||'')+(g.field?' · '+g.field:'');
-  document.getElementById('scHomeName').textContent=g.home||'Home';
-  document.getElementById('scAwayName').textContent=g.away||'Away';
+  document.getElementById('scHomeName').textContent=withClub(g.homeClub,g.home)||'Home';
+  document.getElementById('scAwayName').textContent=withClub(g.awayClub,g.away)||'Away';
   document.getElementById('scHome').value = g.homeScore==null?'':g.homeScore;
   document.getElementById('scAway').value = g.awayScore==null?'':g.awayScore;
   document.getElementById('scNudge').style.display='none';
@@ -1933,7 +1944,12 @@ function ackEmg(rowNum,how,btn){
 }
 
 function refreshBadges(){
-  api('incidents',{pin:S.pin,date:S.date}).then(function(r){
+  // Incidents and sit outs follow the venue chip, the way late scores
+  // already did. A coordinator at Highland Park was being shown ten
+  // venues' worth of reports and had to read past nine of them.
+  var iq={pin:S.pin,date:S.date};
+  if(S.site!=='all') iq.venue=S.site;
+  api('incidents',iq).then(function(r){
     if(r&&r.status==='ok') badge('incBadge',(r.data||[]).filter(function(i){return i.status==='open';}).length);
   }).catch(function(){});
   var mq={pin:S.pin,date:S.date};
@@ -1945,7 +1961,9 @@ function refreshBadges(){
       if(S.view==='missing') renderMissing();
     }
   }).catch(function(){});
-  api('sitOutList',{pin:S.pin}).then(function(r){
+  var sq={pin:S.pin};
+  if(S.site!=='all') sq.venue=S.site;
+  api('sitOutList',sq).then(function(r){
     if(r&&r.status==='ok'){
       S.sitOuts=(r.data||[]).filter(function(x){return !x.rapCompleted;});
       badge('sitBadge',S.sitOuts.length);
@@ -2087,7 +2105,9 @@ function renderMissing(){
 function loadSitOut(){
   var el=document.getElementById('staffBody');
   el.innerHTML='<div class="empty">Loading suspensions…</div>';
-  api('suspensions',{pin:S.pin,date:S.date}).then(function(r){
+  var pq={pin:S.pin,date:S.date};
+  if(S.site!=='all') pq.venue=S.site;
+  api('suspensions',pq).then(function(r){
     if(!r||r.status!=='ok'){ el.innerHTML='<div class="empty"><b>Could not load</b>'+esc((r&&r.message)||'')+'</div>'; return; }
     S.susp=r.data||[];
     renderSusp();
@@ -2181,7 +2201,9 @@ function loadStaffMessage(){
 function loadIncidents(){
   var el=document.getElementById('staffBody');
   el.innerHTML='<div class="empty">Loading reports…</div>';
-  api('incidents',{pin:S.pin,date:S.date}).then(function(r){
+  var iq2={pin:S.pin,date:S.date};
+  if(S.site!=='all') iq2.venue=S.site;
+  api('incidents',iq2).then(function(r){
     if(!r||r.status!=='ok'){
       el.innerHTML='<div class="empty"><b>No access</b>'+((r&&r.message)||'Could not load reports.')+'</div>';
       return;
@@ -2457,7 +2479,16 @@ function pickStaffSite(v,btn){
   var p=btn.parentNode.querySelectorAll('button');
   for(var i=0;i<p.length;i++) p[i].setAttribute('aria-pressed', p[i]===btn?'true':'false');
   renderStats();
-  renderStaff();
+  // Incidents, sit outs and late scores are fetched scoped to the venue,
+  // so changing the chip has to re-pull them rather than only repaint the
+  // games. Without this, switching site left the previous site's reports
+  // on screen.
+  if(S.view==='games')          renderStaff();
+  else if(S.view==='incidents') loadIncidents();
+  else if(S.view==='missing')   loadMissing();
+  else if(S.view==='sitout')    loadSitOut();
+  else                          renderStaff();
+  refreshBadges();
 }
 
 function renderStaff(){
@@ -2585,7 +2616,7 @@ function staffRow(g,caps,spent){
     '<div class="gm-top"><div class="gm-when"><b>'+esc(g.time)+'</b>'+
       '<i class="gnum">#'+esc(g.gameNumber)+'</i>'+
       (g.field?'<i class="gfield">'+esc(g.field)+'</i>':'')+'</div>'+badge+'</div>'+
-    '<div class="gm-match"><span class="gm-teams">'+esc(g.home)+' vs '+esc(g.away)+'</span>'+score+'</div>'+
+    '<div class="gm-match"><span class="gm-teams">'+esc(withClub(g.homeClub,g.home))+' vs '+esc(withClub(g.awayClub,g.away))+'</span>'+score+'</div>'+
     '<div class="gm-meta">'+esc(g.division)+
       (g.stage?' <span class="stage'+(g.kicks?' kicks':'')+'">'+esc(g.stage)+'</span>':'')+
       (g.flagged?' \u00b7 \u2691 staff attention':'')+'</div>'+
@@ -3214,7 +3245,7 @@ try {
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.08.14-f';
+var PAGE_VERSION='2026.08.15-b';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
