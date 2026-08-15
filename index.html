@@ -840,6 +840,20 @@ textarea.fin{resize:vertical;line-height:1.5}
   </div>
 </div>
 
+<!-- Manual check in, by a coordinator or admin -->
+<div class="mbg" id="ciBg" onclick="if(event.target===this)closeModal('ciBg')">
+  <div class="modal">
+    <div class="m-h"><b>Check in a referee</b><i id="ciWhen">&mdash;</i></div>
+    <div class="m-b">
+      <div class="hint" style="margin-bottom:11px">Checking somebody in covers every
+        game they have at this venue today, exactly as if they had done it themselves.</div>
+      <div id="ciCrew"></div>
+      <div class="err" id="ciErr"></div>
+    </div>
+    <div class="m-f"><button class="btn ghost" onclick="closeModal('ciBg')">Done</button></div>
+  </div>
+</div>
+
 <!-- Referee feedback, from a site coordinator or a referee coach -->
 <div class="mbg" id="fbBg" onclick="if(event.target===this)closeModal('fbBg')">
   <div class="modal">
@@ -1406,21 +1420,66 @@ function goRefPick(){
   api('eventRefs',{date:S.date}).then(function(r){
     S.refs = (r&&r.status==='ok'&&r.data&&r.data.length) ? r.data : (markDemo(),demoRefs());
     filterRefs();
-    setTimeout(function(){document.getElementById('refSearch').focus();},80);
+    setTimeout(function(){
+      var box=document.getElementById('refSearch');
+      box.focus();
+      // iOS puts the keyboard over the lower half and does not scroll for
+      // it. Pull the box to the top so the results have the screen.
+      try{ box.scrollIntoView({block:'start',behavior:'smooth'}); }catch(e){}
+    },80);
   }).catch(function(){ markDemo(); S.refs=demoRefs(); filterRefs(); });
+}
+
+/* Ten referees could not find themselves on Thursday.
+
+   Two causes, both ours. The match was a plain substring anywhere in the
+   name, so typing "ju" put Julian Debus below anyone with "ju" in the
+   middle of theirs. And every match rendered, so on an iPhone the list ran
+   under the keyboard -- the name was on screen, three rows into a region
+   nobody could see and few thought to scroll.
+
+   So: rank first names and surnames that START with what was typed above
+   everything else, and never show more than six. If there are more, say so
+   and ask for another letter. A short ranked list beats a long correct one
+   when half of it is behind a keyboard. */
+var REF_LIST_MAX = 6;
+
+function rankRef(name, q){
+  var n=String(name||'').toLowerCase();
+  if(n.indexOf(q)===0) return 0;                       // whole name starts with it
+  var parts=n.split(/[\s,]+/).filter(Boolean);
+  for(var i=0;i<parts.length;i++) if(parts[i].indexOf(q)===0) return 1;  // any word does
+  return n.indexOf(q)>=0 ? 2 : 3;                      // buried in the middle
 }
 
 function filterRefs(){
   var q=(document.getElementById('refSearch').value||'').toLowerCase().trim();
-  var list=S.refs;
-  if(q.length>=1) list=S.refs.filter(function(r){return r.name.toLowerCase().indexOf(q)>=0;});
-  else list=S.refs.slice(0,8);
   var el=document.getElementById('refList');
-  if(!list.length){ el.innerHTML='<div class="empty"><b>No match</b>Check the spelling, or ask at the Referee HQ tent.</div>'; return; }
+  var list, total;
+
+  if(q.length>=1){
+    list=S.refs.filter(function(r){ return rankRef(r.name,q)<3; })
+      .map(function(r){ return {r:r, k:rankRef(r.name,q)}; })
+      .sort(function(a,b){ return a.k-b.k || a.r.name.localeCompare(b.r.name); })
+      .map(function(x){ return x.r; });
+  } else {
+    list=S.refs.slice();
+  }
+  total=list.length;
+  list=list.slice(0,REF_LIST_MAX);
+
+  if(!total){
+    el.innerHTML='<div class="empty"><b>No match</b>Check the spelling, or ask at the Referee HQ tent.</div>';
+    return;
+  }
   el.innerHTML=list.map(function(r){
     return '<button class="refrow" onclick="pickRef('+JSON.stringify(r.name).replace(/"/g,'&quot;')+')">'+
       '<b>'+esc(r.name)+'</b>'+(r.games?'<i>'+r.games+' game'+(r.games===1?'':'s')+'</i>':'')+'</button>';
-  }).join('');
+  }).join('')+
+  (total>REF_LIST_MAX
+    ? '<div class="hint" style="text-align:center;padding:11px 0">'+
+      (total-REF_LIST_MAX)+' more. Type another letter.</div>'
+    : '');
 }
 
 function pickRef(name){
@@ -2484,7 +2543,74 @@ function staffRow(g,caps,spent){
           '<button class="btn ghost" onclick="openFeedback(\''+g.gameId+'\')">Leave feedback</button>'+
         '</div>'
       : '')+
+    // A referee whose phone is flat, or who never found their name, still
+    // needs to show as on site. Same permission as changing a crew.
+    (caps.checkIn && (g.crew||[]).length
+      ? '<div class="gm-acts" style="margin-top:7px">'+
+          '<button class="btn ghost" onclick="openCheckin(\''+g.gameId+'\')">Check in a referee</button>'+
+        '</div>'
+      : '')+
   '</div>';
+}
+
+/* ══ MANUAL CHECK IN ══════════════════════════════════════
+   Ten referees could not find their own name on Thursday, and a phone
+   with no battery cannot check anybody in at all. A coordinator standing
+   in front of the crew should not have to talk them through it.
+
+   Uses the same checkinVenue the referee's own button uses, so it covers
+   every game they have at that venue and nothing behaves differently for
+   having been done by somebody else. */
+function openCheckin(gameId){
+  var g=(S.board||[]).filter(function(x){return x.gameId===gameId;})[0];
+  if(!g) return;
+  S.ciGame=g;
+  document.getElementById('ciWhen').textContent=
+    '#'+(g.gameNumber||'')+' \u00b7 '+(g.time||'')+' \u00b7 '+
+    ((window.JAR&&JAR.short)?JAR.short(g.venue):g.venue);
+  document.getElementById('ciErr').textContent='';
+  renderCiCrew();
+  document.getElementById('ciBg').classList.add('on');
+}
+
+function renderCiCrew(){
+  var g=S.ciGame; if(!g) return;
+  document.getElementById('ciCrew').innerHTML=(g.crew||[])
+    .filter(function(c){return c.name;})
+    .map(function(c){
+      var inAlready=!!c.checkedIn;
+      return '<div class="gm-acts" style="margin-bottom:7px;align-items:center">'+
+        '<div style="flex:1;min-width:0"><b>'+esc(c.name)+'</b>'+
+          '<div class="gm-meta">'+esc(c.pos||'')+'</div></div>'+
+        (inAlready
+          ? '<button class="btn done" disabled>Checked in</button>'
+          : '<button class="btn go" onclick="doStaffCheckin('+
+            JSON.stringify(c.name).replace(/"/g,'&quot;')+',this)">Check in</button>')+
+      '</div>';
+    }).join('')||'<div class="hint">No crew assigned to this game.</div>';
+}
+
+function doStaffCheckin(name,btn){
+  var g=S.ciGame; if(!g) return;
+  var err=document.getElementById('ciErr');
+  btn.disabled=true; btn.textContent='\u2026';
+  post({action:'checkinVenue',pin:S.pin,refName:name,date:S.date,venue:g.venue})
+    .then(function(r){
+      if(r&&r.status==='ok'){
+        // Mark every game at this venue for this referee, the way the
+        // referee's own check in does, so the board agrees immediately.
+        (S.board||[]).forEach(function(x){
+          if(x.venue!==g.venue) return;
+          (x.crew||[]).forEach(function(c){ if(c.name===name) c.checkedIn=true; });
+        });
+        renderCiCrew(); renderStaff(); renderStats();
+      } else {
+        btn.disabled=false; btn.textContent='Check in';
+        err.textContent=(r&&r.message)||'Could not check them in.';
+      }
+    })
+    .catch(function(){ btn.disabled=false; btn.textContent='Check in';
+                       err.textContent='No signal. Try again in a moment.'; });
 }
 
 /* ══ REFEREE FEEDBACK ═════════════════════════════════════
@@ -2945,7 +3071,7 @@ try {
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.08.14-c';
+var PAGE_VERSION='2026.08.14-d';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');

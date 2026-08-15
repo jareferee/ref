@@ -425,7 +425,7 @@ body[data-mode="full"] .full-only{display:block}
 <div class="done-screen" id="done">
   <div class="tick">✓</div>
   <h2>Report filed</h2>
-  <p id="doneMsg">Joe, Bowen and Joey have it.</p>
+  <p id="doneMsg">The tournament administrators have it.</p>
   <p style="color:var(--steel);font-size:13px">If this was a send-off, still complete your game report in Assignr.</p>
   <div class="raphand" id="rapHand">
     <h3>Give them this</h3>
@@ -440,7 +440,7 @@ body[data-mode="full"] .full-only{display:block}
 
 <div class="bar" id="bar">
   <div class="bar-in">
-    <div class="meta"><b id="barMode">Short report</b><i id="barSub">Goes to Joe, Bowen and Joey</i></div>
+    <div class="meta"><b id="barMode">Short report</b><i id="barSub">Goes to the tournament administrators</i></div>
     <button class="file" id="fileBtn" onclick="submitIncident()">File report</button>
   </div>
 </div>
@@ -472,6 +472,16 @@ if (!window.JAR) {
     else _cfgWarn();
   } catch(e){}
 }
+
+// Every request names its event, and only when config.js resolved one.
+// Three tournaments run on 13-16 August; without this the backend picks
+// whichever sorts first. The 'steamboat' default below is for display and
+// must never be sent as fact.
+function evParam(){
+  var id = (window.JAR && JAR.id) || '';
+  return id ? '&event='+encodeURIComponent(id) : '';
+}
+function evId(){ return (window.JAR && JAR.id) || ''; }
 
 var EVENT = (window.JAR && JAR.id) || 'steamboat';
 function jarBrand(extra){
@@ -523,7 +533,8 @@ function setMode(m){
   document.getElementById('swFull').setAttribute('aria-pressed',m==='full');
   document.getElementById('barMode').textContent=m==='short'?'Short report':'Full USSF report';
   document.getElementById('barSub').textContent=m==='short'
-    ?'Goes to Joe, Bowen and Joey':'Goes to Joe, Bowen, Joey and CSA discipline';
+    ?'Goes to the tournament administrators'
+    :'Goes to the tournament administrators and CSA discipline';
 }
 
 function setType(btn){
@@ -718,7 +729,7 @@ function checkDisc(){
 
 function loadGame(){
   if(!S.gameId){ noGame(); return; }
-  fetch(BACKEND+'?action=eventBoard&date='+encodeURIComponent(S.date))
+  fetch(BACKEND+'?action=eventBoard&date='+encodeURIComponent(S.date)+evParam())
     .then(function(r){return r.json();})
     .then(function(res){
       if(!res||res.status!=='ok'||!res.data){ noGame(); return; }
@@ -769,7 +780,7 @@ function submitIncident(){
   var wit=[].slice.call(document.querySelectorAll('.wit:checked')).map(function(c){return c.value;});
 
   var body={
-    action:'fileIncident',
+    action:'fileIncident', event:evId(),
     gameId:S.gameId, date:S.date,
     type:S.type, mode:S.mode, code:S.code||'',
     personName:name,
@@ -825,7 +836,7 @@ function submitIncident(){
         document.getElementById('doneId').textContent='Reference '+(res.incidentId||'');
         if(res.sitOut){
           document.getElementById('doneMsg').textContent=
-            'Joe, Bowen and Joey have it, and this person is on the sit out list.';
+            'The tournament administrators have it, and this person is on the sit out list.';
           document.getElementById('rapHand').classList.add('on');
         }
         window.scrollTo(0,0);
@@ -857,7 +868,7 @@ try{ jarBrand('Incident report');
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.08.11-a';
+var PAGE_VERSION='2026.08.14-a';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
