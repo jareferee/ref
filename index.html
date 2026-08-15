@@ -3205,7 +3205,22 @@ function emgAck(how,btn){
     });
 }
 
-function emgSilence(){ sirenStop(); }
+/* Silence stops the noise AND closes the takeover.
+
+   It used to call sirenStop() alone, which left a full red screen with no
+   way off it -- the two other buttons close the overlay through emgAck,
+   this one never did.
+
+   Deliberately does not acknowledge anything. A coordinator who is already
+   at the field, or who is standing next to the referee, wants the siren to
+   stop; they have not said they are responding, and the alert stays open
+   for everyone else and in the EMERGENCY record. _emgSeen already holds
+   this row, so the fifteen second poll will not put it back up. */
+function emgSilence(){
+  sirenStop();
+  var el=document.getElementById('emgOver');
+  if(el) el.classList.remove('on');
+}
 
 function emgPoll(){
   if(!S.pin) return;                       // staff only
@@ -3245,7 +3260,7 @@ try {
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.08.15-b';
+var PAGE_VERSION='2026.08.15-c';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
