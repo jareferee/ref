@@ -286,6 +286,17 @@ body::after{
 .stat i{display:block;font-style:normal;font-family:var(--mono);font-size:8.5px;color:var(--steel);
   margin-top:4px;letter-spacing:.06em;text-transform:uppercase}
 .stat.warn b{color:var(--caution)}
+/* A game with no crew is the one number on this bar the system cannot fix
+   for itself. Check ins, scores and confirmations all resolve as the day
+   runs; an unassigned game stays broken until a person assigns somebody,
+   and the referees for it will never complain because there are none.
+   So it is a button, and it says so. */
+.stat.tap{cursor:pointer;border-color:rgba(196,71,47,.5);
+  background:rgba(196,71,47,.14);transition:background .12s}
+.stat.tap:active{background:rgba(196,71,47,.26)}
+.stat.tap b{color:var(--flag)}
+.stat.tap i{color:#F0A897}
+.stat.tap.on{background:rgba(196,71,47,.32);border-color:var(--flag)}
 .crew{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
 .cw{font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:99px;
   border:1px solid rgba(127,184,222,.24);color:var(--steel)}
@@ -2010,7 +2021,10 @@ function renderStats(s){
     '<div class="stat"><b>'+s.games+'</b><i>games</i></div>'+
     '<div class="stat"><b>'+s.refsCheckedIn+'/'+s.refsTotal+'</b><i>checked in</i></div>'+
     '<div class="stat'+(s.reported?' warn':'')+'"><b>'+s.reported+'</b><i>to confirm</i></div>'+
-    '<div class="stat'+(s.noCrew?' warn':'')+'"><b>'+s.noCrew+'</b><i>no crew</i></div>';
+    (s.noCrew
+      ? '<div class="stat tap'+(S.noCrewOnly?' on':'')+'" onclick="toggleNoCrew()">'+
+          '<b>'+s.noCrew+'</b><i>no crew '+(S.noCrewOnly?'\u2715':'\u203a')+'</i></div>'
+      : '<div class="stat"><b>0</b><i>no crew</i></div>');
 }
 
 function rosterHref(g){
@@ -2380,6 +2394,25 @@ function gameLen(g){
 // Kickoff to "this should be dealt with by now".
 function gameWindow(g){ return gameLen(g) + POST_GRACE_; }
 
+// Show only the games nobody is assigned to. Clears the venue chip and the
+// search box, because the whole point is to stop hunting.
+function toggleNoCrew(){
+  S.noCrewOnly = !S.noCrewOnly;
+  if(S.noCrewOnly){
+    S.site='all';
+    S.q='';
+    var box=document.getElementById('staffSearch'); if(box) box.value='';
+    if(S.view!=='games'){ S.view='games';
+      document.querySelectorAll('#vtabs button').forEach(function(b){
+        b.setAttribute('aria-pressed', b.textContent.toLowerCase().indexOf('games')>=0);
+      });
+    }
+  }
+  renderStaffSites();
+  renderStats();
+  renderStaff();
+}
+
 function isSpent(g){
   if(g.canceled) return true;
   if(g.flagged) return false;
@@ -2546,15 +2579,23 @@ function renderStaff(){
   var board=S.board.filter(function(g){ return !g.staffSlot; });
   if(S.site!=='all') board=board.filter(function(g){ return String(g.venue||'')===S.site; });
   if(S.q) board=board.filter(function(g){ return matchQ(gameHay(g)); });
+  if(S.noCrewOnly) board=board.filter(function(g){ return !(g.crew||[]).length; });
   renderSelfCheckin();
 
   var live=board.filter(function(g){ return !isSpent(g); });
   var spent=board.filter(isSpent);
 
   if(!board.length){
-    el.innerHTML = S.q ? noHits('games')
+    el.innerHTML = S.noCrewOnly
+      ? '<div class="empty"><b>Every game has a crew</b>Nothing left to assign today.</div>'
+      : S.q ? noHits('games')
       : '<div class="empty"><b>Nothing at '+esc((window.JAR&&JAR.short)?JAR.short(S.site):S.site)+
         '</b>No games at this site today.</div>'; return; }
+
+  if(S.noCrewOnly){
+    el.innerHTML='<div class="hint" style="margin-bottom:12px">Showing only games with '+
+      'nobody assigned. Tap the red <b>no crew</b> box again for the full board.</div>';
+  } else { el.innerHTML=''; }
 
   var byVenue={};
   live.forEach(function(g){ (byVenue[g.venue]=byVenue[g.venue]||[]).push(g); });
@@ -2566,7 +2607,7 @@ function renderStaff(){
       gs.map(function(g){ return staffRow(g,caps); }).join('')+'</div>';
   }).join('');
 
-  if(!live.length) html='<div class="empty"><b>All caught up</b>Every game today is scored and confirmed.</div>';
+  if(!live.length && !S.noCrewOnly) html='<div class="empty"><b>All caught up</b>Every game today is scored and confirmed.</div>';
 
   if(spent.length){
     spent.sort(function(a,b){ return mins(b.time)-mins(a.time); });
@@ -2576,7 +2617,7 @@ function renderStaff(){
       '<div class="spent-body" id="spentBody">'+
       spent.map(function(g){ return staffRow(g,caps,true); }).join('')+'</div>';
   }
-  el.innerHTML=html;
+  el.innerHTML+=html;
 }
 
 function toggleSpent(){
@@ -3334,7 +3375,7 @@ try {
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.08.15-f';
+var PAGE_VERSION='2026.08.15-g';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
