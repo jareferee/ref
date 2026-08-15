@@ -2973,10 +2973,25 @@ function saveCrew(btn){
 
   var label=btn.textContent;
   btn.disabled=true; btn.textContent='Saving\u2026';
+
+  // fetch does not give up for minutes, so a slow save left the button on
+  // "Saving" with nothing to press and no way to tell whether it had gone
+  // through. Twenty seconds, then hand control back and say what to check.
+  var done=false;
+  var giveUp=setTimeout(function(){
+    if(done) return;
+    done=true;
+    btn.disabled=false; btn.textContent=label;
+    err.textContent='Still waiting on the server. It may have saved \u2014 close this and '+
+                    'check the crew on the card before trying again.';
+  },20000);
+  var settle=function(){ if(done) return false; done=true; clearTimeout(giveUp); return true; };
+
   post({action:'crewSwitch',pin:S.pin,gameId:g.gameId,date:S.date,crew:crew,
         reason:(document.getElementById('crewReason')||{}).value||'',
         handledBy:(S.staff&&S.staff.name)||'staff'})
     .then(function(r){
+      if(!settle()) return;
       if(r&&r.status==='ok'){
         closeModal('crewBg');
         alert(r.changes ? (r.detail||[]).join('\n')+'\n\n'+r.message : r.message);
@@ -2985,7 +3000,8 @@ function saveCrew(btn){
         btn.disabled=false; btn.textContent=label;
         err.textContent=(r&&r.message)||'Could not save.';
       }
-    },function(){ btn.disabled=false; btn.textContent=label;
+    },function(){ if(!settle()) return;
+        btn.disabled=false; btn.textContent=label;
         err.textContent='Could not reach the server.'; });
 }
 
@@ -3318,7 +3334,7 @@ try {
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.08.15-e';
+var PAGE_VERSION='2026.08.15-f';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
