@@ -218,6 +218,99 @@
       host:     { name: 'Arsenal Colorado', url: 'https://www.arsenalcolorado.com' }
     },
 
+
+    // ── added 18 August ───────────────────────────────────────────
+    // A TOURNAMENTS row is only half of a new event. This file carries the
+    // identity a page needs before it has spoken to the backend: crest,
+    // colours, day tabs, venues, host. Without a block here, ?e=uchc found
+    // nothing and fell through to whatever was last stored -- which is why
+    // it opened Arsenal.
+    playerscupu10: {
+      id:       'playerscupu10',        // must match TOURNAMENTS.ID
+      path:     'playerscupu10',
+      shield:   'PCJ',
+      name:     'Players Cup U8-U10',
+      full:     '2026 Players Cup U08-U10',
+      subtitle: 'Hosted by Albion SC Boulder',
+      cardBrand:'Players Cup U8-U10 2026',
+      cardSub:  'REFEREE GAME CARD',
+      accent:   '#2E7D53',
+      hub:      'jareferee.com/playerscupu10',
+      weatherPlace: 'Boulder',
+      dates:    ['2026-08-22','2026-08-23'],
+      daylbl:   { '2026-08-22':['Sat','Aug 22'], '2026-08-23':['Sun','Aug 23'] },
+      venues:   ['Pleasant View Fields Sports Complex'],
+      hqVenues: [], hqFields: [],
+      trim:     [' Fields Sports Complex',' Sports Complex'],
+      alertWho: 'your site coordinator and Deanna',
+      refInfo:  [
+        { h: 'Small sided',
+          p: 'U8 to U10 play 25 minute halves. No added time. Check the age band on your game card before kickoff.' },
+        { h: 'Something wrong',
+          p: 'Use the red Help button in the corner. It reaches your site coordinator and Deanna at once.' }
+      ],
+      host:     { name: 'Albion SC Boulder', url: 'https://www.albionscboulder.com' }
+    },
+
+    uchc: {
+      id:       'uchealth',             // must match TOURNAMENTS.ID
+      path:     'uchc',                 // the URL you hand out
+      shield:   'UCH',
+      name:     'UC Health Cup',
+      full:     '2026 UC Health Cup',
+      subtitle: 'Hosted by Colorado Soccer Association',
+      cardBrand:'UC Health Cup 2026',
+      cardSub:  'REFEREE GAME CARD',
+      accent:   '#15294B',
+      hub:      'jareferee.com/uchc',
+      weatherPlace: 'Denver',
+      dates:    ['2026-09-27','2026-10-03','2026-10-04','2026-10-05'],
+      daylbl:   { '2026-09-27':['Sun','Sep 27'], '2026-10-03':['Sat','Oct 3'],
+                  '2026-10-04':['Sun','Oct 4'],  '2026-10-05':['Mon','Oct 5'] },
+      venues:   ['Fort Logan Soccer Complex'],
+      hqVenues: [], hqFields: [],
+      trim:     [' Soccer Complex'],
+      alertWho: 'your site coordinator and Deanna',
+      refInfo:  [
+        { h: 'Recreational',
+          p: 'U8 to U19 recreational. Half lengths vary by age band -- check your game card.' },
+        { h: 'Something wrong',
+          p: 'Use the red Help button in the corner. It reaches your site coordinator and Deanna at once.' }
+      ],
+      host:     { name: 'Colorado Soccer Association', url: 'https://www.coloradosoccer.org' }
+    },
+
+    vvsccup: {
+      id:       'vailcup',              // must match TOURNAMENTS.ID
+      path:     'vvsccup',              // the URL you hand out
+      shield:   'VVS',
+      name:     'Vail Cup',
+      full:     'Cindy Eskwith Memorial Vail Cup',
+      subtitle: 'Hosted by Vail Valley Soccer Club',
+      cardBrand:'Vail Cup 2026',
+      cardSub:  'REFEREE GAME CARD',
+      accent:   '#F0A830',
+      hub:      'jareferee.com/vvsccup',
+      weatherPlace: 'Vail',
+      dates:    ['2026-10-02','2026-10-03','2026-10-04','2026-10-05'],
+      daylbl:   { '2026-10-02':['Fri','Oct 2'], '2026-10-03':['Sat','Oct 3'],
+                  '2026-10-04':['Sun','Oct 4'], '2026-10-05':['Mon','Oct 5'] },
+      // No venues on the TOURNAMENTS row yet. Left empty deliberately: the
+      // board falls back to whatever Assignr returns rather than filtering
+      // to a list that is wrong. Fill both in when the fields are known.
+      venues:   [],
+      hqVenues: [], hqFields: [],
+      trim:     [' Soccer Complex',' Sports Complex'],
+      alertWho: 'your site coordinator and Deanna',
+      refInfo:  [
+        { h: 'Altitude',
+          p: 'Vail is at 8,000 feet. Water between games, and watch players and yourself for altitude effects.' },
+        { h: 'Something wrong',
+          p: 'Use the red Help button in the corner. It reaches your site coordinator and Deanna at once.' }
+      ],
+      host:     { name: 'Vail Valley Soccer Club', url: '' }
+    },
+
     dic: {
       id:       'denverintl',         // must match TOURNAMENTS.ID
       path:     'dic',
@@ -321,6 +414,11 @@
       if (q) {
         var byQ = byPath(q[1]);
         if (byQ) return { event: byQ, from: 'query' };
+        // Asked for by name and not found. Do NOT carry on down to the
+        // stored choice: ?e=uchc quietly opened Arsenal, because Arsenal
+        // was the last event picked on that phone. Being told the event is
+        // unknown is recoverable; being shown the wrong tournament is not.
+        return { event: null, from: 'unknown', asked: q[1] };
       }
       var seg = String(location.pathname || '').split('/').filter(Boolean)[0] || '';
       var byP = byPath(seg);
