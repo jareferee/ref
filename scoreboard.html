@@ -573,13 +573,53 @@ function render(){
   }).join('');
 }
 
+/* How long a game runs, from the tournament rules: 35 minute halves at U13
+   and up, 30 at U11 and U12, 25 below, plus five minutes half time. */
+var HALF_MIN_ = { u9:25, u10:25, u11:30, u12:30 };   // anything else 35
+function gameLen(g){
+  var m=/\bu\s?(\d{1,2})\b/i.exec(String((g&&g.d)||''));
+  var a=m?Number(m[1]):0;
+  return ((a&&HALF_MIN_['u'+a])?HALF_MIN_['u'+a]:35)*2+5;
+}
+function nowMins(){ var n=new Date(); return n.getHours()*60+n.getMinutes(); }
+function todayStr(){
+  var d=new Date(), m=d.getMonth()+1, dd=d.getDate();
+  return d.getFullYear()+'-'+(m<10?'0':'')+m+'-'+(dd<10?'0':'')+dd;
+}
+
 function row(g){
   var played = g.hs!=null && g.as!=null;
   var isLive = g.st==='live';
+
+  /* "Upcoming" used to be whatever was left when there was no score, with
+     no reference to the clock at all. A 9:30 kick off still read Upcoming
+     at half past three, which tells a parent looking for a result exactly
+     the wrong thing.
+
+     Only the day being shown can be judged against the clock -- a game on
+     tomorrow's tab is upcoming whatever the time is now. */
+  var when = 'upcoming';
+  if (S.date === todayStr()) {
+    var k = mins(g.t), now = nowMins();
+    if (k !== 9999) {
+      if (now >= k + gameLen(g))      { when = 'ended'; }
+      else if (now >= k)              { when = 'playing'; }
+    }
+  } else if (S.date < todayStr()) {
+    when = 'ended';
+  }
+
   var cls = 'g'+(g.cx?' cxl':(isLive?' livegame':(played?' final':'')));
   var hw = played && g.hs>g.as, aw = played && g.as>g.hs;
-  var stat = g.cx ? 'Cancelled' : isLive ? 'In progress' : played ? 'Final' : 'Upcoming';
-  var statCls = isLive?'g-stat l':(played?'g-stat f':'g-stat');
+  var stat = g.cx      ? 'Cancelled'
+           : played    ? 'Final'
+           : isLive    ? 'In progress'
+           : when==='playing' ? 'In progress'
+           : when==='ended'   ? 'Awaiting score'
+           :                    'Upcoming';
+  var statCls = (isLive||when==='playing') ? 'g-stat l'
+              : played ? 'g-stat f'
+              : 'g-stat';
 
   return '<div class="'+cls+'">'+
     '<div class="g-time">'+esc(g.t)+'<i>'+esc(g.n||'')+'</i></div>'+
@@ -632,7 +672,7 @@ setInterval(loadWx, 10*60*1000);
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.08.14-a';
+var PAGE_VERSION='2026.08.15-a';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');

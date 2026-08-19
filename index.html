@@ -962,7 +962,13 @@ textarea.fin{resize:vertical;line-height:1.5}
   <div class="modal">
     <div class="m-h"><b>End of day report</b><i id="eodWhen">—</i></div>
     <div class="m-b">
-      <label class="fl">Site</label>
+      <label class="fl">Who worked this site</label>
+      <input class="fin" id="eodName" type="text" autocomplete="off"
+        placeholder="Name as it should appear on the hours sheet">
+      <div class="hint">Yours by default. Change it only if you are filing on
+        someone else's behalf.</div>
+
+      <label class="fl" style="margin-top:13px">Site</label>
       <select id="eodVenue" class="fin"></select>
 
       <div class="two">
@@ -1038,12 +1044,20 @@ textarea.fin{resize:vertical;line-height:1.5}
                     color:var(--steel);margin-bottom:6px">Where are you?</div>
         <select id="sosVenue" class="fin"></select>
       </div>
+      <div style="margin-bottom:13px">
+        <div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;
+                    color:var(--steel);margin-bottom:6px">In a few words &mdash; optional</div>
+        <textarea id="sosDetail" class="fin" rows="2" maxlength="200"
+          placeholder="Coach will not leave the field. U12 boys, red kit."></textarea>
+        <div class="hint" style="margin-top:5px">Goes out with the alert, by text and email.
+          Skip it if you need someone now &mdash; the buttons below send on their own.</div>
+      </div>
       <div class="reasons">
         <button onclick="sendSos('Medical')"><b>Medical</b><i>Injury that needs more than a sideline can give</i></button>
         <button onclick="sendSos('Referee safety')"><b>Referee safety</b><i>A referee is being threatened or is not safe</i></button>
         <button onclick="sendSos('Spectator or parent')"><b>Spectator or parent</b><i>Someone will not leave or will not stop</i></button>
         <button onclick="sendSos('Fight or violence')"><b>Fight or violence</b><i>Physical altercation on or near the field</i></button>
-        <button onclick="sendSos('Other')"><b>Other</b><i>Something else that needs staff now</i></button>
+        <button onclick="sendSos('Other')"><b>Other</b><i>Something else &mdash; say what above if you can</i></button>
       </div>
     </div>
     <div class="m-f"><button class="btn ghost" onclick="closeModal('sosBg')">Never mind</button></div>
@@ -1391,17 +1405,26 @@ function openEod(){
     return '<option value="'+esc(v)+'"'+(S.site===v?' selected':'')+'>'+esc(short)+'</option>';
   }).join('') || '<option value="">All sites</option>';
 
+  // Prefilled, and editable. An admin covering a venue files under their
+  // own name; an admin entering a paper report files under the coordinator
+  // who actually worked it.
+  var nm=document.getElementById('eodName');
+  if(nm && !nm.value) nm.value=(S.staff&&S.staff.name)||'';
+
+  // Says which day is being filed. Filing on Tuesday for Saturday is
+  // normal and fine -- it just has to be obvious which date it lands on.
   document.getElementById('eodWhen').textContent=
-    (S.staff&&S.staff.name?S.staff.name+' \u00b7 ':'')+
-    ((DAYLBL[S.date]||[]).join(' ')||S.date);
+    ((DAYLBL[S.date]||[]).join(' ')||S.date)+
+    (S.date!==todayStr()?' \u00b7 filing after the day':'');
   document.getElementById('eodErr').textContent='';
   document.getElementById('eodIn').oninput=eodHoursPreview;
   document.getElementById('eodOut').oninput=eodHoursPreview;
 
   // Prefill from an existing report so a correction is an edit.
-  api('scReportStatus',{pin:S.pin,date:S.date,scName:(S.staff&&S.staff.name)||''})
+  api('scReportStatus',{pin:S.pin,date:S.date,scName:(nm&&nm.value)||(S.staff&&S.staff.name)||''})
     .then(function(r){
       if(r&&r.status==='ok'&&r.filed&&r.report){
+        if(r.report.name && nm) nm.value=r.report.name;
         if(r.report.venue) sel.value=r.report.venue;
         document.getElementById('eodIn').value=r.report.timeIn||'';
         document.getElementById('eodOut').value=r.report.timeOut||'';
@@ -1421,8 +1444,11 @@ function saveEod(btn){
   if(!tin||!tout){ err.textContent='Both times are needed.'; return; }
   var label=btn.textContent;
   btn.disabled=true; btn.textContent='Filing\u2026';
+  var who=(document.getElementById('eodName')||{}).value||'';
+  who=String(who).trim();
+  if(!who){ err.textContent='Whose hours are these? Put a name in.'; return; }
   post({action:'scReport',pin:S.pin,date:S.date,
-        scName:(S.staff&&S.staff.name)||'',
+        scName:who,
         role:(S.staff&&S.staff.role)||'sc',
         venue:document.getElementById('eodVenue').value,
         timeIn:tin,timeOut:tout,
@@ -2433,12 +2459,17 @@ function staffVenues(){
   return out.sort();
 }
 
-// Only site coordinators file hours. Admin and directors can still open
-// it from the sheet, but the button is not theirs.
+// Anyone who works a site files hours for it.
+//
+// This was site coordinators only, and the comment claimed admin could
+// "open it from the sheet" -- which nobody does. Jeff and Deanna both
+// covered venues on 15 August, both are admin, and neither had a button
+// to press, so neither got paid for the day.
 function showEodFor(role){
   var b=document.getElementById('eodBtn'); if(!b) return;
   role=String(role||'').toLowerCase();
-  b.style.display=(role==='sc'||role==='coordinator')?'block':'none';
+  b.style.display=(role==='sc'||role==='coordinator'||
+                   role==='admin'||role==='director')?'block':'none';
 }
 
 /* ══ STAFF SELF CHECK IN ══════════════════════════════════
@@ -3113,6 +3144,7 @@ function openSos(){
     html += '<option value="">I am not sure \u2014 alert everyone</option>';
     sel.innerHTML = html;
   }
+  var d=document.getElementById('sosDetail'); if(d) d.value='';
   document.getElementById('sosBg').classList.add('on');
 }
 
@@ -3130,7 +3162,13 @@ function sendSos(reason){
   // Field only belongs to the game. If they picked a different venue, the
   // field number would point staff at the wrong end of the wrong park.
   var sameVenue = g && venue && venue === g.venue;
-  var body={action:'emergency',reason:reason,
+  // Free text, never required. Most presses were coming through as
+  // "Other", which tells whoever is running to the field nothing at all.
+  // A referee who has ten seconds can say what is happening; one who does
+  // not still sends with a single tap and nothing is slower than before.
+  var detail=((document.getElementById('sosDetail')||{}).value||'').trim();
+
+  var body={action:'emergency',reason:reason, details:detail,
             refName:S.refName||(S.staff&&S.staff.name)||'Unidentified',
             venue:venue, field:sameVenue?g.field:'',
             gameId:sameVenue?g.gameId:'', gameNumber:sameVenue?g.gameNumber:''};
@@ -3375,7 +3413,7 @@ try {
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.08.15-g';
+var PAGE_VERSION='2026.08.18-a';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
