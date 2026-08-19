@@ -1039,19 +1039,27 @@ textarea.fin{resize:vertical;line-height:1.5}
   <div class="modal">
     <div class="m-h"><b>What is happening?</b><i id="sosWho">Site staff are alerted immediately</i></div>
     <div class="m-b">
+      <div style="margin-bottom:13px" id="sosWhoBox">
+        <div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;
+                    color:var(--steel);margin-bottom:6px">Who is this?</div>
+        <input id="sosName" class="fin" type="text" autocomplete="name"
+               maxlength="60" placeholder="Your name">
+        <div class="hint" style="margin-top:5px">So whoever comes knows who to look for.</div>
+      </div>
       <div style="margin-bottom:13px">
         <div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;
                     color:var(--steel);margin-bottom:6px">Where are you?</div>
         <select id="sosVenue" class="fin"></select>
       </div>
       <div style="margin-bottom:13px">
-        <div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;
+        <div id="sosDetailLbl" style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;
                     color:var(--steel);margin-bottom:6px">In a few words &mdash; optional</div>
         <textarea id="sosDetail" class="fin" rows="2" maxlength="200"
           placeholder="Coach will not leave the field. U12 boys, red kit."></textarea>
         <div class="hint" style="margin-top:5px">Goes out with the alert, by text and email.
           Skip it if you need someone now &mdash; the buttons below send on their own.</div>
       </div>
+      <div class="hint" id="sosNudge" style="display:none;color:#F0A897;margin-bottom:11px"></div>
       <div class="reasons">
         <button onclick="sendSos('Medical')"><b>Medical</b><i>Injury that needs more than a sideline can give</i></button>
         <button onclick="sendSos('Referee safety')"><b>Referee safety</b><i>A referee is being threatened or is not safe</i></button>
@@ -3145,7 +3153,35 @@ function openSos(){
     sel.innerHTML = html;
   }
   var d=document.getElementById('sosDetail'); if(d) d.value='';
+
+  // Eleven of twelve presses over 13-16 August logged as "Other" with no
+  // name attached, and a coordinator was sent to a venue to look for
+  // nobody in particular. The name is prefilled when the hub knows it and
+  // asked for when it does not -- but see sendSos: it is never a gate.
+  var known = S.refName || (S.staff && S.staff.name) || '';
+  var nb = document.getElementById('sosWhoBox');
+  var ni = document.getElementById('sosName');
+  if (ni) ni.value = known;
+  if (nb) nb.style.display = known ? 'none' : 'block';
+
+  SOS_NUDGED = {};
+  sosNudge('');
   document.getElementById('sosBg').classList.add('on');
+}
+
+// One nudge per reason, never a block. A referee who taps the same button
+// twice has said what they meant and the alert goes, whatever is missing.
+var SOS_NUDGED = {};
+
+function sosNudge(msg, focusId){
+  var n = document.getElementById('sosNudge');
+  if (n) {
+    n.textContent = msg || '';
+    n.style.display = msg ? 'block' : 'none';
+  }
+  if (focusId) {
+    try { document.getElementById(focusId).focus(); } catch(e){}
+  }
 }
 
 // The game a referee is at or about to start. 110 minutes covers a full
@@ -3162,14 +3198,40 @@ function sendSos(reason){
   // Field only belongs to the game. If they picked a different venue, the
   // field number would point staff at the wrong end of the wrong park.
   var sameVenue = g && venue && venue === g.venue;
-  // Free text, never required. Most presses were coming through as
-  // "Other", which tells whoever is running to the field nothing at all.
-  // A referee who has ten seconds can say what is happening; one who does
-  // not still sends with a single tap and nothing is slower than before.
   var detail=((document.getElementById('sosDetail')||{}).value||'').trim();
+  var typed =((document.getElementById('sosName')  ||{}).value||'').trim();
+  var who = S.refName || (S.staff && S.staff.name) || typed;
+
+  // One nudge, naming everything that is missing at once. The second tap
+  // of the same button always sends. A referee is never more than one
+  // extra tap from help, whatever they have left blank.
+  if (!SOS_NUDGED[reason]) {
+    var want = [];
+    if (!who) want.push('who you are');
+    if (reason === 'Other' && !detail) want.push('what is happening');
+    if (want.length) {
+      SOS_NUDGED[reason] = 1;
+      sosNudge('Add ' + want.join(' and ') + ', then tap ' + reason +
+               ' again. Tapping again sends either way.',
+               !who ? 'sosName' : 'sosDetail');
+      return;
+    }
+  }
+
+  // Every double tap in the record -- 8 seconds, 3 seconds, 21 seconds --
+  // was one person and one situation, and each one sent a second email and
+  // a second text to everybody. Ask once; the answer is still theirs.
+  var nowMs = Date.now ? Date.now() : (new Date()).getTime();
+  if (S.lastSos && S.lastSos.reason === reason && (nowMs - S.lastSos.at) < 90000) {
+    var secs = Math.round((nowMs - S.lastSos.at) / 1000);
+    if (!confirm('You sent this ' + secs + ' seconds ago and help is already coming.\n\n' +
+                 'Send a second alert?')) { closeModal('sosBg'); return; }
+  }
+  S.lastSos = { reason: reason, at: nowMs };
 
   var body={action:'emergency',reason:reason, details:detail,
-            refName:S.refName||(S.staff&&S.staff.name)||'Unidentified',
+            refName:who||'Unidentified',
+            date:S.date,
             venue:venue, field:sameVenue?g.field:'',
             gameId:sameVenue?g.gameId:'', gameNumber:sameVenue?g.gameNumber:''};
   closeModal('sosBg');
@@ -3413,7 +3475,7 @@ try {
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.08.18-a';
+var PAGE_VERSION='2026.08.19-a';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
