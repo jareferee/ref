@@ -905,8 +905,9 @@ textarea.fin{resize:vertical;line-height:1.5}
       <textarea class="fin" id="bltBody" rows="3"
         placeholder="Go to your car. Nothing restarts until this is cleared here."></textarea>
 
-      <div class="hint">Everyone on the hub sees this at the top of their screen until
-        you clear it. It does not text or email anybody.</div>
+      <div class="hint">Every referee at this event sees this at the top of their
+        screen until you clear it &mdash; every venue, not just yours. It does not
+        text or email anybody.</div>
       <div class="err" id="bltErr"></div>
     </div>
     <div class="m-f">
@@ -2792,11 +2793,15 @@ function staffRow(g,caps,spent){
    Polled on the same 15 second beat as the emergency check, because the
    thing this exists for is weather that moves. */
 function bltCan(){
+  // Was a role list here and another one in requireBulletin_, which is two
+  // places to change and one to forget. The backend now decides in
+  // capsForRole_ and hands the answer over at sign-in.
+  var caps=(S.staff&&S.staff.caps)||{};
+  if(caps.postBulletin) return true;
+  // A coordinator signed in before this shipped has a cached auth response
+  // with no postBulletin key. Fall back to the old rule rather than taking
+  // the button away from somebody mid-tournament.
   var r=(S.staff&&S.staff.role)||'';
-  // A tournament director decides whether play stops, so they must be able
-  // to say so without finding an administrator first. Site coordinators
-  // next, scoped to their own venue -- the backend already filters on
-  // venue, so that is a change here, not there.
   return r==='admin' || r==='director';
 }
 
@@ -2827,7 +2832,13 @@ function loadBulletins(){
 
 function openBulletin(){
   if(!bltCan()) return;
-  document.getElementById('bltScope').textContent=(EV.name||'')+' \u00b7 all venues';
+  // Coordinators can post from 2026.08.20 and a coordinator reasonably
+  // assumes a bulletin reaches their own ground. It does not -- it reaches
+  // the whole event. Count the venues out loud rather than leave that to
+  // be discovered by the referees at the other three.
+  var vs=(EV.venues||[]).length;
+  document.getElementById('bltScope').textContent=
+    (EV.name||'')+' \u00b7 '+(vs>1 ? 'all '+vs+' venues' : 'all venues');
   document.getElementById('bltTitle').value='';
   document.getElementById('bltBody').value='';
   document.getElementById('bltErr').textContent='';
@@ -3475,7 +3486,7 @@ try {
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.08.19-a';
+var PAGE_VERSION='2026.08.20-c';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
