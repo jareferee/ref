@@ -890,7 +890,10 @@ textarea.fin{resize:vertical;line-height:1.5}
   <div class="modal">
     <div class="m-h"><b>Post a bulletin</b><i id="bltScope">&mdash;</i></div>
     <div class="m-b">
-      <label class="fl">How serious</label>
+      <label class="fl">Who sees it</label>
+      <select id="bltVenue" class="fin"></select>
+
+      <label class="fl" style="margin-top:13px">How serious</label>
       <select id="bltSev" class="fin">
         <option value="urgent">Urgent &mdash; stop play, clear the fields</option>
         <option value="warn">Warning &mdash; act on this soon</option>
@@ -905,9 +908,8 @@ textarea.fin{resize:vertical;line-height:1.5}
       <textarea class="fin" id="bltBody" rows="3"
         placeholder="Go to your car. Nothing restarts until this is cleared here."></textarea>
 
-      <div class="hint">Every referee at this event sees this at the top of their
-        screen until you clear it &mdash; every venue, not just yours. It does not
-        text or email anybody.</div>
+      <div class="hint">Whoever you pick above sees this at the top of their screen
+        until you clear it. It does not text or email anybody.</div>
       <div class="err" id="bltErr"></div>
     </div>
     <div class="m-f">
@@ -2825,20 +2827,67 @@ function renderBulletins(){
 }
 
 function loadBulletins(){
+  // Deliberately fetched unfiltered and narrowed here.
+  //
+  // The backend filters on a single venue string, which cannot answer for
+  // a referee working two grounds in a day -- passing one would hide the
+  // other's warnings. So the hub asks for everything the event has today
+  // and decides against the whole set of venues the person is actually at.
   api('announcements',{date:S.date}).then(function(r){
-    if(r&&r.status==='ok'){ S.bulletins=r.data||[]; renderBulletins(); }
+    if(r&&r.status==='ok'){ S.bulletins=(r.data||[]).filter(bltForMe); renderBulletins(); }
   }).catch(function(){});
+}
+
+// Which venues this person is standing at today. Empty means unknown.
+function myVenues(){
+  var set={};
+  (S.myGames||[]).forEach(function(g){ if(g.venue) set[String(g.venue).toLowerCase().trim()]=1; });
+  return set;
+}
+
+function bltForMe(b){
+  // Unscoped goes to everybody. That is most of them.
+  var v=String(b.venue||'').toLowerCase().trim();
+  if(!v) return true;
+  // Staff run the event and need to see what every site has posted,
+  // including the ground they are not standing on.
+  var caps=(S.staff&&S.staff.caps)||{};
+  if(caps.seeAllRefs||caps.postBulletin) return true;
+  var mine=myVenues();
+  // Fails OPEN, on purpose. If the board has not loaded, or the referee
+  // has no games on this date, we cannot say where they are -- and a
+  // lightning warning withheld from somebody standing on a field is a
+  // worse outcome than one shown to somebody who did not need it.
+  for(var k in mine){ if(mine.hasOwnProperty(k)) return !!mine[v]; }
+  return true;
 }
 
 function openBulletin(){
   if(!bltCan()) return;
-  // Coordinators can post from 2026.08.20 and a coordinator reasonably
-  // assumes a bulletin reaches their own ground. It does not -- it reaches
-  // the whole event. Count the venues out loud rather than leave that to
-  // be discovered by the referees at the other three.
-  var vs=(EV.venues||[]).length;
+
+  // A blank venue means every venue, which is right for an administrator
+  // and wrong for a coordinator standing at one ground. Made a choice
+  // rather than a default: the list opens on the venue they are at, and
+  // going wider is one tap they have to actually take.
+  var sel=document.getElementById('bltVenue');
+  var vs=(EV.venues||[]).slice();
+  var mine=myVenues(), here='';
+  vs.forEach(function(v){ if(!here && mine[String(v).toLowerCase().trim()]) here=v; });
+  var caps=(S.staff&&S.staff.caps)||{};
+  // Whoever runs the whole event opens on the whole event.
+  var wide=!!(caps.rosterApproval||(S.staff&&S.staff.role==='admin'));
+  if(sel){
+    var html='<option value="">Everyone at '+esc(EV.name||'this event')+
+             (vs.length>1?' \u00b7 all '+vs.length+' venues':'')+'</option>';
+    vs.forEach(function(v){
+      html+='<option value="'+esc(v)+'">'+esc(v)+' only</option>';
+    });
+    sel.innerHTML=html;
+    sel.value=(!wide && here) ? here : '';
+  }
+
   document.getElementById('bltScope').textContent=
-    (EV.name||'')+' \u00b7 '+(vs>1 ? 'all '+vs+' venues' : 'all venues');
+    (EV.name||'')+(vs.length>1 ? ' \u00b7 '+vs.length+' venues' : '');
   document.getElementById('bltTitle').value='';
   document.getElementById('bltBody').value='';
   document.getElementById('bltErr').textContent='';
@@ -2850,11 +2899,13 @@ function saveBulletin(btn){
   var err=document.getElementById('bltErr');
   if(!title){ err.textContent='Write a headline. That is what people read first.'; return; }
   btn.disabled=true; btn.textContent='Posting\u2026';
+  var vsel=document.getElementById('bltVenue');
   post({action:'postAnnouncement', pin:S.pin,
         title:title,
         bodyText:document.getElementById('bltBody').value.trim(),
         severity:document.getElementById('bltSev').value,
         event:(window.JAR&&JAR.id)||'',
+        venue:vsel?vsel.value:'',
         postedBy:(S.staff&&S.staff.name)||'Staff',
         startDate:S.date, endDate:S.date})
   .then(function(r){
@@ -2869,7 +2920,8 @@ function saveBulletin(btn){
 function clearBulletin(ts){
   if(!bltCan()) return;
   if(!confirm('Clear this bulletin for everyone?')) return;
-  post({action:'clearAnnouncement', pin:S.pin, timestamp:ts})
+  post({action:'clearAnnouncement', pin:S.pin, timestamp:ts,
+        clearedBy:(S.staff&&S.staff.name)||'Staff'})
     .then(function(){ loadBulletins(); })
     .catch(function(){});
 }
