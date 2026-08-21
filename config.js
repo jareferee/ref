@@ -237,8 +237,15 @@
       accent:   '#2E7D53',
       hub:      'jareferee.com/playerscupu10',
       weatherPlace: 'Boulder',
-      dates:    ['2026-08-22','2026-08-23'],
-      daylbl:   { '2026-08-22':['Sat','Aug 22'], '2026-08-23':['Sun','Aug 23'] },
+      // Friday added 2026-08-20. Games numbered PCA were already sitting in
+      // the cache for the 21st, but the day pills are built from this list
+      // and the board only ever asks about a date somebody can tap -- so a
+      // day missing here is a day of games nobody can reach. Nothing errors.
+      // TOURNAMENTS.START_DATE has to move to the 21st as well, or the
+      // backend will not claim the day either. Both, or neither works.
+      dates:    ['2026-08-21','2026-08-22','2026-08-23'],
+      daylbl:   { '2026-08-21':['Fri','Aug 21'],
+                  '2026-08-22':['Sat','Aug 22'], '2026-08-23':['Sun','Aug 23'] },
       venues:   ['Pleasant View Fields Sports Complex'],
       hqVenues: [], hqFields: [],
       trim:     [' Fields Sports Complex',' Sports Complex'],
@@ -463,7 +470,7 @@
   var EVENT = R.event || NEUTRAL;
 
   window.JAR = {
-    VERSION: '2026.08.11-a',
+    VERSION: '2026.08.20-d',
 
     // False on /ref/ with nothing chosen yet. The hub shows its picker
     // rather than guessing, which is the whole point of a front door.
