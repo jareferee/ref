@@ -1,6 +1,13 @@
 /* ════════════════════════════════════════════════════════════
    JAReferee · Gameday Command Center
-   config.js  —  2026.08.06-a
+   config.js
+
+   The version lives in one place: JAR.VERSION, near the bottom. It used
+   to be written here in the header as well, and the two drifted -- this
+   line read 2026.08.06-a while the constant said 2026.08.11-a, so anybody
+   opening the file to check what was deployed got an answer two weeks
+   stale. A stamp that has to be updated in two places is a stamp that
+   will be wrong. Do not put a number back in this comment.
 
    Lives beside hub.html in whichever repo serves the tournament, and is
    loaded relatively. Nothing here names another repo, so viewing source
