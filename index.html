@@ -261,7 +261,15 @@ body::after{
   text-transform:uppercase;padding:3px 9px;border-radius:99px;white-space:nowrap}
 .gm-badge.in{background:rgba(79,168,122,.16);color:var(--go);border:1px solid rgba(79,168,122,.42)}
 .gm-badge.out{background:rgba(224,162,43,.13);color:var(--caution);border:1px solid rgba(224,162,43,.4)}
-.gm-badge.fin{background:rgba(127,184,222,.14);color:var(--ice);border:1px solid rgba(127,184,222,.36)}
+/* .final, not .fin. The modifier used to be "fin", which also matches the
+   form-input class .fin further down -- width:100%, font-size:16px,
+   padding:11px 12px. Same specificity, declared later, so it won: the
+   FINAL badge rendered as a full-width text input, shoved the time and
+   game number onto their own line and sat on top of them. Nothing was
+   wrong with the flex layout above; the badge was picking up the styling
+   of a textarea. */
+.gm-badge.final{background:rgba(127,184,222,.14);color:var(--ice);
+  border:1px solid rgba(127,184,222,.36)}
 .gm-match{font-size:14px;line-height:1.42}
 .gm-meta{font-family:var(--mono);font-size:9.5px;color:var(--steel);margin-top:4px}
 .gm-acts{display:flex;gap:7px;margin-top:11px}
@@ -1718,7 +1726,7 @@ function gameRow(g){
   }
   var done = !!g.scoreStatus;
   var badge = done
-    ? '<span class="gm-badge fin">'+esc(g.scoreStatus)+'</span>'
+    ? '<span class="gm-badge final">'+esc(g.scoreStatus)+'</span>'
     : (g.checkedIn ? '<span class="gm-badge in">Checked in</span>'
                    : '<span class="gm-badge out">Not yet</span>');
   var score = done ? '<span class="gm-score">'+g.homeScore+' – '+g.awayScore+'</span>' : '';
@@ -2690,11 +2698,25 @@ function sitOutsFor(g){
     return S.sitOuts.filter(function(x){
       // Never warn on the game the send-off happened in.
       if(x.gameNumber && String(x.gameNumber)===String(g.gameNumber)) return false;
-      // The person's own team is the direct match. Where the report only
-      // recorded Home or Away, the fixture it came from still names both
-      // clubs -- either of them appearing here is the same club, so match
-      // on those as well rather than losing the suspension entirely.
-      return hit(_tkey_(x.team)) || hit(_tkey_(x.homeTeam)) || hit(_tkey_(x.awayTeam));
+      // The suspended person's own team, and nothing else.
+      //
+      // This used to fall back to the fixture's homeTeam and awayTeam when
+      // the person's team did not match, reasoning that a report recording
+      // only "Home" still named both clubs. It does -- but the other club
+      // in that fixture is the opponent, who did nothing. A send-off for
+      // Albion in #26AC63 put a red suspension banner on every remaining
+      // game of the club Albion happened to be playing that morning.
+      //
+      // The fallback was redundant as well: _sitTeam_ on the server already
+      // turns a recorded "Home" or "Away" into the actual team name before
+      // this list is sent, so x.team is the person's own club whenever the
+      // report named a side at all.
+      //
+      // Where the report named no team and no side, nothing shows here. That
+      // is deliberate. The suspension is still in the Sit Out list for a
+      // human to read, and a banner that cries wolf on an innocent club
+      // every game trains everybody to stop reading banners.
+      return hit(_tkey_(x.team));
     });
   }catch(e){ return []; }
 }
@@ -2730,7 +2752,7 @@ function sitOutBanner(g){
 
 function staffRow(g,caps,spent){
   var sitwarn = spent ? '' : sitOutBanner(g);
-  var badge = g.scoreStatus==='Final' ? '<span class="gm-badge fin">Final</span>'
+  var badge = g.scoreStatus==='Final' ? '<span class="gm-badge final">Final</span>'
             : g.scoreStatus==='Reported' ? '<span class="gm-badge out">Needs confirm</span>'
             : '';
   var score = g.scoreStatus ? '<span class="gm-score">'+g.homeScore+' – '+g.awayScore+'</span>' : '';
@@ -3538,7 +3560,7 @@ try {
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.08.20-c';
+var PAGE_VERSION='2026.08.22-a';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
