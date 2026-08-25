@@ -611,6 +611,75 @@ textarea.fin{resize:vertical;line-height:1.5}
 .kickswarn{margin-top:9px;padding:9px 12px;border-radius:9px;font-size:13px;
   background:rgba(224,162,43,.1);border-left:2.5px solid var(--caution);color:var(--ice-pale)}
 
+/* ── LEGIBILITY IN DIRECT SUN ────────────────────────────
+   From Eric Henschel after Arsenal Cup, 24 August. Built and tested
+   indoors, read on a phone in a field at 93 degrees. Older officials in
+   particular could not separate the greys.
+
+   Three changes, all of them about what a referee needs first:
+
+   1. The FIELD NUMBER now sits beside the kickoff time, and the game
+      number has moved down to the meta line. A referee walking onto a
+      complex needs to know where; the game number matters later, when
+      they file. It was the wrong way round.
+   2. HOME and AWAY are separated by a real "vs" rather than a word lost
+      inside two forty-character club names.
+   3. The crew POSITION and every grey caption are pushed up in size and
+      contrast.
+
+   On (3), the obvious explanation was wrong and worth writing down.
+   --steel on a live card measures 5.17:1, which passes. The failure is on
+   FINISHED games, where .gm.past{opacity:.62} multiplies everything down
+   to 2.88:1 -- well under the floor -- while the captions were also 9.5px
+   monospace. Small text needs MORE contrast, not less. So the fix is both:
+   captions move to --ice-pale (10.68:1 live, 5.04:1 faded) and up to
+   11.5px, and .gm.past fades to .74 rather than .62. A finished game
+   should read as finished, not as unreadable.
+*/
+
+/* Field number: the single most important thing on the card. */
+.fieldbig{
+  font-style:normal; font-family:var(--mono); font-weight:700;
+  font-size:.62em; letter-spacing:.04em;
+  color:var(--slate); background:var(--ice);
+  padding:2px 8px; border-radius:6px; margin-left:9px;
+  vertical-align:middle; white-space:nowrap;
+}
+/* Separator that survives two long club names either side of it. */
+.vs{
+  display:inline-block; font-family:var(--disp); font-weight:900;
+  font-size:.82em; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ice); margin:0 9px; vertical-align:baseline;
+}
+.next-match .vs{display:block;margin:2px 0}
+
+/* Position blocks. A referee confirms these at a glance all day. */
+.pos{font-size:15px!important}
+.pos-sm{width:44px;height:36px;font-size:15px;
+  background:rgba(127,184,222,.22);border-color:rgba(127,184,222,.55)}
+
+/* Grey captions raised off the background. --steel reads at roughly 3:1
+   on --slate, which is below the accessible floor and exactly what was
+   disappearing outdoors. */
+.gm-meta{font-size:11.5px;color:var(--ice-pale);opacity:.92}
+/* Was .62, which took every caption on a finished game to 2.88:1. */
+.gm.past{opacity:.74}
+.next-when i{font-size:14px;color:var(--ice-pale)}
+.next-meta{color:var(--ice-pale)}
+.gm-badge{font-size:11px}
+.gm-teams{font-size:15px;line-height:1.5}
+.next-match{font-size:16px;line-height:1.5}
+
+/* Sit-out banner: player, then team, then everything else. It read as one
+   paragraph, so the two things that decide whether somebody may play were
+   the same weight as the game number they were carded in. */
+.sit-name{display:block;font-family:var(--disp);font-weight:900;
+  font-size:17px;letter-spacing:.02em;line-height:1.2;color:#FFD9D1}
+.sit-team{display:block;font-weight:700;font-size:14.5px;
+  line-height:1.35;margin-top:2px;color:#FFF}
+.sit-rest{display:block;font-size:12.5px;line-height:1.45;margin-top:4px;
+  color:rgba(255,255,255,.78)}
+
 /* Game numbers were mono, small and low contrast -- unreadable in
    sunlight on a phone, which is where they are actually read. */
 .gnum{font-family:var(--mono);font-weight:700;font-size:13px!important;
@@ -1659,10 +1728,12 @@ function renderRef(){
       '<div class="k">'+(live?'Happening now':'Up next')+'</div>'+
       '<div class="next-top">'+
         '<div class="pos">'+esc(next.position)+'</div>'+
-        '<div class="next-when"><b>'+esc(next.time)+'</b>'+
-          '<i>'+esc(next.venue)+(next.field?' · '+esc(next.field):'')+'</i></div>'+
+        '<div class="next-when"><b>'+esc(next.time)+
+          (next.field?'<em class="fieldbig">'+esc(next.field)+'</em>':'')+'</b>'+
+          '<i>'+esc(next.venue)+'</i></div>'+
       '</div>'+
-      '<div class="next-match">'+esc(next.home)+'<br>'+esc(next.away)+'</div>'+
+      '<div class="next-match">'+esc(next.home)+
+        '<span class="vs">vs</span>'+esc(next.away)+'</div>'+
       '<div class="next-meta">'+esc(next.division)+
         (next.stage?' <span class="stage'+(next.kicks?' kicks':'')+'">'+esc(next.stage)+'</span>':'')+
         ' <span class="gnum">#'+esc(next.gameNumber)+'</span></div>'+
@@ -1716,12 +1787,12 @@ function gameRow(g){
     return '<div class="gm past" style="opacity:.62">'+
       '<div class="gm-top"><div class="pos-sm">'+esc(g.position)+'</div>'+
         '<div class="gm-when"><b style="text-decoration:line-through">'+esc(g.time)+
-          '</b><i>#'+esc(g.gameNumber)+'</i></div>'+
+          (g.field?'<em class="fieldbig">'+esc(g.field)+'</em>':'')+'</b></div>'+
         '<span class="gm-badge out">'+esc(pay)+'</span></div>'+
       '<div class="gm-match" style="text-decoration:line-through">'+
         esc(withClub(g.homeClub,g.home))+' vs '+esc(withClub(g.awayClub,g.away))+sitPill(g)+'</div>'+
-      '<div class="gm-meta">'+esc(g.venue)+(g.field?' · '+esc(g.field):'')+
-        ' · '+esc(g.division)+'</div>'+
+      '<div class="gm-meta"><span class="gnum">#'+esc(g.gameNumber)+'</span> '+
+        esc(g.venue)+' · '+esc(g.division)+'</div>'+
     '</div>';
   }
   var done = !!g.scoreStatus;
@@ -1733,11 +1804,14 @@ function gameRow(g){
   var warn=sitOutBanner(g);
   return '<div class="gm'+(done?' past':'')+(warn?' hassit':'')+'">'+warn+
     '<div class="gm-top"><div class="pos-sm">'+esc(g.position)+'</div>'+
-      '<div class="gm-when"><b>'+esc(g.time)+'</b><i class="gnum">#'+esc(g.gameNumber)+'</i></div>'+
+      '<div class="gm-when"><b>'+esc(g.time)+
+        (g.field?'<em class="fieldbig">'+esc(g.field)+'</em>':'')+'</b></div>'+
       badge+'</div>'+
-    '<div class="gm-match"><span class="gm-teams">'+esc(withClub(g.homeClub,g.home))+' vs '+esc(withClub(g.awayClub,g.away))+
+    '<div class="gm-match"><span class="gm-teams">'+esc(withClub(g.homeClub,g.home))+
+      '<span class="vs">vs</span>'+esc(withClub(g.awayClub,g.away))+
       sitPill(g)+'</span>'+score+'</div>'+
-    '<div class="gm-meta">'+esc(g.venue)+(g.field?' \u00b7 '+esc(g.field):'')+' \u00b7 '+esc(g.division)+
+    '<div class="gm-meta"><span class="gnum">#'+esc(g.gameNumber)+'</span> '+
+      esc(g.venue)+' \u00b7 '+esc(g.division)+
       (g.stage?' <span class="stage'+(g.kicks?' kicks':'')+'">'+esc(g.stage)+'</span>':'')+'</div>'+
     '<div class="gm-acts">'+
       (g.checkedIn?'<button class="btn done" disabled>✓ In</button>'
@@ -2738,13 +2812,21 @@ function sitOutBanner(g){
   return '<div class="sitwarn">'+
     '<b>Suspension &middot; check before kickoff</b>'+
     hits.map(function(x){
-      return '<span>'+esc(x.name||'Unnamed')+
-        (x.number?' <b>#'+esc(x.number)+'</b>':'')+
-        (x.role?' \u00b7 '+esc(x.role):'')+
-        (x.reason||x.code?' \u00b7 '+esc(x.reason||x.code):'')+
-        ' \u00b7 sent off '+esc(x.date||'')+
-        (x.gameNumber?' in #'+esc(x.gameNumber):'')+
-        ' \u00b7 <b>'+esc(x.team||'')+'</b></span>';
+      // Three lines, in the order the decision is made: who, which team,
+      // then the paperwork. It used to be one run-on sentence in which the
+      // player's name and the game number they were carded in carried the
+      // same weight -- and the only two things a coordinator needs before
+      // kickoff are the name and the team.
+      var rest=[];
+      if(x.role) rest.push(esc(x.role));
+      if(x.reason||x.code) rest.push(esc(x.reason||x.code));
+      rest.push('sent off '+esc(x.date||'')+(x.gameNumber?' in #'+esc(x.gameNumber):''));
+      return '<span>'+
+        '<span class="sit-name">'+esc(x.name||'Unnamed')+
+          (x.number?' #'+esc(x.number):'')+'</span>'+
+        (x.team?'<span class="sit-team">'+esc(x.team)+'</span>':'')+
+        '<span class="sit-rest">'+rest.join(' \u00b7 ')+'</span>'+
+      '</span>';
     }).join('')+
     '<i>This person must not play or coach. Confirm with the team before the match starts.</i>'+
   '</div>';
@@ -3560,7 +3642,7 @@ try {
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.08.22-a';
+var PAGE_VERSION='2026.08.24-a';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
