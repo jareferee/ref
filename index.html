@@ -322,6 +322,21 @@ body::after{
 .gm.locked{opacity:.6}
 /* Clearing a score is destructive enough to look different. */
 .btn.ghost.danger{color:#F0A897;border-color:rgba(196,71,47,.5)}
+/* On-site panel. Standby referees were on the board all along and nothing
+   rendered them, so the person they exist for could not see them. */
+.onsite{background:rgba(23,51,75,.4);border:1px solid rgba(127,184,222,.18);
+  border-radius:12px;padding:12px 14px;margin-bottom:14px}
+.onsite .sec-h{margin-bottom:9px}
+.os-k{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-bottom:8px}
+.os-k:last-child{margin-bottom:0}
+.os-k>b{font-family:var(--mono);font-size:10px;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--steel);min-width:112px}
+.os-p{display:inline-flex;align-items:baseline;gap:6px;font-size:13.5px;
+  color:var(--ice-pale);background:rgba(9,25,40,.5);
+  border:1px solid rgba(127,184,222,.2);border-radius:99px;padding:4px 11px}
+.os-p.in{color:var(--go);border-color:rgba(79,168,122,.45)}
+.os-p i{font-style:normal;font-family:var(--mono);font-size:10px;color:var(--steel)}
+.os-none{font-size:12.5px;color:var(--steel)}
 .spent-h{display:flex;align-items:center;gap:11px;margin:22px 0 9px;cursor:pointer;
   width:100%;text-align:left;appearance:none;
   background:rgba(23,51,75,.55);border:1.5px solid rgba(127,184,222,.28);
@@ -2778,6 +2793,16 @@ function renderStaff(){
   // fixtures. They come back on the board so staff can check in against
   // them, but they never belong in a list of games.
   var board=S.board.filter(function(g){ return !g.staffSlot; });
+  // ...and now shown on their own, which they never were. Eric and Sonja
+  // reported they could not see standby slots at Arsenal. They were right,
+  // and it was not permissions: nothing rendered them at all. They arrived
+  // on the board, got filtered out here, and that was the end of them.
+  //
+  // A coordinator whose referee has not turned up needs to know who is
+  // sitting at HQ available to take the game. That is the entire purpose of
+  // a standby assignment and it was invisible to the person it exists for.
+  var staffSlots=S.board.filter(function(g){ return !!g.staffSlot && !g.canceled; });
+  if(S.site!=='all') staffSlots=staffSlots.filter(function(g){ return String(g.venue||'')===S.site; });
   if(S.site!=='all') board=board.filter(function(g){ return String(g.venue||'')===S.site; });
   if(S.q) board=board.filter(function(g){ return matchQ(gameHay(g)); });
   if(S.noCrewOnly) board=board.filter(function(g){ return !(g.crew||[]).length; });
@@ -2800,6 +2825,8 @@ function renderStaff(){
     el.innerHTML='<div class="hint" style="margin-bottom:12px">Showing only games with '+
       'nobody assigned. Tap the red <b>no crew</b> box again for the full board.</div>';
   } else { el.innerHTML=''; }
+
+  el.innerHTML += onSiteHtml(staffSlots);
 
   var byVenue={};
   live.forEach(function(g){ (byVenue[g.venue]=byVenue[g.venue]||[]).push(g); });
@@ -2844,6 +2871,55 @@ function clearScore(gameId,btn){
     loadBoard();
   }).catch(function(){ btn.disabled=false; btn.textContent=was;
     alert('No signal. Try again in a moment.'); });
+}
+
+// Who is on site and not in a match: coordinators, standby referees,
+// mentors. Ordered by how likely a coordinator is to need them -- standby
+// first, because that is the one you go looking for when a crew is short.
+var STAFF_SLOT_ORDER_ = ['Standby','Site Coordinator','Referee Coach'];
+
+function onSiteHtml(slots){
+  if(!slots || !slots.length) return '';
+  var by={};
+  slots.forEach(function(g){ (by[g.staffSlot]=by[g.staffSlot]||[]).push(g); });
+
+  var kinds=Object.keys(by).sort(function(a,b){
+    var ia=STAFF_SLOT_ORDER_.indexOf(a), ib=STAFF_SLOT_ORDER_.indexOf(b);
+    return (ia<0?99:ia)-(ib<0?99:ib);
+  });
+
+  // One number worth having at a glance: how many standby are here and
+  // have actually checked in.
+  var sb=(by['Standby']||[]);
+  var sbIn=0;
+  sb.forEach(function(g){ (g.crew||[]).forEach(function(c){ if(c.checkedIn) sbIn++; }); });
+  var sbTotal=0;
+  sb.forEach(function(g){ sbTotal += (g.crew||[]).length; });
+
+  var body=kinds.map(function(k){
+    var people=[];
+    by[k].forEach(function(g){
+      (g.crew||[]).forEach(function(c){
+        people.push({ name:c.name, inYet:!!c.checkedIn,
+                      where:g.field||'', time:g.time||'' });
+      });
+    });
+    if(!people.length){
+      return '<div class="os-k"><b>'+esc(k)+'</b>'+
+        '<span class="os-none">nobody assigned</span></div>';
+    }
+    people.sort(function(a,b){ return a.name.localeCompare(b.name); });
+    return '<div class="os-k"><b>'+esc(k)+'</b>'+
+      people.map(function(p){
+        return '<span class="os-p'+(p.inYet?' in':'')+'">'+esc(p.name)+
+          (p.time?'<i>'+esc(p.time)+'</i>':'')+'</span>';
+      }).join('')+'</div>';
+  }).join('');
+
+  return '<div class="sec onsite"><div class="sec-h">'+
+    '<h3>On site</h3><div class="rule"></div>'+
+    (sbTotal?'<span class="n">'+sbIn+'/'+sbTotal+' standby in</span>':'')+
+    '</div>'+body+'</div>';
 }
 
 function toggleSpent(){
@@ -3765,7 +3841,7 @@ try {
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.08.25-a';
+var PAGE_VERSION='2026.08.25-b';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
