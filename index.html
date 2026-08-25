@@ -311,11 +311,27 @@ body::after{
 .cw.in{border-color:rgba(79,168,122,.5);color:var(--go);background:rgba(79,168,122,.09)}
 
 /* completed games collapse to the bottom */
-.gm.spent{opacity:.5}
-.gm.spent .gm-match{font-size:13px}
-.gm.spent .crew,.gm.spent .gm-acts{display:none}
-.spent-h{display:flex;align-items:baseline;gap:9px;margin:22px 0 9px;cursor:pointer}
-.spent-h h3{margin:0;font-family:var(--disp);font-weight:800;font-size:12px;
+/* Dimmed and compact, but NOT stripped of its buttons. Hiding the actions
+   here is what made a confirmed score on the current day uncorrectable. */
+.gm.spent{opacity:.72}
+.gm.spent .gm-match{font-size:13.5px}
+.gm.spent .crew{display:none}
+.gm.spent .gm-acts{margin-top:7px}
+/* A previous day is genuinely read only. That part Eric liked. */
+.gm.locked .crew,.gm.locked .gm-acts{display:none}
+.gm.locked{opacity:.6}
+/* Clearing a score is destructive enough to look different. */
+.btn.ghost.danger{color:#F0A897;border-color:rgba(196,71,47,.5)}
+.spent-h{display:flex;align-items:center;gap:11px;margin:22px 0 9px;cursor:pointer;
+  width:100%;text-align:left;appearance:none;
+  background:rgba(23,51,75,.55);border:1.5px solid rgba(127,184,222,.28);
+  border-radius:11px;padding:13px 15px;min-height:52px;color:inherit}
+.spent-h:hover{border-color:rgba(127,184,222,.5)}
+.spent-h .cv{font-size:15px;color:var(--ice)}
+.spent-h .n{font-family:var(--mono);font-size:12px;color:var(--ice-pale);
+  background:rgba(127,184,222,.16);border-radius:99px;padding:2px 9px}
+.spent-h .tap{margin-left:auto;font-size:12px;color:var(--steel)}
+.spent-h h3{margin:0;font-family:var(--disp);font-weight:800;font-size:15px;
   letter-spacing:.18em;text-transform:uppercase;color:var(--steel)}
 .spent-h .rule{flex:1;height:1px;background:rgba(127,184,222,.12)}
 .spent-h .cv{font-family:var(--mono);font-size:10px;color:var(--steel)}
@@ -2769,6 +2785,9 @@ function renderStaff(){
 
   var live=board.filter(function(g){ return !isSpent(g); });
   var spent=board.filter(isSpent);
+  // Read only only when the day is over. Anything on today stays editable
+  // however finished it looks.
+  var pastDay = S.date < today();
 
   if(!board.length){
     el.innerHTML = S.noCrewOnly
@@ -2789,27 +2808,55 @@ function renderStaff(){
     var gs=byVenue[v].slice().sort(function(a,b){return mins(a.time)-mins(b.time);});
     return '<div class="sec"><div class="sec-h"><h3>'+esc(v)+'</h3>'+
       '<div class="rule"></div><span class="n">'+gs.length+'</span></div>'+
-      gs.map(function(g){ return staffRow(g,caps); }).join('')+'</div>';
+      gs.map(function(g){ return staffRow(g,caps,false,pastDay); }).join('')+'</div>';
   }).join('');
 
   if(!live.length && !S.noCrewOnly) html='<div class="empty"><b>All caught up</b>Every game today is scored and confirmed.</div>';
 
   if(spent.length){
     spent.sort(function(a,b){ return mins(b.time)-mins(a.time); });
-    html+='<div class="spent-h" onclick="toggleSpent()">'+
-      '<h3>Done</h3><div class="rule"></div>'+
-      '<span class="cv" id="spentCv">'+spent.length+' ▾</span></div>'+
+    // A whole tappable bar, not a small arrow at one end. Eric could not
+    // find it, and he was looking for it -- a coordinator glancing at a
+    // phone in the sun has no chance.
+    html+='<button class="spent-h" onclick="toggleSpent()" aria-expanded="false" id="spentBtn">'+
+      '<span class="cv" id="spentCv">\u25be</span>'+
+      '<h3>Done</h3>'+
+      '<span class="n">'+spent.length+'</span>'+
+      '<span class="tap">Tap to show</span></button>'+
       '<div class="spent-body" id="spentBody">'+
-      spent.map(function(g){ return staffRow(g,caps,true); }).join('')+'</div>';
+      spent.map(function(g){ return staffRow(g,caps,true,pastDay); }).join('')+'</div>';
   }
   el.innerHTML+=html;
+}
+
+// Clear a score that should never have been entered.
+function clearScore(gameId,btn){
+  var g=null; (S.board||[]).forEach(function(x){ if(x.gameId===gameId) g=x; });
+  var what = g ? (g.homeScore+' \u2013 '+g.awayScore+'  '+g.home+' v '+g.away) : 'this score';
+  if(!confirm('Clear '+what+'?\n\nThe game goes back to having no score and can be '+
+              'entered again. Who cleared it is recorded.')) return;
+  btn.disabled=true; var was=btn.textContent; btn.textContent='Clearing\u2026';
+  post({action:'deleteScore', pin:S.pin, gameId:gameId,
+        by:(S.staff&&S.staff.name)||'Staff'})
+  .then(function(r){
+    btn.disabled=false; btn.textContent=was;
+    if(!r||r.status!=='ok'){ alert((r&&r.message)||'Could not clear it.'); return; }
+    loadBoard();
+  }).catch(function(){ btn.disabled=false; btn.textContent=was;
+    alert('No signal. Try again in a moment.'); });
 }
 
 function toggleSpent(){
   var b=document.getElementById('spentBody');
   var on=b.classList.toggle('on');
   var cv=document.getElementById('spentCv');
-  cv.textContent=cv.textContent.replace(/[▾▴]/, on?'▴':'▾');
+  if(cv) cv.textContent = on ? '\u25b4' : '\u25be';
+  var btn=document.getElementById('spentBtn');
+  if(btn){
+    btn.setAttribute('aria-expanded', on ? 'true' : 'false');
+    var tap=btn.querySelector('.tap');
+    if(tap) tap.textContent = on ? 'Tap to hide' : 'Tap to show';
+  }
 }
 
 // Which outstanding suspensions touch this game.
@@ -2893,7 +2940,16 @@ function sitOutBanner(g){
   '</div>';
 }
 
-function staffRow(g,caps,spent){
+// spent  = finished today. Dimmed, moved into Done, STILL EDITABLE.
+// locked = a previous day. Read only.
+//
+// Those used to be one flag, and the consequence was that confirming a
+// score removed every action from the card -- on the current day. A
+// coordinator who confirmed 3-1 when it was 1-3 had no way back and had to
+// ring Deanna. Eric raised it after Arsenal and he was right: previous days
+// should lock, today should not.
+function staffRow(g,caps,spent,locked){
+  var ro = !!locked;
   var sitwarn = spent ? '' : sitOutBanner(g);
   var badge = g.scoreStatus==='Final' ? '<span class="gm-badge final">Final</span>'
             : g.scoreStatus==='Reported' ? '<span class="gm-badge out">Needs confirm</span>'
@@ -2904,7 +2960,7 @@ function staffRow(g,caps,spent){
   }).join('') || '<span class="cw">no crew assigned</span>';
 
   var acts='';
-  if(caps.confirmScore && !spent){
+  if(caps.confirmScore && !ro){
     if(g.scoreStatus==='Reported'){
       // One tap. Fifty games a day means no modal for the common case.
       acts='<button class="btn go" onclick="confirmNow(\''+g.gameId+'\',this)">Confirm '+
@@ -2915,9 +2971,15 @@ function staffRow(g,caps,spent){
     } else {
       acts='<button class="btn ghost" onclick="openScore(\''+g.gameId+'\',\'staff\')">Edit score</button>'+pmBtn(g);
     }
+    // Clearing is separate from editing on purpose. Editing assumes you
+    // know the right answer; clearing is for when the score belongs to a
+    // different game entirely and the honest state is "we do not have one".
+    if(g.scoreStatus){
+      acts+='<button class="btn ghost danger" onclick="clearScore(\''+g.gameId+'\',this)">Clear</button>';
+    }
   }
 
-  return '<div class="gm'+(spent?' spent':'')+(sitwarn?' hassit':'')+'">'+sitwarn+
+  return '<div class="gm'+(spent?' spent':'')+(ro?' locked':'')+(sitwarn?' hassit':'')+'">'+sitwarn+
     '<div class="gm-top"><div class="gm-when"><b>'+esc(g.time)+'</b>'+
       '<i class="gnum">#'+esc(g.gameNumber)+'</i>'+
       (g.field?'<i class="gfield">'+esc(g.field)+'</i>':'')+'</div>'+badge+'</div>'+
@@ -2928,7 +2990,7 @@ function staffRow(g,caps,spent){
       (g.flagged?' \u00b7 \u2691 staff attention':'')+'</div>'+
     '<div class="crew">'+crew+'</div>'+
     (acts?'<div class="gm-acts">'+acts+'</div>':'')+
-    (caps.switchRef && !spent
+    (caps.switchRef && !ro
       ? '<div class="gm-acts" style="margin-top:7px">'+
           '<button class="btn ghost" onclick="openCrew(\''+g.gameId+'\')">Change crew</button>'+
           '<button class="btn ghost" onclick="openField(\''+g.gameId+'\')">Move field</button>'+
@@ -3703,7 +3765,7 @@ try {
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.08.24-b';
+var PAGE_VERSION='2026.08.25-a';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
