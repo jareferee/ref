@@ -889,7 +889,7 @@ textarea.fin{resize:vertical;line-height:1.5}
     <p>Start typing your name</p>
   </div>
   <div class="search"><input type="text" id="refSearch" placeholder="Last name or first name"
-       autocomplete="off" autocapitalize="words" oninput="filterRefs()"></div>
+       autocomplete="off" autocapitalize="words" oninput="onRefInput()"></div>
   <div class="reflist" id="refList"></div>
 </div>
 
@@ -1616,19 +1616,58 @@ var DEMO_GAMES = [
 function goRefPick(){
   show('s-pick');
   document.getElementById('refSearch').value='';
-  document.getElementById('refList').innerHTML=
-    '<div class="empty">Loading today\'s crew…</div>';
-  api('eventRefs',{date:S.date}).then(function(r){
-    S.refs = (r&&r.status==='ok'&&r.data&&r.data.length) ? r.data : (markDemo(),demoRefs());
+  S.refs=[]; S.refScope='search'; S.refTruncated=false;
+  // No list is fetched until something is typed. The roster used to arrive
+  // here in full and be filtered in JavaScript, which meant the roster had
+  // already been sent to whoever opened the page. Staff still get it in one
+  // go; everybody else asks the server for close matches to what they typed.
+  // See handleGetSteamboatRefs in Steamboat.gs for the reasoning.
+  if(S.pin){
+    document.getElementById('refList').innerHTML=
+      '<div class="empty">Loading today\'s crew…</div>';
+    api('eventRefs',{date:S.date,pin:S.pin}).then(function(r){
+      S.refs = (r&&r.status==='ok'&&r.data&&r.data.length) ? r.data : (markDemo(),demoRefs());
+      S.refScope = (r&&r.scope)||'staff';
+      filterRefs();
+      focusRefBox();
+    }).catch(function(){ markDemo(); S.refs=demoRefs(); S.refScope='staff'; filterRefs(); });
+  } else {
     filterRefs();
-    setTimeout(function(){
-      var box=document.getElementById('refSearch');
-      box.focus();
-      // iOS puts the keyboard over the lower half and does not scroll for
-      // it. Pull the box to the top so the results have the screen.
-      try{ box.scrollIntoView({block:'start',behavior:'smooth'}); }catch(e){}
-    },80);
-  }).catch(function(){ markDemo(); S.refs=demoRefs(); filterRefs(); });
+    focusRefBox();
+  }
+}
+
+function focusRefBox(){
+  setTimeout(function(){
+    var box=document.getElementById('refSearch');
+    if(!box) return;
+    box.focus();
+    // iOS puts the keyboard over the lower half and does not scroll for
+    // it. Pull the box to the top so the results have the screen.
+    try{ box.scrollIntoView({block:'start',behavior:'smooth'}); }catch(e){}
+  },80);
+}
+
+// One request per pause in typing, not per keystroke.
+var _refSearchTimer=null, _refSearchSeq=0;
+function searchRefs(q){
+  var el=document.getElementById('refList');
+  if(q.length < (S.refMinChars||3)){
+    S.refs=[]; S.refTruncated=false; filterRefs(); return;
+  }
+  el.innerHTML='<div class="empty">Looking…</div>';
+  var seq=++_refSearchSeq;
+  api('eventRefs',{date:S.date,q:q}).then(function(r){
+    // A slow earlier request must not overwrite a newer one.
+    if(seq!==_refSearchSeq) return;
+    if(r&&r.minChars) S.refMinChars=r.minChars;
+    S.refs=(r&&r.status==='ok'&&r.data)?r.data:[];
+    S.refTruncated=!!(r&&r.truncated);
+    filterRefs();
+  }).catch(function(){
+    if(seq!==_refSearchSeq) return;
+    S.refs=[]; filterRefs();
+  });
 }
 
 /* Ten referees could not find themselves on Thursday.
@@ -1653,17 +1692,39 @@ function rankRef(name, q){
   return n.indexOf(q)>=0 ? 2 : 3;                      // buried in the middle
 }
 
+// Debounced so a fast typist sends one request, not nine.
+function onRefInput(){
+  var q=(document.getElementById('refSearch').value||'').toLowerCase().trim();
+  if(S.refScope==='staff'){ filterRefs(); return; }
+  clearTimeout(_refSearchTimer);
+  _refSearchTimer=setTimeout(function(){ searchRefs(q); },220);
+  // Repaint immediately so the prompt tracks what has been typed.
+  if(q.length < (S.refMinChars||3)) filterRefs();
+}
+
 function filterRefs(){
   var q=(document.getElementById('refSearch').value||'').toLowerCase().trim();
   var el=document.getElementById('refList');
   var list, total;
 
-  if(q.length>=1){
-    list=S.refs.filter(function(r){ return rankRef(r.name,q)<3; })
-      .map(function(r){ return {r:r, k:rankRef(r.name,q)}; })
-      .sort(function(a,b){ return a.k-b.k || a.r.name.localeCompare(b.r.name); })
-      .map(function(x){ return x.r; });
+  // Staff hold the whole roster and filter it here, as before. Everybody
+  // else is shown exactly what the server sent back for what they typed.
+  if(S.refScope==='staff'){
+    if(q.length>=1){
+      list=S.refs.filter(function(r){ return rankRef(r.name,q)<3; })
+        .map(function(r){ return {r:r, k:rankRef(r.name,q)}; })
+        .sort(function(a,b){ return a.k-b.k || a.r.name.localeCompare(b.r.name); })
+        .map(function(x){ return x.r; });
+    } else {
+      list=S.refs.slice();
+    }
   } else {
+    var need=S.refMinChars||3;
+    if(q.length<need){
+      el.innerHTML='<div class="empty"><b>Type your name</b>'+
+        'At least '+need+' letters of your first or last name.</div>';
+      return;
+    }
     list=S.refs.slice();
   }
   total=list.length;
@@ -1677,9 +1738,9 @@ function filterRefs(){
     return '<button class="refrow" onclick="pickRef('+JSON.stringify(r.name).replace(/"/g,'&quot;')+')">'+
       '<b>'+esc(r.name)+'</b>'+(r.games?'<i>'+r.games+' game'+(r.games===1?'':'s')+'</i>':'')+'</button>';
   }).join('')+
-  (total>REF_LIST_MAX
+  ((total>REF_LIST_MAX || S.refTruncated)
     ? '<div class="hint" style="text-align:center;padding:11px 0">'+
-      (total-REF_LIST_MAX)+' more. Type another letter.</div>'
+      'More names match. Type another letter.</div>'
     : '');
 }
 
@@ -3642,7 +3703,7 @@ try {
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.08.24-a';
+var PAGE_VERSION='2026.08.24-b';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
