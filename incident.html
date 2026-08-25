@@ -128,7 +128,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--ice)}
   background:rgba(127,184,222,.12);padding:1px 5px;border-radius:4px}
 
 /* fill-the-blanks panel */
-.fills{margin-top:13px}
+/* Above the narrative now, so the spacing runs the other way. */
+.fills{margin-bottom:13px}
 .fill{background:rgba(9,25,40,.5);border:1px solid rgba(224,162,43,.3);
   border-radius:10px;padding:11px 13px;margin-bottom:8px}
 .fill-k{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--caution);
@@ -317,13 +318,22 @@ body[data-mode="full"] .full-only{display:block}
       <p><b>Names, never pronouns.</b> Write the name every time, not "he" or "they."</p>
       <p><b>Laws of the Game wording.</b> Say "struck" and "serious foul play," not "hit" and "bad tackle."</p>
     </div>
+    <!-- The blanks come BEFORE the narrative.
+         They used to sit underneath it, so a referee opened the form, saw a
+         big empty text box, wrote the whole account by hand, and only then
+         scrolled past it and found the questions that would have written it
+         for them. Eric Henschel raised it after Arsenal Cup and said the
+         feature was excellent -- he just found it after doing the work
+         twice. Answer the questions, watch the narrative fill in. -->
+    <div class="fills" id="fills"></div>
     <div class="narr-head">
       <span>Narrative</span>
       <span class="blanks" id="blankCount">0 blanks left</span>
     </div>
     <textarea id="narr" oninput="onNarrInput()" placeholder="Pick a code above and a template lands here."></textarea>
-    <p class="hint">Answer the blanks below, or type straight into the narrative. Either works.</p>
-    <div class="fills" id="fills"></div>
+    <p class="hint">The narrative fills in as you answer above. You can also type
+      straight into it &mdash; either works, and editing it by hand never
+      loses what you have already answered.</p>
     <div class="prev">
       <h4>What the committee reads</h4>
       <div class="doc" id="preview">Pick a misconduct code to load a template.</div>
@@ -653,7 +663,7 @@ function renderFills(){
 
   if(!uniq.length){
     el.innerHTML = v.trim()
-      ? '<div class="fills-done">Nothing left to fill. Read it through, then file.</div>' : '';
+      ? '<div class="fills-done">Nothing left to fill. Read the narrative below, then file.</div>' : '';
     return;
   }
   el.innerHTML = uniq.map(function(b,i){
@@ -868,7 +878,7 @@ try{ jarBrand('Incident report');
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.08.14-a';
+var PAGE_VERSION='2026.08.25-a';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
