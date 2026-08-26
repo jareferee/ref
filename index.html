@@ -362,6 +362,14 @@ body::after{
   flex:1;min-width:96px;min-height:48px}
 .segrow button[aria-pressed="true"]{background:var(--ice);color:var(--slate);
   border-color:var(--ice);font-weight:700}
+.nt-row{display:flex;align-items:center;gap:10px;padding:11px 0;
+  border-bottom:1px solid rgba(127,184,222,.14)}
+.nt-row:last-child{border-bottom:0}
+.nt-row b{display:block;font-size:15px;color:var(--snow)}
+.nt-meta{display:block;font-family:var(--mono);font-size:11px;color:var(--steel);margin-top:2px}
+.nt-x{appearance:none;cursor:pointer;margin-left:auto;background:transparent;
+  color:#F0A897;border:1.5px solid rgba(196,71,47,.45);border-radius:8px;
+  padding:8px 12px;font-size:12.5px;font-family:var(--body);min-height:40px}
 .spent-h{display:flex;align-items:center;gap:11px;margin:22px 0 9px;cursor:pointer;
   width:100%;text-align:left;appearance:none;
   background:rgba(23,51,75,.55);border:1.5px solid rgba(127,184,222,.28);
@@ -981,6 +989,8 @@ textarea.fin{resize:vertical;line-height:1.5}
           style="display:none;width:100%;text-align:center;margin-top:9px">End of day report</button>
   <button class="handout" id="bltBtn" onclick="openBulletin()"
           style="display:none;width:100%;text-align:center;margin-top:9px">Post a bulletin</button>
+  <button class="handout" id="notifyBtn" onclick="openNotify()"
+          style="display:none;width:100%;text-align:center;margin-top:9px">Medical contacts</button>
   <div class="vtabs" id="vtabs">
     <button aria-pressed="true"  onclick="setView('games',this)">Games</button>
     <button aria-pressed="false" onclick="setView('incidents',this)">Incidents<span class="badge" id="incBadge" style="display:none">0</span></button>
@@ -1133,6 +1143,39 @@ textarea.fin{resize:vertical;line-height:1.5}
 </div>
 
 <button class="sos" onclick="openSos()">🚨 Help</button>
+
+<!-- medical contacts -->
+<div class="mbg" id="notifyBg" onclick="if(event.target===this)closeModal('notifyBg')">
+  <div class="modal">
+    <div class="m-h"><b>Medical contacts</b><i id="notifyScope">&mdash;</i></div>
+    <div class="m-b">
+      <div class="hint" style="margin-bottom:12px">Anyone here is texted when a
+        referee calls for medical help. They get the field and the venue, nothing
+        else &mdash; no name, no injury. They do not get any other kind of alert
+        and they have no access to this app.</div>
+
+      <div id="notifyList"></div>
+
+      <div style="border-top:1px solid rgba(127,184,222,.18);margin-top:14px;padding-top:14px">
+        <label class="fl">Name</label>
+        <input type="text" id="ntName" class="fin" maxlength="60"
+               placeholder="Amy Rivera ATC" autocomplete="off">
+        <label class="fl" style="margin-top:11px">Mobile</label>
+        <input type="tel" id="ntPhone" class="fin" inputmode="tel"
+               placeholder="970 555 0180" autocomplete="off">
+        <label class="fl" style="margin-top:11px">Which ground</label>
+        <select id="ntVenue" class="fin"></select>
+        <div class="hint" style="margin-top:6px">Leave as every ground if one
+          trainer covers the whole site.</div>
+        <div class="err" id="ntErr" style="min-height:18px;margin-top:8px"></div>
+      </div>
+    </div>
+    <div class="m-f">
+      <button class="btn ghost" onclick="closeModal('notifyBg')">Done</button>
+      <button class="btn ice" id="ntSave" onclick="saveNotify(this)">Add them</button>
+    </div>
+  </div>
+</div>
 
 <!-- score modal -->
 <div class="mbg" id="scoreBg" onclick="if(event.target===this)closeModal('scoreBg')">
@@ -2132,6 +2175,8 @@ function loadBoard(){
   loadBulletins();
   var bb=document.getElementById('bltBtn');
   if(bb) bb.style.display = bltCan() ? 'block' : 'none';
+  var nb=document.getElementById('notifyBtn');
+  if(nb) nb.style.display = notifyCan() ? 'block' : 'none';
   refreshBadges();
   if(S.view==='incidents'){ loadIncidents(); }
   else if(S.view==='sitout'){ loadSitOut(); }
@@ -3048,6 +3093,96 @@ function setSort(v){
     b.setAttribute('aria-pressed', b.getAttribute('data-s')===v);
   });
   renderStaff();
+}
+
+/* ── MEDICAL CONTACTS ──
+   Who gets texted when a referee calls for medical help. A coordinator
+   standing at a venue can add the trainer's number without opening a
+   spreadsheet, which is the whole point -- a trainer added on Saturday
+   morning is worth ten added on Monday. */
+function notifyCan(){
+  var caps=(S.staff&&S.staff.caps)||{};
+  return !!(caps.checkIn || caps.rosterApproval);
+}
+
+function openNotify(){
+  if(!notifyCan()) return;
+  document.getElementById('notifyScope').textContent = EV.name || '';
+  document.getElementById('ntName').value='';
+  document.getElementById('ntPhone').value='';
+  document.getElementById('ntErr').textContent='';
+
+  var sel=document.getElementById('ntVenue');
+  if(sel){
+    var vs=(EV.venues||[]).slice();
+    var mine=myVenues(), here='';
+    vs.forEach(function(v){ if(!here && mine[String(v).toLowerCase().trim()]) here=v; });
+    sel.innerHTML='<option value="">Every ground at this event</option>'+
+      vs.map(function(v){ return '<option value="'+esc(v)+'">'+esc(v)+' only</option>'; }).join('');
+    sel.value = here || '';
+  }
+  loadNotify();
+  document.getElementById('notifyBg').classList.add('on');
+}
+
+function loadNotify(){
+  var el=document.getElementById('notifyList');
+  el.innerHTML='<div class="empty">Loading…</div>';
+  api('notifyList',{event:(window.JAR&&JAR.id)||'',pin:S.pin}).then(function(r){
+    if(!r||r.status!=='ok'){ el.innerHTML='<div class="empty">Could not load the list.</div>'; return; }
+    S.notify=(r.data||[]).filter(function(x){ return x.active; });
+    if(!S.notify.length){
+      el.innerHTML='<div class="empty"><b>Nobody yet</b>'+
+        'If a referee calls for medical right now, only the site coordinator '+
+        'and admin are told.</div>';
+      return;
+    }
+    el.innerHTML=S.notify.map(function(x,i){
+      return '<div class="nt-row">'+
+        '<div><b>'+esc(x.name)+'</b>'+
+          '<span class="nt-meta">'+esc(x.phone)+'  \u00b7  '+
+            esc(x.venue||'every ground')+'</span></div>'+
+        '<button class="nt-x" onclick="removeNotify('+i+',this)" '+
+          'aria-label="Remove '+esc(x.name)+'">Remove</button>'+
+      '</div>';
+    }).join('');
+  }).catch(function(){ el.innerHTML='<div class="empty">Could not load the list.</div>'; });
+}
+
+function saveNotify(btn){
+  var name=(document.getElementById('ntName').value||'').trim();
+  var phone=(document.getElementById('ntPhone').value||'').trim();
+  var err=document.getElementById('ntErr');
+  if(!name){ err.textContent='Give them a name.'; return; }
+  // Checked here as well as on the server, so a mistyped number is caught
+  // before it looks like it worked.
+  if(String(phone).replace(/\D/g,'').length!==10){
+    err.textContent='That needs to be a ten digit mobile number.'; return; }
+  err.textContent='';
+  btn.disabled=true; btn.textContent='Adding\u2026';
+  post({action:'addNotify', pin:S.pin, name:name, phone:phone,
+        event:(window.JAR&&JAR.id)||'',
+        venue:document.getElementById('ntVenue').value})
+  .then(function(r){
+    btn.disabled=false; btn.textContent='Add them';
+    if(!r||r.status!=='ok'){ err.textContent=(r&&r.message)||'Could not add them.'; return; }
+    document.getElementById('ntName').value='';
+    document.getElementById('ntPhone').value='';
+    loadNotify();
+  }).catch(function(){ btn.disabled=false; btn.textContent='Add them';
+    err.textContent='No signal. Try again in a moment.'; });
+}
+
+function removeNotify(i,btn){
+  var x=(S.notify||[])[i]; if(!x) return;
+  if(!confirm('Stop texting '+x.name+' when a referee calls for medical?')) return;
+  btn.disabled=true;
+  post({action:'removeNotify', pin:S.pin, rowNum:x.rowNum})
+  .then(function(r){
+    btn.disabled=false;
+    if(!r||r.status!=='ok'){ alert((r&&r.message)||'Could not remove them.'); return; }
+    loadNotify();
+  }).catch(function(){ btn.disabled=false; });
 }
 
 function toggleSpent(){
@@ -4070,7 +4205,7 @@ try {
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.08.25-f';
+var PAGE_VERSION='2026.08.25-g';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
