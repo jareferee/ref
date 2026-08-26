@@ -7,14 +7,19 @@
 <meta name="theme-color" content="#0E2438">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@600;700;800;900&family=DM+Sans:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --slate:#0E2438; --slate-2:#17334B; --slate-3:#1F4260;
   --ice:#7FB8DE; --ice-pale:#C5E0F2; --steel:#8E9BA9; --snow:#F2F6F9;
   --caution:#E0A22B; --flag:#C4472F; --go:#4FA87A;
-  --disp:'Barlow Condensed',Impact,sans-serif;
-  --body:'Inter',-apple-system,'Segoe UI',Roboto,sans-serif;
+  /* Bebas Neue and DM Sans are what the Reference Library and the CREST
+     site use. The hub was on Barlow Condensed and Inter -- close enough
+     that nothing looked broken, different enough that the three products
+     never looked like one programme. Barlow stays as the fallback so
+     nothing shifts if Bebas fails to load. */
+  --disp:'Bebas Neue','Barlow Condensed',Impact,sans-serif;
+  --body:'DM Sans','Inter',-apple-system,'Segoe UI',Roboto,sans-serif;
   --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -923,6 +928,18 @@ textarea.fin{resize:vertical;line-height:1.5}
   100%{box-shadow:0 0 0 0 rgba(79,168,122,0)}}
 .evgo{flex:0 0 auto;color:var(--ice);font-size:27px;line-height:1;position:relative;z-index:1}
 
+/* Bebas is a single weight and rides higher than Barlow, so anything that
+   asked for 900 now just needs the letter-spacing back. */
+.hero h2,.evhero h2,.sod-hi,.evtx b,.next-when b{letter-spacing:.02em}
+
+/* The one thing a referee came here to do. */
+.lead.go{width:100%;text-align:left;appearance:none;cursor:pointer;
+  background:linear-gradient(135deg,#C8921A 0%,#F5C842 100%);
+  border:0;color:#1a1204;box-shadow:0 6px 26px rgba(200,146,26,.22)}
+.lead.go b{color:#1a1204}
+.lead.go i{color:rgba(26,18,4,.78)}
+.lead.go .arrow{color:#1a1204;opacity:.75}
+
 .evfoot{margin-top:26px;padding-top:4px}
 .evlink{display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit;
   background:rgba(23,51,75,.32);border:1px solid rgba(127,184,222,.14);
@@ -1027,11 +1044,16 @@ textarea.fin{resize:vertical;line-height:1.5}
     <p id="hSub"></p>
   </div>
 
-  <a class="lead" href="scoreboard.html">
-    <b>Live Scores</b>
-    <i>Every game, every division, updated as they finish</i>
-    <span class="arrow">Tap to open &#9656;</span>
-  </a>
+  <!-- Referee first, literally.
+       Live Scores used to be the hero here and Referee check in was a grey
+       row at the bottom under "quiet". That is backwards: the scoreboard
+       is how Deanna reconciles what referees entered in Assignr, and the
+       referee standing in the car park wants to check in. -->
+  <button class="lead go" onclick="goRefPick()">
+    <b>Referee check in</b>
+    <i>Find your name, see your games, check in at the field</i>
+    <span class="arrow">Start here &#9656;</span>
+  </button>
 
   <a class="lead" id="hRules" href="rules.html" style="display:none">
     <b>Tournament rules</b>
@@ -1042,6 +1064,17 @@ textarea.fin{resize:vertical;line-height:1.5}
   <div class="blk">
     <div class="blk-h"><h3>Where to go</h3><div class="rule"></div></div>
     <div id="hVenues"></div>
+  </div>
+
+  <div class="blk">
+    <div class="blk-h"><h3>Also here</h3><div class="rule"></div></div>
+    <a class="qrow" href="scoreboard.html" style="text-decoration:none">
+      <b>Live scores</b><i>every division</i><span class="chev">&#8250;</span>
+    </a>
+    <a class="qrow" id="hLib" href="#" target="_blank" rel="noopener"
+       style="display:none;text-decoration:none">
+      <b>CREST Reference Library</b><i>laws &amp; policy</i><span class="chev">&#8250;</span>
+    </a>
   </div>
 
   <a class="lead" id="hRap" href="rap/" style="display:none">
@@ -1055,9 +1088,6 @@ textarea.fin{resize:vertical;line-height:1.5}
   </button>
 
   <div class="quiet">
-    <button class="qrow" onclick="goRefPick()">
-      <b>Referee check in</b><i>crew only</i><span class="chev">&#8250;</span>
-    </button>
     <button class="qrow" onclick="toggleStaff()">
       <b>Tournament staff</b><i>PIN</i><span class="chev">&#8250;</span>
     </button>
@@ -1475,6 +1505,9 @@ function paintBrand(){
   setTxt('brName',   EV.name   || 'Referee Hub');
   setTxt('brSub',    'REFEREE HUB' + (EV.shield ? ' \u00b7 ' + EV.shield : ''));
   setTxt('wxDesc',   EV.weatherPlace || '');
+  // Library row on the event home, from config.
+  var lb=document.getElementById('hLib');
+  if(lb && window.JAR && JAR.LIBRARY_URL){ lb.href=JAR.LIBRARY_URL; lb.style.display='flex'; }
   setTxt('rapUrl',   EV.rapUrl || 'jareferee.com/rap');
   setTxt('sosWho',   (EV.alertWho || 'Site staff') + ' are alerted immediately');
 
@@ -1642,6 +1675,7 @@ function loadEventPick(){
 
 function renderEventPick(list){
   var box=document.getElementById('evList'); if(!box) return;
+  S.evList = list || [];
   var today=todayStr();
 
   // Live first, then whatever starts next. A referee opening this is
@@ -1742,7 +1776,13 @@ function fmtRange(a,b){
 }
 
 function pickEvent(id){
-  if(window.JAR&&JAR.setEvent) JAR.setEvent(id);
+  // Hand the TOURNAMENTS row over with the choice. config.js can then open
+  // an event it has never heard of, which is every event Deanna adds
+  // without a deploy. Without this, tapping Rush COS 7v7 looked like a
+  // dead button.
+  var row=null;
+  (S.evList||[]).forEach(function(t){ if(String(t.id)===String(id)) row=t; });
+  if(window.JAR&&JAR.setEvent) JAR.setEvent(id, true, row);
 }
 
 // Back to the picker. Clearing the stored choice matters: without it the
@@ -4542,7 +4582,7 @@ try {
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.08.25-l';
+var PAGE_VERSION='2026.08.25-m';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');

@@ -403,6 +403,50 @@
 
   // The first path segment. Falls back to steamboat so a page opened from
   // a bare URL still renders rather than throwing.
+  // An event built from its TOURNAMENTS row, for the ones config.js has
+  // never heard of.
+  //
+  // The picker lists what is in the SHEET, so an event Deanna adds in the
+  // Command Center on Friday appears immediately. Resolution, though,
+  // needed a block in THIS FILE -- so tapping Rush COS 7v7 or CSA Cups
+  // found nothing, resolve() correctly refused to fall back to whatever
+  // was picked last, and the referee got the picker again. It looked like
+  // a dead button. Adding a tournament should never require a deploy.
+  //
+  // A config block is now an OVERRIDE for branding -- crest, accent,
+  // watermark, day labels -- and not a requirement for the thing to work.
+  function fromRow(t) {
+    if (!t || !t.id) return null;
+    var dates = [], d = t.startDate, guard = 0;
+    while (d && t.endDate && d <= t.endDate && guard++ < 40) {
+      dates.push(d);
+      var x = new Date(d + 'T12:00:00'); x.setDate(x.getDate() + 1);
+      var m = x.getMonth() + 1, dd = x.getDate();
+      d = x.getFullYear() + '-' + (m < 10 ? '0' : '') + m + '-' + (dd < 10 ? '0' : '') + dd;
+    }
+    if (!dates.length && t.startDate) dates = [t.startDate];
+    var lbl = {};
+    dates.forEach(function (x) {
+      var dt = new Date(x + 'T12:00:00');
+      lbl[x] = [['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dt.getDay()],
+                ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][dt.getMonth()]
+                  + ' ' + dt.getDate()];
+    });
+    var venues = t.venues || [];
+    return {
+      id: t.id, path: t.id,
+      shield: String(t.name || t.id).replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase(),
+      name: t.name || t.id, full: t.name || t.id,
+      subtitle: t.blurb || 'Colorado Soccer Association',
+      accent: t.accent || '#7FB8DE',
+      hub: 'jareferee.com/ref?e=' + t.id,
+      weatherPlace: venues[0] || '',
+      dates: dates, daylbl: lbl, venues: venues,
+      hqVenues: [], hqFields: [], trim: [], logos: [], refInfo: [],
+      divisionOrder: [], adopted: true
+    };
+  }
+
   function byPath(seg) {
     seg = String(seg || '').toLowerCase();
     if (!seg) return null;
@@ -421,12 +465,23 @@
   //   path    /skyline/           a tournament's own address
   //   stored  last picked         so a referee picks once, not every load
   //   none    /ref/               ask
+  // The TOURNAMENTS row the picker stashed when it was tapped.
+  function adopted(id) {
+    try {
+      var raw = localStorage.getItem('jar-event-row');
+      if (!raw) return null;
+      var row = JSON.parse(raw);
+      if (!row || String(row.id).toLowerCase() !== String(id).toLowerCase()) return null;
+      return fromRow(row);
+    } catch (e) { return null; }
+  }
+
   function resolve() {
     var out = { event: null, from: 'none' };
     try {
       var q = String(location.search || '').match(/[?&]e=([A-Za-z0-9_-]+)/);
       if (q) {
-        var byQ = byPath(q[1]);
+        var byQ = byPath(q[1]) || adopted(q[1]);
         if (byQ) return { event: byQ, from: 'query' };
         // Asked for by name and not found. Do NOT carry on down to the
         // stored choice: ?e=uchc quietly opened Arsenal, because Arsenal
@@ -445,7 +500,7 @@
       if (raw) {
         var st = JSON.parse(raw);
         if (st && st.id && (Date.now() - (st.at || 0)) < 20 * 60 * 60 * 1000) {
-          var byS = byPath(st.id);
+          var byS = byPath(st.id) || adopted(st.id);
           if (byS) return { event: byS, from: 'stored' };
         }
       }
@@ -477,7 +532,7 @@
   var EVENT = R.event || NEUTRAL;
 
   window.JAR = {
-    VERSION: '2026.08.25-a',
+    VERSION: '2026.08.25-b',
 
     // ── CREST, the rest of the programme ──
     // Taken from coloradoreferee.github.io, the site that lists every tool.
@@ -496,9 +551,13 @@
 
     // Remember a choice, then reload so every page picks it up the same
     // way it would from a path. One code path, not two.
-    setEvent: function (id, reload) {
+    // row is the TOURNAMENTS record the picker was showing. Stored so an
+    // event with no config block can still be opened, and so a hard reload
+    // on ?e=rushcos resolves without another round trip.
+    setEvent: function (id, reload, row) {
       try {
         localStorage.setItem('jar-event', JSON.stringify({ id: String(id), at: Date.now() }));
+        if (row && row.id) localStorage.setItem('jar-event-row', JSON.stringify(row));
       } catch (e) {}
       if (reload !== false) {
         var base = String(location.pathname || '');
@@ -507,8 +566,12 @@
     },
 
     forgetEvent: function () {
-      try { localStorage.removeItem('jar-event'); } catch (e) {}
+      try {
+        localStorage.removeItem('jar-event');
+        localStorage.removeItem('jar-event-row');
+      } catch (e) {}
     },
+    fromRow: fromRow,
     BACKEND: BACKEND,
     ASSETS:  ASSETS,
     HOUSE:   HOUSE,
