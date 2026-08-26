@@ -835,36 +835,94 @@ textarea.fin{resize:vertical;line-height:1.5}
 .evh{font-family:var(--disp);font-weight:800;font-size:11px;letter-spacing:.19em;
   text-transform:uppercase;color:var(--steel);margin:20px 0 8px}
 .evh:first-child{margin-top:6px}
+/* ══ THE FRONT DOOR ══
+   jareferee.com/ref is the first thing a referee sees standing in a car
+   park. It was a heading and three grey bars.
+   Devices borrowed from the CREST site so the whole programme looks like
+   one thing: layered radial glows, a gradient rule across the top of a
+   card, faint diagonal texture, and the live pulse. */
+#s-event{position:relative;z-index:1}
+#s-event::before{
+  content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(ellipse 120% 70% at 50% 0%, rgba(27,47,85,.85) 0%, transparent 62%),
+    radial-gradient(ellipse 70% 50% at 100% 22%, rgba(200,146,26,.10) 0%, transparent 58%),
+    radial-gradient(ellipse 80% 60% at 0% 92%, rgba(20,40,80,.55) 0%, transparent 55%);
+}
+
+/* Hero. The gold rule is the CREST signature. */
+.evhero{position:relative;text-align:center;padding:28px 0 20px;overflow:hidden}
+.evhero::after{content:'';position:absolute;left:0;right:0;bottom:0;height:3px;
+  background:linear-gradient(90deg,transparent,#C8921A 22%,#F5C842 50%,#C8921A 78%,transparent)}
+.evhero .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.24em;
+  text-transform:uppercase;color:#F5C842}
+.evhero h2{font-family:var(--disp);font-weight:900;font-size:clamp(34px,10vw,46px);
+  letter-spacing:.03em;line-height:1;margin:8px 0 6px}
+.evhero p{margin:0;color:var(--ice-pale);font-size:14px}
+.evwx{display:inline-flex;align-items:center;gap:9px;margin-top:14px;
+  background:rgba(9,25,40,.5);border:1px solid rgba(127,184,222,.2);
+  border-radius:99px;padding:8px 16px;font-size:13px;color:var(--ice-pale)}
+.evwx b{font-family:var(--disp);font-weight:900;font-size:17px;color:var(--go);
+  letter-spacing:.03em}
+
+.evh{font-family:var(--disp);font-weight:800;font-size:12px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--steel);margin:22px 0 10px}
+
 /* ── EVENT CARDS ──
    Was a flat row with the accent only on the shield outline, so three
-   tournaments read as three identical grey bars. The accent now runs the
-   left edge, which is the one place a colour is visible at arm's length in
-   the sun without tinting the text. */
+   tournaments read as three identical grey bars. */
 .evcard{display:flex;align-items:center;gap:14px;width:100%;text-align:left;
-  appearance:none;cursor:pointer;background:rgba(23,51,75,.5);
-  border:1px solid rgba(127,184,222,.2);border-left:5px solid var(--ev,#7FB8DE);
-  border-radius:14px;padding:15px 16px;margin-bottom:10px;color:inherit;
-  transition:transform .08s,border-color .15s,background .15s}
-.evcard:hover{border-color:rgba(127,184,222,.5);background:rgba(31,66,96,.6)}
+  appearance:none;cursor:pointer;position:relative;overflow:hidden;
+  background:linear-gradient(135deg,rgba(25,45,80,.75) 0%,rgba(30,51,96,.55) 100%);
+  border:1px solid rgba(127,184,222,.2);
+  border-radius:15px;padding:17px 16px;margin-bottom:11px;color:inherit;
+  transition:transform .1s,border-color .18s,box-shadow .18s;
+  animation:evUp .45s ease both}
+.evcard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--ev,#7FB8DE),transparent 72%)}
+.evcard::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(-45deg,transparent,transparent 30px,
+    rgba(255,255,255,.014) 30px,rgba(255,255,255,.014) 31px)}
+.evcard:nth-child(2){animation-delay:.06s}
+.evcard:nth-child(3){animation-delay:.12s}
+.evcard:nth-child(4){animation-delay:.18s}
+@keyframes evUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.evcard:hover{border-color:var(--ev,#7FB8DE);
+  box-shadow:0 6px 26px rgba(0,0,0,.35),0 0 0 1px rgba(255,255,255,.03) inset}
 .evcard:active{transform:scale(.995)}
-.evcard.live{background:linear-gradient(100deg,rgba(79,168,122,.16),rgba(23,51,75,.5) 55%);
-  border-color:rgba(79,168,122,.5)}
-.evsh{flex:0 0 auto;width:46px;height:54px;display:flex;align-items:center;justify-content:center;
-  font-family:var(--disp);font-weight:900;font-size:14px;letter-spacing:.06em;
-  border:2px solid var(--ev,#7FB8DE);color:var(--ev,#7FB8DE);border-radius:9px 9px 16px 16px;
-  background:rgba(9,25,40,.45)}
-.evtx{flex:1 1 auto;min-width:0}
-.evtx b{display:block;font-family:var(--disp);font-weight:900;font-size:21px;
-  letter-spacing:.02em;line-height:1.1}
-.evtx i{display:block;font-style:normal;font-size:13.5px;color:var(--ice-pale);margin-top:4px;
-  line-height:1.4}
-.evtx .when{font-family:var(--mono);font-size:11.5px;letter-spacing:.05em;color:var(--ice)}
-.evlive{display:inline-flex;align-items:center;gap:6px;font-family:var(--disp);font-weight:900;
-  font-size:12px;letter-spacing:.14em;color:var(--go);text-transform:uppercase}
-.evlive::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--go);
-  animation:evpulse 1.8s ease-in-out infinite}
-@keyframes evpulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.8)}}
-.evgo{flex:0 0 auto;color:var(--ice);font-size:26px;line-height:1}
+
+/* Running today. Bigger, brighter, and it says what is waiting inside. */
+.evcard.live{padding:20px 18px;
+  background:linear-gradient(135deg,rgba(79,168,122,.2) 0%,rgba(25,45,80,.8) 62%);
+  border-color:rgba(79,168,122,.55);
+  box-shadow:0 8px 34px rgba(0,0,0,.4),0 0 40px rgba(79,168,122,.09)}
+.evcard.live .evsh{width:56px;height:66px;font-size:17px;
+  box-shadow:0 0 22px rgba(79,168,122,.22)}
+.evcard.live .evtx b{font-size:26px}
+
+.evsh{flex:0 0 auto;width:48px;height:56px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--disp);font-weight:900;font-size:15px;letter-spacing:.06em;
+  border:2px solid var(--ev,#7FB8DE);color:var(--ev,#7FB8DE);border-radius:9px 9px 18px 18px;
+  background:rgba(9,25,40,.55);position:relative;z-index:1}
+.evtx{flex:1 1 auto;min-width:0;position:relative;z-index:1}
+.evtx b{display:block;font-family:var(--disp);font-weight:900;font-size:22px;
+  letter-spacing:.02em;line-height:1.08}
+.evtx i{display:block;font-style:normal;font-size:13.5px;color:var(--ice-pale);margin-top:5px;
+  line-height:1.45}
+.evtx .when{font-family:var(--mono);font-size:11.5px;letter-spacing:.05em;color:#F5C842}
+/* --go on a green-tinted card measured 3.56:1 -- a green label on a green
+   wash, which is the failure mode Eric described. Lightened to #8FE0B4,
+   which holds 8:1 on the same background and still reads as "live". */
+.evlive{display:inline-flex;align-items:center;gap:7px;font-family:var(--disp);font-weight:900;
+  font-size:13.5px;letter-spacing:.15em;color:#8FE0B4;text-transform:uppercase}
+.evlive::before{content:'';width:9px;height:9px;border-radius:50%;background:var(--go);
+  box-shadow:0 0 0 0 rgba(79,168,122,.7);animation:evpulse 1.9s ease-out infinite}
+@keyframes evpulse{
+  0%{box-shadow:0 0 0 0 rgba(79,168,122,.65)}
+  70%{box-shadow:0 0 0 11px rgba(79,168,122,0)}
+  100%{box-shadow:0 0 0 0 rgba(79,168,122,0)}}
+.evgo{flex:0 0 auto;color:var(--ice);font-size:27px;line-height:1;position:relative;z-index:1}
+
 .evfoot{margin-top:26px;padding-top:4px}
 .evlink{display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit;
   background:rgba(23,51,75,.32);border:1px solid rgba(127,184,222,.14);
@@ -953,10 +1011,11 @@ textarea.fin{resize:vertical;line-height:1.5}
 
 <!-- ══ LANDING ══ -->
 <div class="screen" id="s-event">
-  <div class="hero">
-    <div class="k" id="evKick">Colorado Referee Hub</div>
-    <h2>Which one are you at?</h2>
+  <div class="evhero">
+    <div class="k">Colorado Referee Hub</div>
+    <h2 id="evTitle">Which one are you at?</h2>
     <p id="evSub">Pick your tournament. We will remember it for the rest of the day.</p>
+    <div class="evwx" id="evWx" style="display:none"></div>
   </div>
   <div id="evList"><div class="empty">Checking what is on…</div></div>
 </div>
@@ -1518,6 +1577,37 @@ function weekdayOf(dateStr){
 // Everything a referee might want from the hub on a day they are not
 // working a tournament. Only real links -- an entry appears when the
 // address is configured and not otherwise.
+// Conditions for whichever event is running, on the picker.
+function evPickWeather(t){
+  var cfg=(window.JAR&&JAR.EVENTS)?JAR.EVENTS[t.id]:null;
+  if(!cfg){
+    var keys=(window.JAR&&JAR.EVENTS)?Object.keys(JAR.EVENTS):[];
+    for(var i=0;i<keys.length;i++){ if(JAR.EVENTS[keys[i]].id===t.id){ cfg=JAR.EVENTS[keys[i]]; break; } }
+  }
+  var place=(cfg&&cfg.weatherPlace)||'';
+  var box=document.getElementById('evWx'); if(!box) return;
+  api('weather',{venue:place,date:todayStr()}).then(function(r){
+    if(!r||r.status!=='ok'||!r.data) return;
+    var c=r.data.current||{}, dl=r.data.daily||{};
+    var code=c.weather_code, storm=code!=null&&code>=95;
+    var ico=storm?'\u26C8\uFE0F':(code>=61&&code<=82)?'\uD83C\uDF27\uFE0F':
+            (code>=1&&code<=3)?'\u26C5':'\u2600\uFE0F';
+    var bits=[];
+    if(place) bits.push(place);
+    if(c.wind_speed_10m!=null) bits.push(Math.round(c.wind_speed_10m)+' mph');
+    if(dl.precipChance!=null)  bits.push(dl.precipChance+'% rain');
+    box.innerHTML='<span>'+ico+'</span>'+
+      (c.temperature_2m!=null?'<b>'+Math.round(c.temperature_2m)+'\u00b0</b>':'')+
+      '<span>'+esc(bits.join(' \u00b7 '))+'</span>';
+    // Storms are the one thing worth saying loudly before they tap anything.
+    if(storm){
+      box.style.borderColor='rgba(196,71,47,.6)';
+      box.innerHTML+='<b style="color:#F0A897">Storms in the area</b>';
+    }
+    box.style.display='inline-flex';
+  }).catch(function(){});
+}
+
 function evFooter(){
   var rows=[];
   var lib=(window.JAR&&JAR.LIBRARY_URL)||'';
@@ -1577,6 +1667,22 @@ function renderEventPick(list){
     return;
   }
 
+  // The heading answers the question the referee is actually asking. On a
+  // day with something running that is "you are here", not "pick one".
+  var t0=document.getElementById('evTitle'), s0=document.getElementById('evSub');
+  if(t0 && s0){
+    if(live.length===1){
+      t0.textContent='Today at '+ (live[0].name||'the tournament');
+      s0.textContent='Tap to open your day. We will remember it.';
+    } else if(live.length>1){
+      t0.textContent='Which one are you at?';
+      s0.textContent=live.length+' tournaments running today. Pick yours.';
+    } else {
+      t0.textContent='Nothing on today';
+      s0.textContent='Here is what is coming, and everything else you might need.';
+    }
+  }
+
   var card=function(t,isLive){
     var cfg=(window.JAR&&JAR.EVENTS)?JAR.EVENTS[t.id]:null;
     if(!cfg){ // config may not know an event the sheet does
@@ -1589,15 +1695,19 @@ function renderEventPick(list){
     var vtxt=vs.length>3 ? vs.length+' venues' : vs.join(' \u00b7 ');
     // "Aug 29 to Aug 30" does not tell a referee whether that is tomorrow.
     // The countdown does, and it is the thing they are actually asking.
+    // A live card says what is waiting inside rather than repeating the
+    // date the referee already knows, because they are standing at it.
     var when = isLive
-      ? '<span class="evlive">Running now</span>'
+      ? '<span class="evlive">Running now</span>'+
+        (vs.length ? '<br>'+esc(vs.length>3 ? vs.length+' venues' : vs.join(' \u00b7 ')) : '')
       : '<span class="when">'+esc(untilText(t.startDate))+'</span> \u00b7 '+
-        esc(fmtRange(t.startDate,t.endDate));
+        esc(fmtRange(t.startDate,t.endDate))+
+        (vtxt?'<br>'+esc(vtxt):'');
     return '<button class="evcard'+(isLive?' live':'')+'" style="--ev:'+esc(accent)+'" '+
       'onclick="pickEvent(\''+esc(t.id)+'\')">'+
       '<span class="evsh">'+esc(shield)+'</span>'+
       '<span class="evtx"><b>'+esc(t.name||t.id)+'</b>'+
-        '<i>'+when+(vtxt?'<br>'+esc(vtxt):'')+'</i></span>'+
+        '<i>'+when+'</i></span>'+
       '<span class="evgo">&rsaquo;</span></button>';
   };
 
@@ -1613,6 +1723,12 @@ function renderEventPick(list){
   // tournament deserves somewhere to go rather than a dead end.
   html += evFooter();
   box.innerHTML=html;
+
+  // Conditions on the front door. A referee standing in a car park at 7:40
+  // wants to know it is 62 and the fields are open before they want to know
+  // anything else. Only shown for a live event, because a forecast for a
+  // tournament eleven days out is decoration.
+  if (live.length === 1) evPickWeather(live[0]);
 }
 
 function fmtRange(a,b){
@@ -4426,7 +4542,7 @@ try {
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.08.25-k';
+var PAGE_VERSION='2026.08.25-l';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
