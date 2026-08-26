@@ -435,7 +435,14 @@
     var venues = t.venues || [];
     return {
       id: t.id, path: t.id,
-      shield: String(t.name || t.id).replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase(),
+      // GAME_PREFIX first. Deanna already fills it, it is already three or
+      // four letters, and it is already the event's shorthand -- COS, PCA,
+      // APC. Falling straight to the name gave "Colorado Rush - Rush COS
+      // 7v7 Invitational" the shield COL, which is not what anybody calls
+      // it. Short id next, then the name as a last resort.
+      shield: String(t.prefix || '').toUpperCase().slice(0, 4) ||
+              String(t.id || '').toUpperCase().slice(0, 3) ||
+              String(t.name || '?').replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase(),
       name: t.name || t.id, full: t.name || t.id,
       subtitle: t.blurb || 'Colorado Soccer Association',
       accent: t.accent || '#7FB8DE',
@@ -532,7 +539,7 @@
   var EVENT = R.event || NEUTRAL;
 
   window.JAR = {
-    VERSION: '2026.08.25-b',
+    VERSION: '2026.08.25-c',
 
     // ── CREST, the rest of the programme ──
     // Taken from coloradoreferee.github.io, the site that lists every tool.
