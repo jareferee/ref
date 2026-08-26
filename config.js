@@ -450,7 +450,13 @@
       weatherPlace: venues[0] || '',
       dates: dates, daylbl: lbl, venues: venues,
       hqVenues: [], hqFields: [], trim: [], logos: [], refInfo: [],
-      divisionOrder: [], adopted: true
+      divisionOrder: [],
+      // The tick boxes Deanna sets in the Command Center. These drove the
+      // GCC dashboard tiles and nothing else -- the referee hub never read
+      // them, so turning Scoreboard off still left a Live scores link on
+      // every referee's phone.
+      tools: (t.tools || []).map(function (x) { return String(x).toLowerCase().trim(); }),
+      adopted: true
     };
   }
 
@@ -538,8 +544,24 @@
   var R = resolve();
   var EVENT = R.event || NEUTRAL;
 
+  // A config block is branding; the sheet is the source of truth for what
+  // is switched on. Where the picker handed a row over, its tools win, so
+  // an event with a hand-written block still respects the tick boxes.
+  try {
+    var rowRaw = localStorage.getItem('jar-event-row');
+    if (rowRaw && EVENT && EVENT.id) {
+      var rw = JSON.parse(rowRaw);
+      if (rw && String(rw.id).toLowerCase() === String(EVENT.id).toLowerCase()) {
+        if (rw.tools && rw.tools.length) {
+          EVENT.tools = rw.tools.map(function (x) { return String(x).toLowerCase().trim(); });
+        }
+        if (!EVENT.venues || !EVENT.venues.length) EVENT.venues = rw.venues || [];
+      }
+    }
+  } catch (e) {}
+
   window.JAR = {
-    VERSION: '2026.08.25-c',
+    VERSION: '2026.08.25-e',
 
     // ── CREST, the rest of the programme ──
     // Taken from coloradoreferee.github.io, the site that lists every tool.
@@ -555,6 +577,9 @@
     // rather than guessing, which is the whole point of a front door.
     resolved: !!R.event,
     resolvedFrom: R.from,
+    // The id that was asked for and not found, so the hub can go and look
+    // it up in TOURNAMENTS rather than shrugging at a shared link.
+    asked: R.asked || '',
 
     // Remember a choice, then reload so every page picks it up the same
     // way it would from a path. One code path, not two.

@@ -1068,8 +1068,11 @@ textarea.fin{resize:vertical;line-height:1.5}
 
   <div class="blk">
     <div class="blk-h"><h3>Also here</h3><div class="rule"></div></div>
-    <a class="qrow" href="scoreboard.html" style="text-decoration:none">
+    <a class="qrow" id="hScores" href="scoreboard.html" style="text-decoration:none">
       <b>Live scores</b><i>every division</i><span class="chev">&#8250;</span>
+    </a>
+    <a class="qrow" id="hCards" href="cards.html" style="display:none;text-decoration:none">
+      <b>Print game cards</b><i>and rosters</i><span class="chev">&#8250;</span>
     </a>
     <a class="qrow" id="hLib" href="#" target="_blank" rel="noopener"
        style="display:none;text-decoration:none">
@@ -1535,9 +1538,28 @@ function paintBrand(){
 
   var rap=document.getElementById('hRap');
   if(rap) rap.style.display = EV.rapUrl ? '' : 'none';
+
+  // The tick boxes from the Command Center, honoured here at last.
+  //
+  // TOOLS drove the GCC dashboard tiles and nothing else. The referee hub
+  // had its links hardcoded, so switching Scoreboard off still left Live
+  // scores on every referee's phone, and switching Rules on did nothing
+  // unless somebody also wrote a rulesUrl into config.js.
+  //
+  // An event with no TOOLS at all shows everything, because a blank column
+  // means "not configured yet", not "turn the hub off".
   var rul=document.getElementById('hRules');
-  if(rul){ rul.style.display = EV.rulesUrl ? '' : 'none';
-           if(EV.rulesUrl) rul.setAttribute('href', EV.rulesUrl); }
+  if(rul){
+    var showRules = hasTool('rules') || !!EV.rulesUrl;
+    rul.style.display = showRules ? '' : 'none';
+    // A tournament's own rules page when it has one, otherwise the shared
+    // page the tool switch turns on.
+    rul.setAttribute('href', EV.rulesUrl || 'rules.html');
+  }
+  var sb=document.getElementById('hScores');
+  if(sb) sb.style.display = hasTool('scoreboard') ? '' : 'none';
+  var cards=document.getElementById('hCards');
+  if(cards) cards.style.display = hasTool('cards') ? '' : 'none';
 
   paintWatermark();
   hideBrokenMarks();
@@ -1659,6 +1681,29 @@ function evFooter(){
         '<span class="evgo">&rsaquo;</span></a>';
     }).join('')+
   '</div>';
+}
+
+// Someone opened ?e=<id> for an event config.js does not carry. Fetch the
+// TOURNAMENTS row, adopt it, and reload into it. One extra round trip on
+// first open only; after that the row is stored.
+function adoptAsked(id){
+  var box=document.getElementById('evList');
+  if(box) box.innerHTML='<div class="empty">Opening\u2026</div>';
+  api('tournaments',{}).then(function(r){
+    if(!r||r.status!=='ok'||!r.data) return loadEventPick();
+    var hit=null;
+    r.data.forEach(function(t){
+      if(String(t.id).toLowerCase()===String(id).toLowerCase()) hit=t;
+    });
+    if(!hit){
+      // Asked for something that does not exist. Say so rather than
+      // silently showing a list, so a wrong link is obvious.
+      if(box) box.innerHTML='<div class="empty"><b>No tournament called '+
+        esc(id)+'</b>Check the link, or pick from the list below.</div>';
+      return loadEventPick();
+    }
+    if(window.JAR&&JAR.setEvent) JAR.setEvent(hit.id, true, hit);
+  }).catch(function(){ loadEventPick(); });
 }
 
 function needEventPick(){
@@ -3562,6 +3607,18 @@ function partOfDay(){
 }
 function firstName(n){ return String(n||'').trim().split(/\s+/)[0] || 'referee'; }
 
+// Is a tool switched on for this event?
+//
+// No TOOLS column filled in means everything shows. A blank cell is an
+// event nobody has configured yet, not an event with the hub switched off,
+// and defaulting to hiding things would make a brand new tournament look
+// broken on the Saturday somebody first opened it.
+function hasTool(name){
+  var t=(EV.tools||[]);
+  if(!t.length) return true;
+  return t.indexOf(String(name).toLowerCase())>=0;
+}
+
 function toggleSpent(){
   var b=document.getElementById('spentBody');
   var on=b.classList.toggle('on');
@@ -4572,6 +4629,16 @@ try {
   if (needEventPick()) {
     show('s-event');
     loadEventPick();
+    // ...unless a specific event was ASKED for and simply is not in
+    // config.js. That is a shared link to a tournament Deanna built in
+    // the Command Center, and it must work on a phone that has never
+    // opened this hub before.
+    //
+    // localStorage cannot help here -- the row only lands there when the
+    // picker is tapped, so the link worked for whoever built it and for
+    // nobody else. The fix is to go and ask the sheet.
+    var asked = (window.JAR && JAR.resolvedFrom === 'unknown' && JAR.asked) || '';
+    if (asked) adoptAsked(asked);
   }
 } catch(e) { }
 
@@ -4582,7 +4649,7 @@ try {
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.08.25-m';
+var PAGE_VERSION='2026.08.25-o';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
