@@ -306,8 +306,10 @@ body::after{
 .stat.tap i{color:#F0A897}
 .stat.tap.on{background:rgba(196,71,47,.32);border-color:var(--flag)}
 .crew{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
-.cw{font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:99px;
-  border:1px solid rgba(127,184,222,.24);color:var(--steel)}
+/* Was 10px --steel, which is the size and contrast Eric could not read in
+   the sun. These are names a coordinator matches against a face. */
+.cw{font-family:var(--mono);font-size:11.5px;padding:4px 9px;border-radius:99px;
+  border:1px solid rgba(127,184,222,.24);color:var(--ice-pale)}
 .cw.in{border-color:rgba(79,168,122,.5);color:var(--go);background:rgba(79,168,122,.09)}
 
 /* completed games collapse to the bottom */
@@ -337,6 +339,29 @@ body::after{
 .os-p.in{color:var(--go);border-color:rgba(79,168,122,.45)}
 .os-p i{font-style:normal;font-family:var(--mono);font-size:10px;color:var(--steel)}
 .os-none{font-size:12.5px;color:var(--steel)}
+/* Crew chips. Three states, and the two that need chasing look like it.
+   in      = checked in, done
+   waiting = assigned, not here yet
+   open    = nobody assigned at all */
+.cw.waiting{color:var(--caution);border-color:rgba(224,162,43,.45)}
+.cw.open{color:var(--caution);border-color:rgba(224,162,43,.55);
+  border-style:dashed;background:rgba(224,162,43,.08)}
+.cw.open i{font-style:normal;opacity:.75}
+.sorttabs{display:flex;align-items:center;gap:7px;margin:8px 0 2px}
+.sorttabs>span{font-family:var(--mono);font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--steel);margin-right:2px}
+.sorttabs button{appearance:none;cursor:pointer;background:transparent;
+  border:1.5px solid rgba(127,184,222,.24);color:var(--ice-pale);
+  border-radius:99px;padding:6px 13px;font-size:12.5px;font-family:var(--body)}
+.sorttabs button[aria-pressed="true"]{background:rgba(127,184,222,.16);
+  border-color:rgba(127,184,222,.55);color:var(--ice)}
+.segrow{display:flex;gap:7px;flex-wrap:wrap}
+.segrow button{appearance:none;cursor:pointer;background:rgba(9,25,40,.6);
+  border:1.5px solid rgba(127,184,222,.28);color:var(--ice-pale);
+  border-radius:10px;padding:11px 14px;font-size:14px;font-family:var(--body);
+  flex:1;min-width:96px;min-height:48px}
+.segrow button[aria-pressed="true"]{background:var(--ice);color:var(--slate);
+  border-color:var(--ice);font-weight:700}
 .spent-h{display:flex;align-items:center;gap:11px;margin:22px 0 9px;cursor:pointer;
   width:100%;text-align:left;appearance:none;
   background:rgba(23,51,75,.55);border:1.5px solid rgba(127,184,222,.28);
@@ -970,6 +995,11 @@ textarea.fin{resize:vertical;line-height:1.5}
       placeholder="Search game number, referee, team or player"
       oninput="onStaffSearch(this.value)">
   </div>
+  <div class="sorttabs" id="sortTabs">
+    <span>Order</span>
+    <button data-s="time"  aria-pressed="true"  onclick="setSort('time')">By time</button>
+    <button data-s="field" aria-pressed="false" onclick="setSort('field')">By field</button>
+  </div>
   <div class="vtabs" id="staffSites" style="display:none"></div>
   <div id="staffBody"></div>
 </div>
@@ -1162,7 +1192,29 @@ textarea.fin{resize:vertical;line-height:1.5}
                     color:var(--steel);margin-bottom:6px">Where are you?</div>
         <select id="sosVenue" class="fin"></select>
       </div>
-      <div style="margin-bottom:13px">
+      <!-- Medical only. Two pickers instead of a keyboard.
+           A referee is not a clinician and must never be asked to say what
+           is wrong with somebody. Typing "possible concussion" writes a
+           diagnosis into a permanent record, made by an untrained person
+           under pressure, and it shapes how the trainer arrives before
+           they have seen the player. All the referee answers is what they
+           can see from where they are standing. -->
+      <div id="sosMed" style="display:none;margin-bottom:13px">
+        <div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;
+                    color:var(--steel);margin-bottom:6px">Which team</div>
+        <div class="segrow" id="sosTeam"></div>
+        <div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;
+                    color:var(--steel);margin:11px 0 6px">Where are they</div>
+        <div class="segrow" id="sosWhere">
+          <button type="button" onclick="pickSos('sosWhere',this)">On the field</button>
+          <button type="button" onclick="pickSos('sosWhere',this)">On the bench</button>
+          <button type="button" onclick="pickSos('sosWhere',this)">Off the field</button>
+        </div>
+        <div class="hint" style="margin-top:7px">Do not say what the injury is.
+          You are calling for help, not making a diagnosis.</div>
+      </div>
+
+      <div id="sosDetailWrap" style="margin-bottom:13px">
         <div id="sosDetailLbl" style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;
                     color:var(--steel);margin-bottom:6px">In a few words &mdash; optional</div>
         <textarea id="sosDetail" class="fin" rows="2" maxlength="200"
@@ -2228,14 +2280,46 @@ function renderStats(s){
     s={ games:b.length, refsCheckedIn:inn, refsTotal:tot, reported:rep, noCrew:noCrew };
   }
 
+  // Every box that describes a subset of the board is now a filter.
+  //
+  // They already looked like buttons, which is why Eric tried to press
+  // them. Only "no crew" did anything; the rest were decoration that
+  // invited a tap and ignored it. A coordinator who can see "0/21 checked
+  // in" wants the twenty-one, and the number was the obvious place to ask.
+  var box = function(key, val, label, warn){
+    var on = S.only === key;
+    var live = !!key;
+    return '<div class="stat'+(warn?' warn':'')+(live?' tap':'')+(on?' on':'')+'"'+
+      (live?' onclick="setOnly(\''+key+'\')"':'')+'>'+
+      '<b>'+val+'</b><i>'+label+(live?' '+(on?'\u2715':'\u203a'):'')+'</i></div>';
+  };
+
   document.getElementById('staffStats').innerHTML=
-    '<div class="stat"><b>'+s.games+'</b><i>games</i></div>'+
-    '<div class="stat"><b>'+s.refsCheckedIn+'/'+s.refsTotal+'</b><i>checked in</i></div>'+
-    '<div class="stat'+(s.reported?' warn':'')+'"><b>'+s.reported+'</b><i>to confirm</i></div>'+
-    (s.noCrew
-      ? '<div class="stat tap'+(S.noCrewOnly?' on':'')+'" onclick="toggleNoCrew()">'+
-          '<b>'+s.noCrew+'</b><i>no crew '+(S.noCrewOnly?'\u2715':'\u203a')+'</i></div>'
-      : '<div class="stat"><b>0</b><i>no crew</i></div>');
+    box('',        s.games, 'games') +
+    box(s.refsTotal > s.refsCheckedIn ? 'notin' : '',
+        s.refsCheckedIn+'/'+s.refsTotal, 'checked in') +
+    box(s.reported ? 'confirm' : '', s.reported, 'to confirm', !!s.reported) +
+    box(s.noCrew ? 'nocrew' : '', s.noCrew || 0, 'no crew');
+}
+
+// One filter at a time. Tapping the active one clears it.
+//
+// Replaces toggleNoCrew, which is kept as a wrapper so nothing calling the
+// old name breaks mid-tournament.
+function setOnly(key){
+  S.only = (S.only === key) ? '' : key;
+  S.noCrewOnly = (S.only === 'nocrew');      // legacy flag, still read below
+  if(S.only){
+    S.site='all';
+    S.q='';
+    var box=document.getElementById('staffSearch'); if(box) box.value='';
+    if(S.view!=='games'){ S.view='games';
+      document.querySelectorAll('#vtabs button').forEach(function(b){
+        b.setAttribute('aria-pressed', b.textContent.toLowerCase().indexOf('games')>=0);
+      });
+    }
+  }
+  renderStats(); renderStaff();
 }
 
 function rosterHref(g){
@@ -2607,7 +2691,9 @@ function gameWindow(g){ return gameLen(g) + POST_GRACE_; }
 
 // Show only the games nobody is assigned to. Clears the venue chip and the
 // search box, because the whole point is to stop hunting.
-function toggleNoCrew(){
+function toggleNoCrew(){ setOnly('nocrew'); }
+
+function _legacyToggleNoCrew_unused(){
   S.noCrewOnly = !S.noCrewOnly;
   if(S.noCrewOnly){
     S.site='all';
@@ -2805,7 +2891,10 @@ function renderStaff(){
   if(S.site!=='all') staffSlots=staffSlots.filter(function(g){ return String(g.venue||'')===S.site; });
   if(S.site!=='all') board=board.filter(function(g){ return String(g.venue||'')===S.site; });
   if(S.q) board=board.filter(function(g){ return matchQ(gameHay(g)); });
-  if(S.noCrewOnly) board=board.filter(function(g){ return !(g.crew||[]).length; });
+  if(S.only==='nocrew')  board=board.filter(function(g){ return !(g.crew||[]).length; });
+  if(S.only==='confirm') board=board.filter(function(g){ return g.scoreStatus==='Reported'; });
+  if(S.only==='notin')   board=board.filter(function(g){
+    return (g.crew||[]).some(function(c){ return !c.checkedIn; }); });
   renderSelfCheckin();
 
   var live=board.filter(function(g){ return !isSpent(g); });
@@ -2815,15 +2904,25 @@ function renderStaff(){
   var pastDay = S.date < today();
 
   if(!board.length){
-    el.innerHTML = S.noCrewOnly
+    var cleared = {
+      nocrew:  '<div class="empty"><b>Every game has a crew</b>Nothing left to assign today.</div>',
+      confirm: '<div class="empty"><b>Nothing waiting</b>Every posted score has been confirmed.</div>',
+      notin:   '<div class="empty"><b>Everybody is in</b>Every referee on the board has checked in.</div>'
+    }[S.only];
+    el.innerHTML = cleared
+      ? cleared
+      : S.noCrewOnly
       ? '<div class="empty"><b>Every game has a crew</b>Nothing left to assign today.</div>'
       : S.q ? noHits('games')
       : '<div class="empty"><b>Nothing at '+esc((window.JAR&&JAR.short)?JAR.short(S.site):S.site)+
         '</b>No games at this site today.</div>'; return; }
 
-  if(S.noCrewOnly){
-    el.innerHTML='<div class="hint" style="margin-bottom:12px">Showing only games with '+
-      'nobody assigned. Tap the red <b>no crew</b> box again for the full board.</div>';
+  if(S.only){
+    var what = { nocrew:'games with nobody assigned',
+                 confirm:'games with a score waiting to be confirmed',
+                 notin:'games with a referee who has not checked in' }[S.only] || '';
+    el.innerHTML='<div class="hint" style="margin-bottom:12px">Showing only '+what+
+      '. Tap the box again for the full board.</div>';
   } else { el.innerHTML=''; }
 
   el.innerHTML += onSiteHtml(staffSlots);
@@ -2832,7 +2931,12 @@ function renderStaff(){
   live.forEach(function(g){ (byVenue[g.venue]=byVenue[g.venue]||[]).push(g); });
 
   var html=Object.keys(byVenue).sort().map(function(v){
-    var gs=byVenue[v].slice().sort(function(a,b){return mins(a.time)-mins(b.time);});
+    // Time by default, which is right most of the time. Field order is for
+    // a complex like DSGP or Stenger, where a coordinator walks the site
+    // rather than the clock -- and where searching "10" for field 10 also
+    // returns every game numbered 100 to 109 and every 2010 birth year.
+    var gs=byVenue[v].slice().sort(S.sortBy==='field' ? byField_ : function(a,b){
+      return mins(a.time)-mins(b.time); });
     return '<div class="sec"><div class="sec-h"><h3>'+esc(v)+'</h3>'+
       '<div class="rule"></div><span class="n">'+gs.length+'</span></div>'+
       gs.map(function(g){ return staffRow(g,caps,false,pastDay); }).join('')+'</div>';
@@ -2920,6 +3024,30 @@ function onSiteHtml(slots){
     '<h3>On site</h3><div class="rule"></div>'+
     (sbTotal?'<span class="n">'+sbIn+'/'+sbTotal+' standby in</span>':'')+
     '</div>'+body+'</div>';
+}
+
+// Natural field order: Field 2 before Field 10, and 05A before 05B.
+function byField_(a,b){
+  var pa=fieldKey_(a.field), pb=fieldKey_(b.field);
+  if(pa.n!==pb.n) return pa.n-pb.n;
+  if(pa.s!==pb.s) return pa.s<pb.s?-1:1;
+  return mins(a.time)-mins(b.time);
+}
+function fieldKey_(f){
+  var t=String(f||'');
+  var m=/(\d+)\s*([A-Za-z]?)/.exec(t);
+  // No number at all sorts last rather than first, so "Championship Turf"
+  // does not sit above Field 1.
+  return { n: m?parseInt(m[1],10):9999, s: m?(m[2]||'').toUpperCase():t.toUpperCase() };
+}
+
+function setSort(v){
+  S.sortBy = v;
+  try{ localStorage.setItem('gcc-sort', v); }catch(e){}
+  document.querySelectorAll('#sortTabs button').forEach(function(b){
+    b.setAttribute('aria-pressed', b.getAttribute('data-s')===v);
+  });
+  renderStaff();
 }
 
 function toggleSpent(){
@@ -3031,9 +3159,38 @@ function staffRow(g,caps,spent,locked){
             : g.scoreStatus==='Reported' ? '<span class="gm-badge out">Needs confirm</span>'
             : '';
   var score = g.scoreStatus ? '<span class="gm-score">'+g.homeScore+' – '+g.awayScore+'</span>' : '';
-  var crew = (g.crew||[]).map(function(c){
-    return '<span class="cw'+(c.checkedIn?' in':'')+'">'+esc(c.pos)+' '+esc(c.name)+'</span>';
-  }).join('') || '<span class="cw">no crew assigned</span>';
+  // Crew shown by POSITION, always all three, with the empty ones named.
+  //
+  // Before this a short crew simply had fewer chips, so a coordinator had
+  // to know that CR, AR1, AR2 was the full set and work out which was
+  // missing by its absence. Eric asked for the hole to be obvious rather
+  // than deduced. An unfilled slot is now an amber chip that says AR2, and
+  // a referee who has not checked in is amber too -- assigned but not here
+  // yet is a different state from not assigned at all, and both need
+  // chasing before kickoff.
+  var byPos = {};
+  (g.crew||[]).forEach(function(c){
+    var k = String(c.pos||'').toUpperCase().trim();
+    if(k) byPos[k] = c; else (byPos.__extra = byPos.__extra || []).push(c);
+  });
+  var wanted = ['CR','AR1','AR2'];
+  var crew = wanted.map(function(pos){
+    var c = byPos[pos];
+    if(!c) return '<span class="cw open">'+pos+' <i>open</i></span>';
+    return '<span class="cw'+(c.checkedIn?' in':' waiting')+'">'+
+             esc(pos)+' '+esc(c.name)+'</span>';
+  }).join('');
+  // Anything Assignr sent that is not one of the three, a fourth official
+  // or a slot with no position, still shows rather than disappearing.
+  (byPos.__extra||[]).forEach(function(c){
+    crew += '<span class="cw'+(c.checkedIn?' in':' waiting')+'">'+esc(c.name)+'</span>';
+  });
+  Object.keys(byPos).forEach(function(k){
+    if(k==='__extra' || wanted.indexOf(k)>=0) return;
+    var c=byPos[k];
+    crew += '<span class="cw'+(c.checkedIn?' in':' waiting')+'">'+
+              esc(k)+' '+esc(c.name)+'</span>';
+  });
 
   var acts='';
   if(caps.confirmScore && !ro){
@@ -3530,9 +3687,52 @@ function openSos(){
   if (ni) ni.value = known;
   if (nb) nb.style.display = known ? 'none' : 'block';
 
+  // Team buttons carry the actual club names when we know the game, so a
+  // referee taps a name rather than translating home and away under
+  // pressure. Kit colour would be better still and Assignr does not carry
+  // it -- if it ever does, it belongs here.
+  var tw = document.getElementById('sosTeam');
+  if (tw) {
+    tw.innerHTML = g
+      ? '<button type="button" onclick="pickSos(\'sosTeam\',this)">'+esc(g.home)+'</button>'+
+        '<button type="button" onclick="pickSos(\'sosTeam\',this)">'+esc(g.away)+'</button>'
+      : '<button type="button" onclick="pickSos(\'sosTeam\',this)">Home</button>'+
+        '<button type="button" onclick="pickSos(\'sosTeam\',this)">Away</button>';
+  }
+  ['sosTeam','sosWhere'].forEach(function(id){
+    var w=document.getElementById(id); if(!w) return;
+    Array.prototype.forEach.call(w.querySelectorAll('button'), function(b){
+      b.setAttribute('aria-pressed','false');
+    });
+  });
+  showMedical(false);
+
   SOS_NUDGED = {};
   sosNudge('');
   document.getElementById('sosBg').classList.add('on');
+}
+
+// One choice per row.
+function pickSos(wrapId, btn){
+  var w = document.getElementById(wrapId); if(!w) return;
+  Array.prototype.forEach.call(w.querySelectorAll('button'), function(b){
+    b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');
+  });
+  sosNudge('');
+}
+function sosPicked(wrapId){
+  var w = document.getElementById(wrapId); if(!w) return '';
+  var hit = w.querySelector('button[aria-pressed="true"]');
+  return hit ? hit.textContent.trim() : '';
+}
+
+// Medical swaps the free-text box for the two pickers. The box is not
+// hidden as decoration -- it is removed so nobody types an injury into it.
+function showMedical(on){
+  var m = document.getElementById('sosMed');
+  var d = document.getElementById('sosDetailWrap');
+  if (m) m.style.display = on ? 'block' : 'none';
+  if (d) d.style.display = on ? 'none' : 'block';
 }
 
 // One nudge per reason, never a block. A referee who taps the same button
@@ -3568,6 +3768,30 @@ function sendSos(reason){
   var typed =((document.getElementById('sosName')  ||{}).value||'').trim();
   var who = S.refName || (S.staff && S.staff.name) || typed;
 
+  // Medical: pickers first, then ONE text.
+  //
+  // The referee walks to their phone, taps Help, taps Medical, taps which
+  // team and where. Three or four seconds, and the trainer's phone buzzes
+  // once with everything on it.
+  //
+  // A previous version sent immediately and then texted again on each
+  // picker tap, on the theory that the referee might be kneeling next to
+  // the player and unable to answer questions. They are not -- they are at
+  // their phone, which is why they were able to press Help at all. That
+  // theory cost the trainer three texts for one injury, which is exactly
+  // the noise this whole system is meant to remove.
+  var isMed = /medical/i.test(reason);
+  if (isMed) {
+    var med = document.getElementById('sosMed');
+    if (med && med.style.display === 'none') {
+      showMedical(true);
+      sosNudge('Which team, and where are they? Then tap Medical again. ' +
+               'Tapping again sends either way.');
+      SOS_NUDGED[reason] = 1;
+      return;
+    }
+  }
+
   // One nudge, naming everything that is missing at once. The second tap
   // of the same button always sends. A referee is never more than one
   // extra tap from help, whatever they have left blank.
@@ -3595,7 +3819,11 @@ function sendSos(reason){
   }
   S.lastSos = { reason: reason, at: nowMs };
 
-  var body={action:'emergency',reason:reason, details:detail,
+  var body={action:'emergency',reason:reason,
+            // Never sent on a medical call. See showMedical.
+            details: isMed ? '' : detail,
+            medTeam:  isMed ? sosPicked('sosTeam')  : '',
+            medWhere: isMed ? sosPicked('sosWhere') : '',
             refName:who||'Unidentified',
             date:S.date,
             venue:venue, field:sameVenue?g.field:'',
@@ -3631,6 +3859,7 @@ function loadWx(){
 }
 
 try{ var saved=localStorage.getItem('jar-ref-'+EVENT); if(saved) S.refName=saved; }catch(e){}
+try{ S.sortBy=localStorage.getItem('gcc-sort')||'time'; }catch(e){ S.sortBy='time'; }
 loadWx();
 setInterval(function(){ if(!idle()) loadWx(); },10*60*1000);
 
@@ -3841,7 +4070,7 @@ try {
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.08.25-b';
+var PAGE_VERSION='2026.08.25-f';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
