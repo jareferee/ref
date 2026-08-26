@@ -477,7 +477,17 @@
   var EVENT = R.event || NEUTRAL;
 
   window.JAR = {
-    VERSION: '2026.08.20-d',
+    VERSION: '2026.08.25-a',
+
+    // ── CREST, the rest of the programme ──
+    // Taken from coloradoreferee.github.io, the site that lists every tool.
+    // Not invented: the hub renders a link only when the address is set
+    // here, so a guess would have 404'd in front of a first-year referee
+    // rather than failing quietly.
+    CREST_URL:   'https://coloradoreferee.github.io',
+    LIBRARY_URL: 'https://coloradoreferee.github.io/CREST_Reference',
+    ACADEMY_URL: 'https://coloradoreferee.github.io/CREST_Academy',
+    CSA_URL:     'https://www.coloradosoccer.org',
 
     // False on /ref/ with nothing chosen yet. The hub shows its picker
     // rather than guessing, which is the whole point of a front door.

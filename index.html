@@ -76,14 +76,18 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 
 /* Event watermark. Painted at runtime from JAR.EVENT -- the crest when
    the event supplies one, otherwise a shield drawn in the accent colour. */
+/* Anchored near the top, not centred on the viewport. Centred, it landed
+   in the dead space BELOW the cards on any tall screen -- a giant crest
+   floating in an empty half-page with the version stamp on top of it. It
+   belongs behind the content, not next to it. */
 body::after{
   content:'';position:fixed;z-index:0;pointer-events:none;
-  top:50%;left:50%;transform:translate(-50%,-50%);
-  width:min(88vw,540px);height:min(88vw,540px);
-  background-repeat:no-repeat;background-position:center;background-size:contain;
-  opacity:.05;
+  top:120px;left:50%;transform:translateX(-50%);
+  width:min(70vw,380px);height:min(70vw,380px);
+  background-repeat:no-repeat;background-position:center top;background-size:contain;
+  opacity:.045;
 }
-@media (max-width:520px){ body::after{ opacity:.055 } }
+@media (max-width:520px){ body::after{ top:96px;opacity:.05 } }
 
 /* JAReferee credit */
 .jaref{margin-top:22px;padding:18px 0 4px;text-align:center;
@@ -331,8 +335,8 @@ body::after{
 .onsite .sec-h{margin-bottom:9px}
 .os-k{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-bottom:8px}
 .os-k:last-child{margin-bottom:0}
-.os-k>b{font-family:var(--mono);font-size:10px;letter-spacing:.09em;
-  text-transform:uppercase;color:var(--steel);min-width:112px}
+.os-k>b{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--ice-pale);min-width:116px}
 .os-p{display:inline-flex;align-items:baseline;gap:6px;font-size:13.5px;
   color:var(--ice-pale);background:rgba(9,25,40,.5);
   border:1px solid rgba(127,184,222,.2);border-radius:99px;padding:4px 11px}
@@ -348,8 +352,8 @@ body::after{
   border-style:dashed;background:rgba(224,162,43,.08)}
 .cw.open i{font-style:normal;opacity:.75}
 .sorttabs{display:flex;align-items:center;gap:7px;margin:8px 0 2px}
-.sorttabs>span{font-family:var(--mono);font-size:10px;letter-spacing:.1em;
-  text-transform:uppercase;color:var(--steel);margin-right:2px}
+.sorttabs>span{font-family:var(--mono);font-size:11.5px;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--ice-pale);margin-right:2px}
 .sorttabs button{appearance:none;cursor:pointer;background:transparent;
   border:1.5px solid rgba(127,184,222,.24);color:var(--ice-pale);
   border-radius:99px;padding:6px 13px;font-size:12.5px;font-family:var(--body)}
@@ -366,10 +370,53 @@ body::after{
   border-bottom:1px solid rgba(127,184,222,.14)}
 .nt-row:last-child{border-bottom:0}
 .nt-row b{display:block;font-size:15px;color:var(--snow)}
-.nt-meta{display:block;font-family:var(--mono);font-size:11px;color:var(--steel);margin-top:2px}
+.nt-meta{display:block;font-family:var(--mono);font-size:12.5px;color:var(--ice-pale);margin-top:3px}
 .nt-x{appearance:none;cursor:pointer;margin-left:auto;background:transparent;
   color:#F0A897;border:1.5px solid rgba(196,71,47,.45);border-radius:8px;
   padding:8px 12px;font-size:12.5px;font-family:var(--body);min-height:40px}
+
+/* ── START OF DAY ──
+   The CSA gold from the Reference Library, so a referee moving between the
+   hub and the library is obviously in the same programme. Kept to this
+   block; the rest of the hub stays on the event's own accent, because
+   Arsenal Cup and UC Health should not look identical. */
+.sod{--crest:#F5C842;--crest-dim:rgba(245,200,66,.35);
+  background:linear-gradient(160deg,rgba(27,47,85,.55),rgba(13,21,37,.55));
+  border:1px solid var(--crest-dim);border-radius:16px;padding:18px 17px;margin-bottom:14px}
+.sod-hi{font-family:var(--disp);font-weight:900;font-size:25px;letter-spacing:.02em;
+  line-height:1.05}
+.sod-sub{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ice-pale);margin:4px 0 15px}
+.sod-step{display:flex;gap:12px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.14)}
+.sod-step:last-of-type{border-bottom:0}
+.sod-n{flex:0 0 28px;height:28px;border-radius:50%;background:rgba(9,25,40,.6);
+  border:1px solid rgba(127,184,222,.22);display:flex;align-items:center;justify-content:center;
+  font-family:var(--disp);font-weight:900;font-size:14px;color:var(--steel)}
+.sod-step.done .sod-n{background:var(--go);border-color:var(--go);color:#0b1a10}
+.sod-step.now  .sod-n{background:var(--crest);border-color:var(--crest);color:#1a1204}
+.sod-b{flex:1;min-width:0}
+.sod-b h4{margin:0;font-family:var(--disp);font-weight:900;font-size:17px;letter-spacing:.03em}
+.sod-step.done .sod-b h4{color:var(--steel);text-decoration:line-through}
+.sod-b p{margin:4px 0 0;font-size:14.5px;line-height:1.5;color:var(--ice-pale)}
+.sod-go{display:inline-block;margin-top:10px;background:var(--crest);color:#1a1204;
+  text-decoration:none;border-radius:10px;padding:11px 18px;font-family:var(--disp);
+  font-weight:900;font-size:16px;letter-spacing:.05em;min-height:44px;line-height:22px}
+.sod-lnk{display:inline-block;margin:9px 8px 0 0;font-size:14px;color:var(--crest);
+  text-decoration:none;border:1.5px solid var(--crest-dim);border-radius:9px;
+  padding:10px 13px;min-height:42px;line-height:20px}
+.sod-help{display:flex;gap:11px;align-items:flex-start;margin-top:15px;
+  background:rgba(196,71,47,.1);border:1px solid rgba(196,71,47,.38);
+  border-radius:11px;padding:12px 14px}
+.sod-help::before{content:"\1F6A8";font-size:18px;line-height:1.2}
+.sod-help b{display:block;font-family:var(--disp);font-weight:900;font-size:16px;
+  letter-spacing:.02em;color:#FFB3B8}
+.sod-help p{margin:2px 0 0;font-size:13.5px;line-height:1.5;color:var(--ice-pale)}
+
+/* A, once they are working: the kickoff time is the biggest thing on the
+   screen and everything else gets out of its way. */
+.next-when b{font-size:40px!important}
+.next .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ice)}
 .spent-h{display:flex;align-items:center;gap:11px;margin:22px 0 9px;cursor:pointer;
   width:100%;text-align:left;appearance:none;
   background:rgba(23,51,75,.55);border:1.5px solid rgba(127,184,222,.28);
@@ -788,22 +835,47 @@ textarea.fin{resize:vertical;line-height:1.5}
 .evh{font-family:var(--disp);font-weight:800;font-size:11px;letter-spacing:.19em;
   text-transform:uppercase;color:var(--steel);margin:20px 0 8px}
 .evh:first-child{margin-top:6px}
-.evcard{display:flex;align-items:center;gap:13px;width:100%;text-align:left;
-  appearance:none;cursor:pointer;margin-bottom:9px;
-  background:rgba(23,51,75,.5);border:1.5px solid rgba(127,184,222,.2);
-  border-radius:13px;padding:14px 15px;color:inherit;transition:.15s;min-height:66px}
-.evcard:hover{border-color:rgba(127,184,222,.5);background:rgba(31,66,96,.55)}
-.evcard.live{border-color:rgba(79,168,122,.45)}
-.evsh{flex:0 0 auto;width:44px;height:52px;display:flex;align-items:center;justify-content:center;
-  border:1.5px solid var(--steel);border-radius:6px 6px 20px 20px/6px 6px 30px 30px;
-  font-family:var(--disp);font-weight:900;font-size:12px;letter-spacing:.04em;
-  background:rgba(9,25,40,.5)}
+/* ── EVENT CARDS ──
+   Was a flat row with the accent only on the shield outline, so three
+   tournaments read as three identical grey bars. The accent now runs the
+   left edge, which is the one place a colour is visible at arm's length in
+   the sun without tinting the text. */
+.evcard{display:flex;align-items:center;gap:14px;width:100%;text-align:left;
+  appearance:none;cursor:pointer;background:rgba(23,51,75,.5);
+  border:1px solid rgba(127,184,222,.2);border-left:5px solid var(--ev,#7FB8DE);
+  border-radius:14px;padding:15px 16px;margin-bottom:10px;color:inherit;
+  transition:transform .08s,border-color .15s,background .15s}
+.evcard:hover{border-color:rgba(127,184,222,.5);background:rgba(31,66,96,.6)}
+.evcard:active{transform:scale(.995)}
+.evcard.live{background:linear-gradient(100deg,rgba(79,168,122,.16),rgba(23,51,75,.5) 55%);
+  border-color:rgba(79,168,122,.5)}
+.evsh{flex:0 0 auto;width:46px;height:54px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--disp);font-weight:900;font-size:14px;letter-spacing:.06em;
+  border:2px solid var(--ev,#7FB8DE);color:var(--ev,#7FB8DE);border-radius:9px 9px 16px 16px;
+  background:rgba(9,25,40,.45)}
 .evtx{flex:1 1 auto;min-width:0}
-.evtx b{display:block;font-family:var(--disp);font-weight:900;font-size:19px;
-  letter-spacing:.03em;text-transform:uppercase;line-height:1.1}
-.evtx i{display:block;font-style:normal;font-size:12.5px;color:var(--steel);margin-top:2px;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.evgo{flex:0 0 auto;color:var(--ice);font-size:24px;line-height:1}
+.evtx b{display:block;font-family:var(--disp);font-weight:900;font-size:21px;
+  letter-spacing:.02em;line-height:1.1}
+.evtx i{display:block;font-style:normal;font-size:13.5px;color:var(--ice-pale);margin-top:4px;
+  line-height:1.4}
+.evtx .when{font-family:var(--mono);font-size:11.5px;letter-spacing:.05em;color:var(--ice)}
+.evlive{display:inline-flex;align-items:center;gap:6px;font-family:var(--disp);font-weight:900;
+  font-size:12px;letter-spacing:.14em;color:var(--go);text-transform:uppercase}
+.evlive::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--go);
+  animation:evpulse 1.8s ease-in-out infinite}
+@keyframes evpulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.8)}}
+.evgo{flex:0 0 auto;color:var(--ice);font-size:26px;line-height:1}
+.evfoot{margin-top:26px;padding-top:4px}
+.evlink{display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit;
+  background:rgba(23,51,75,.32);border:1px solid rgba(127,184,222,.14);
+  border-radius:13px;padding:14px 16px;margin-bottom:9px;min-height:64px}
+.evlink:hover{border-color:rgba(127,184,222,.4);background:rgba(31,66,96,.45)}
+.evlink .ic{font-size:21px;line-height:1;flex:0 0 auto;width:30px;text-align:center}
+.evlink .tx{flex:1 1 auto;min-width:0}
+.evlink .tx b{display:block;font-family:var(--disp);font-weight:900;font-size:17px;
+  letter-spacing:.02em}
+.evlink .tx i{display:block;font-style:normal;font-size:13px;color:var(--ice-pale);
+  margin-top:2px;line-height:1.4}
 
 /* ══ DESKTOP, STAFF ONLY ══════════════════════════════════
    A referee uses this one-handed at a field, so 660px is right for them
@@ -1419,6 +1491,53 @@ function setTxt(id, v){ var el=document.getElementById(id); if(el) el.textConten
 
    The list comes from TOURNAMENTS, not from config.js, so an event
    Deanna adds on Friday appears without anyone shipping a file. */
+// How far off, in the words a referee would use. Anything past a fortnight
+// falls back to the date, because "in 34 days" is not information.
+function untilText(startDate){
+  var d = daysUntil(startDate);
+  if (d <= 0)  return 'Today';
+  if (d === 1) return 'Tomorrow';
+  if (d < 7)   return 'This ' + weekdayOf(startDate);
+  if (d < 14)  return 'Next ' + weekdayOf(startDate);
+  return 'In ' + d + ' days';
+}
+function daysUntil(dateStr){
+  try{
+    var a = new Date(todayStr()+'T12:00:00');
+    var b = new Date(String(dateStr)+'T12:00:00');
+    return Math.round((b-a)/86400000);
+  }catch(e){ return 999; }
+}
+function weekdayOf(dateStr){
+  try{
+    return ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][
+      new Date(String(dateStr)+'T12:00:00').getDay()];
+  }catch(e){ return ''; }
+}
+
+// Everything a referee might want from the hub on a day they are not
+// working a tournament. Only real links -- an entry appears when the
+// address is configured and not otherwise.
+function evFooter(){
+  var rows=[];
+  var lib=(window.JAR&&JAR.LIBRARY_URL)||'';
+  var csa=(window.JAR&&JAR.CSA_URL)||'';
+  if(lib) rows.push(['\uD83D\uDCD6','Reference Library','Laws, fees, uniform, procedures. Works offline.',lib]);
+  if(csa) rows.push(['\uD83C\uDFDB','Colorado Soccer Association','Registration, certification, the state office.',csa]);
+  rows.push(['\uD83D\uDCC5','Your Assignr schedule','League games and anything not in a tournament.',
+             'https://app.assignr.com']);
+
+  return '<div class="evfoot">'+
+    '<div class="evh">Anytime</div>'+
+    rows.map(function(r){
+      return '<a class="evlink" href="'+esc(r[3])+'" target="_blank" rel="noopener">'+
+        '<span class="ic">'+r[0]+'</span>'+
+        '<span class="tx"><b>'+esc(r[1])+'</b><i>'+esc(r[2])+'</i></span>'+
+        '<span class="evgo">&rsaquo;</span></a>';
+    }).join('')+
+  '</div>';
+}
+
 function needEventPick(){
   return !!(window.JAR && JAR.resolved === false);
 }
@@ -1449,8 +1568,12 @@ function renderEventPick(list){
   soon=soon.slice(0,3);
 
   if(!live.length && !soon.length){
+    // Still gets the Anytime links. A blank day is the one time a referee
+    // opening this most needs somewhere to go, and returning early here
+    // handed them an empty screen and a full stop.
     box.innerHTML='<div class="empty"><b>Nothing on today</b>'+
-      'No tournament is running. If you are here for league play, your games are in Assignr.</div>';
+      'No tournament is running. If you are here for league play, your games are in Assignr.</div>'+
+      evFooter();
     return;
   }
 
@@ -1464,11 +1587,17 @@ function renderEventPick(list){
     var accent=(cfg&&cfg.accent)||'#7FB8DE';
     var vs=(t.venues||[]);
     var vtxt=vs.length>3 ? vs.length+' venues' : vs.join(' \u00b7 ');
-    return '<button class="evcard'+(isLive?' live':'')+'" onclick="pickEvent(\''+esc(t.id)+'\')">'+
-      '<span class="evsh" style="border-color:'+esc(accent)+';color:'+esc(accent)+'">'+esc(shield)+'</span>'+
+    // "Aug 29 to Aug 30" does not tell a referee whether that is tomorrow.
+    // The countdown does, and it is the thing they are actually asking.
+    var when = isLive
+      ? '<span class="evlive">Running now</span>'
+      : '<span class="when">'+esc(untilText(t.startDate))+'</span> \u00b7 '+
+        esc(fmtRange(t.startDate,t.endDate));
+    return '<button class="evcard'+(isLive?' live':'')+'" style="--ev:'+esc(accent)+'" '+
+      'onclick="pickEvent(\''+esc(t.id)+'\')">'+
+      '<span class="evsh">'+esc(shield)+'</span>'+
       '<span class="evtx"><b>'+esc(t.name||t.id)+'</b>'+
-        '<i>'+(isLive?'Running now':fmtRange(t.startDate,t.endDate))+
-        (vtxt?' \u00b7 '+esc(vtxt):'')+'</i></span>'+
+        '<i>'+when+(vtxt?'<br>'+esc(vtxt):'')+'</i></span>'+
       '<span class="evgo">&rsaquo;</span></button>';
   };
 
@@ -1479,6 +1608,10 @@ function renderEventPick(list){
   if(soon.length){
     html+='<div class="evh">Coming up</div>'+soon.map(function(t){return card(t,false);}).join('');
   }
+  // The page used to stop here, leaving half a screen of nothing with a
+  // giant crest floating in it. A referee who opens this on a day with no
+  // tournament deserves somewhere to go rather than a dead end.
+  html += evFooter();
   box.innerHTML=html;
 }
 
@@ -1909,9 +2042,27 @@ function renderRef(){
     return !g.scoreStatus && !g.canceled; })[0]||null;
 
   var html='';
+
+  // START OF DAY, until the first check-in.
+  //
+  // Two views of the same day, chosen by where the referee actually is.
+  // Before they have checked in for anything they are standing in a car
+  // park working out what happens next, and a menu is no use -- they need
+  // a sequence. Once the first match is checked in they are working, and
+  // everything except the next kickoff is noise.
+  //
+  // The links in step three matter more than they look. Most of 3,400
+  // grassroots officials are in their first season and a good number are
+  // fourteen. Uniform and Law 12 put in front of them at 07:40 get read.
+  // The same links buried in a library never do.
+  var doneToday = S.myGames.filter(function(g){ return g.checkedIn; }).length;
+  if (next && !doneToday) {
+    html += startOfDay(next);
+  }
+
   if(next){
     var live = mins(next.time)<=now && mins(next.time)+gameLen(next)>=now;
-    html+='<div class="next">'+
+    html+='<div class="next" id="nextcard">'+
       '<div class="k">'+(live?'Happening now':'Up next')+'</div>'+
       '<div class="next-top">'+
         '<div class="pos">'+esc(next.position)+'</div>'+
@@ -3185,6 +3336,76 @@ function removeNotify(i,btn){
   }).catch(function(){ btn.disabled=false; });
 }
 
+/* ── START OF DAY ──
+   Shown until the referee has checked in for something. A sequence, not a
+   menu: what is done, what is next, and the two minutes of reading that
+   save an argument at half time. */
+function startOfDay(next){
+  var arrived = !!(S.checkedInVenue || (S.staff && S.staff.name));
+
+  // NO GUESSED URLS. An earlier version fell back to a made-up address for
+  // the reference library, which would have put three dead links in front
+  // of a first-year referee at the one moment they were going to tap them.
+  // A link that goes nowhere is worse than no link: it teaches somebody
+  // that the tool is broken and they stop trying.
+  //
+  // Set libraryUrl per event in config.js. Until it is set, step three is
+  // not rendered at all.
+  var lib = String(EV.libraryUrl || '').trim();
+  var links = [];
+  if (EV.rulesUrl) links.push(['Tournament rules', EV.rulesUrl]);
+  if (lib) {
+    links.push(['Uniform standards', lib]);
+    links.push(['Game day procedures', lib]);
+    links.push(['Law 12 refresher', lib]);
+  }
+
+  var step = function(state, num, title, body, extra){
+    return '<div class="sod-step '+state+'">'+
+      '<div class="sod-n">'+(state==='done' ? '\u2713' : num)+'</div>'+
+      '<div class="sod-b"><h4>'+esc(title)+'</h4>'+
+        (body ? '<p>'+body+'</p>' : '')+(extra||'')+'</div></div>';
+  };
+
+  return '<div class="sod">'+
+    '<div class="sod-hi">Good '+partOfDay()+', '+esc(firstName(S.refName))+'</div>'+
+    '<div class="sod-sub">'+esc(EV.name||'')+
+      (next.venue ? ' \u00b7 '+esc(shortVenue(next.venue)) : '')+'</div>'+
+
+    step(arrived ? 'done' : 'now', '1', 'Find Referee HQ',
+      'Check in with the site coordinator when you arrive. They will tell you '+
+      'anything that has changed.') +
+
+    step(arrived ? 'now' : '', '2', 'Check in for your '+esc(next.time),
+      esc([next.field, next.position].filter(Boolean).join(', '))+'. '+
+      esc(next.home)+' v '+esc(next.away)+'. Do this at the field, with your crew.',
+      '<a class="sod-go" href="#nextcard">Take me to it</a>') +
+
+    (links.length ? step('', '3', 'Before you start',
+      'Two minutes that save an argument later.',
+      links.map(function(l){
+        return '<a class="sod-lnk" href="'+esc(l[1])+'" target="_blank" rel="noopener">'+
+               esc(l[0])+'</a>';
+      }).join('')) : '') +
+
+    step('', links.length ? '4' : '3', 'After the whistle',
+      'Post the score from the field before you leave it. '+
+      (S.myGames.length>1
+        ? esc(String(S.myGames.length-1))+' more match'+(S.myGames.length>2?'es':'')+' after this one.'
+        : 'That is your last match today.')) +
+
+    '<div class="sod-help"><b>Something wrong?</b>'+
+      '<p>Press Help at the bottom of the screen. A coordinator comes to you. '+
+      'You never handle it alone.</p></div>'+
+  '</div>';
+}
+
+function partOfDay(){
+  var h=new Date().getHours();
+  return h<12 ? 'morning' : (h<17 ? 'afternoon' : 'evening');
+}
+function firstName(n){ return String(n||'').trim().split(/\s+/)[0] || 'referee'; }
+
 function toggleSpent(){
   var b=document.getElementById('spentBody');
   var on=b.classList.toggle('on');
@@ -4205,7 +4426,7 @@ try {
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.08.25-g';
+var PAGE_VERSION='2026.08.25-k';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
