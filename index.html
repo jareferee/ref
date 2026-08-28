@@ -2534,11 +2534,35 @@ function loadBoard(){
   else if(S.view==='sitout'){ loadSitOut(); }
   else if(S.view==='roster'){ loadRosterIssues(); }
   else document.getElementById('staffBody').innerHTML='<div class="empty">Loading…</div>';
+  // The response and the rendering are caught separately.
+  //
+  // They used to share one catch, so a typo in renderStaff -- today()
+  // instead of todayStr() -- reported itself as "Offline. Cannot reach the
+  // server." The data had arrived, the stats had already drawn from it,
+  // and the message sent everybody looking at the wifi.
+  //
+  // A network failure and a broken page need different words, and the
+  // broken page needs to say what broke.
   api('eventBoard',{date:S.date}).then(function(r){
-    if(r&&r.status==='ok'){ S.board=r.data; renderStats(r.summary); if(S.view==='games') keepScroll(renderStaff); }
-    else { document.getElementById('staffBody').innerHTML='<div class="empty"><b>No data</b>Deploy the backend, then reload.</div>'; }
+    if(!(r&&r.status==='ok')){
+      document.getElementById('staffBody').innerHTML=
+        '<div class="empty"><b>No data</b>Deploy the backend, then reload.</div>';
+      return;
+    }
+    S.board=r.data;
+    try{
+      renderStats(r.summary);
+      if(S.view==='games') keepScroll(renderStaff);
+    }catch(err){
+      document.getElementById('staffBody').innerHTML=
+        '<div class="empty"><b>Something went wrong drawing this</b>'+
+        esc(String(err&&err.message||err))+
+        '<br><br>The games did load. Reload, and tell Jeff what this says.</div>';
+      try{ console.error('renderStaff failed', err); }catch(e){}
+    }
   }).catch(function(){
-    document.getElementById('staffBody').innerHTML='<div class="empty"><b>Offline</b>Cannot reach the server.</div>';
+    document.getElementById('staffBody').innerHTML=
+      '<div class="empty"><b>Offline</b>Cannot reach the server.</div>';
   });
   loadAlerts();
 }
@@ -3298,7 +3322,7 @@ function renderStaff(){
   var spent=board.filter(isSpent);
   // Read only only when the day is over. Anything on today stays editable
   // however finished it looks.
-  var pastDay = S.date < today();
+  var pastDay = S.date < todayStr();
 
   if(!board.length){
     var cleared = {
@@ -4649,7 +4673,7 @@ try {
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.08.25-o';
+var PAGE_VERSION='2026.08.28-a';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
