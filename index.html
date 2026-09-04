@@ -364,6 +364,23 @@ body::after{
   border-radius:99px;padding:6px 13px;font-size:12.5px;font-family:var(--body)}
 .sorttabs button[aria-pressed="true"]{background:rgba(127,184,222,.16);
   border-color:rgba(127,184,222,.55);color:var(--ice)}
+/* Cancelled games, folded away. Same shape as the staff Done bar so the
+   two read as one idea. */
+.sec.mine .sec-h h3{color:var(--crest,#F5C842)}
+.sec.mine .gm{border-left:3px solid rgba(245,200,66,.55)}
+.offhead{display:flex;align-items:center;gap:11px;width:100%;text-align:left;
+  appearance:none;cursor:pointer;background:rgba(23,51,75,.4);
+  border:1.5px solid rgba(127,184,222,.2);border-radius:11px;padding:13px 15px;
+  min-height:52px;color:inherit;margin-bottom:9px}
+.offhead:hover{border-color:rgba(127,184,222,.45)}
+.offhead h3{margin:0;font-family:var(--disp);font-weight:900;font-size:15px;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--ice-pale)}
+.offhead .cv{font-size:15px;color:var(--ice)}
+.offhead .n{font-family:var(--mono);font-size:12px;color:var(--ice-pale);
+  background:rgba(127,184,222,.16);border-radius:99px;padding:2px 9px}
+.offhead .tap{margin-left:auto;font-size:12px;color:var(--steel)}
+.off-body{display:none}
+.off-body.on{display:block}
 .segrow{display:flex;gap:7px;flex-wrap:wrap}
 .segrow button{appearance:none;cursor:pointer;background:rgba(9,25,40,.6);
   border:1.5px solid rgba(127,184,222,.28);color:var(--ice-pale);
@@ -2292,11 +2309,28 @@ function renderRef(){
       '</div></div>';
   }
 
+  // Cancelled games out of the way.
+  //
+  // A referee scrolling their day should see what they are working. A
+  // cancelled 8:00 sitting between two live games costs a full card of
+  // space and a second of "wait, am I on that?" every time they look.
+  // They stay reachable, because a referee does occasionally need to prove
+  // a game was called off, but they stop being in the way.
   var rest=S.myGames.filter(function(g){ return !next || g.gameId!==next.gameId; });
-  if(rest.length){
+  var live=rest.filter(function(g){ return !g.canceled; });
+  var off =rest.filter(function(g){ return  g.canceled; });
+  if(live.length){
     html+='<div class="sec"><div class="sec-h"><h3>Rest of your day</h3>'+
-      '<div class="rule"></div><span class="n">'+rest.length+'</span></div>'+
-      rest.map(gameRow).join('')+'</div>';
+      '<div class="rule"></div><span class="n">'+live.length+'</span></div>'+
+      live.map(gameRow).join('')+'</div>';
+  }
+  if(off.length){
+    html+='<div class="sec"><button class="offhead" onclick="toggleOff()" '+
+        'aria-expanded="false" id="offBtn">'+
+        '<span class="cv" id="offCv">\u25be</span>'+
+        '<h3>Cancelled</h3><span class="n">'+off.length+'</span>'+
+        '<span class="tap">Tap to show</span></button>'+
+      '<div class="off-body" id="offBody">'+off.map(gameRow).join('')+'</div></div>';
   }
   var info=(EV.refInfo||[]).slice();
   if(EV.rulesUrl){
@@ -2509,22 +2543,59 @@ function doAuth(){
       document.getElementById('staffRole').textContent=
         (r.role==='director'?'Tournament Director':r.role==='sc'?'Site Coordinator':
          r.role==='admin'?'Admin':r.role)+' \u00b7 '+(EV.shield||'');
-      show('s-staff'); renderDays(); loadBoard();
+      show('s-staff'); renderDays(); loadDays(); loadBoard();
     } else { err.textContent=(r&&r.message)||'PIN not recognised.'; }
   }).catch(function(){ err.textContent='Cannot reach the server right now.'; });
 }
 
+// Only the days that have games. An event adopted from the sheet carries
+// every calendar day between its start and end, and CSA Cups is sixteen
+// of them with games on two. Until the backend says which, all are shown
+// so the page is never blank; once it answers, the empties go.
+var DAYS_WITH_GAMES = null;
 function renderDays(){
-  document.getElementById('staffDays').innerHTML = DATES.map(function(d){
+  var show = DAYS_WITH_GAMES
+    ? DATES.filter(function(d){ return DAYS_WITH_GAMES[d]; })
+    : DATES;
+  if(!show.length) show = DATES;
+  document.getElementById('staffDays').innerHTML = show.map(function(d){
     return '<button aria-pressed="'+(d===S.date)+'" onclick="setDay(\''+d+'\')">'+
       '<b>'+DAYLBL[d][0]+'</b><i>'+DAYLBL[d][1]+'</i></button>';
   }).join('');
+  // If today has no games, land on the nearest day that does.
+  if(DAYS_WITH_GAMES && !DAYS_WITH_GAMES[S.date] && show.length){
+    var t=S.date, best=show[0], gap=1e9;
+    show.forEach(function(d){
+      var g=Math.abs(new Date(d+'T12:00:00')-new Date(t+'T12:00:00'));
+      if(g<gap){ gap=g; best=d; }
+    });
+    if(best!==S.date){ S.date=best; renderDays(); loadBoard(); }
+  }
+}
+function loadDays(){
+  api('eventDays',{date:S.date}).then(function(r){
+    if(!r||r.status!=='ok'||!r.days) return;
+    DAYS_WITH_GAMES=r.days; renderDays();
+  }).catch(function(){});
 }
 function setDay(d){ S.date=d; renderDays(); loadBoard(); }
+
+function loadMyFields(){
+  var caps=(S.staff&&S.staff.caps)||{};
+  if(!caps.leaveFeedback){ S.myFields=[]; return; }
+  api('coachDay',{pin:S.pin,date:S.date}).then(function(r){
+    if(!r||r.status!=='ok') return;
+    var next=(r.myFields||[]).map(function(f){ return String(f).trim(); });
+    var changed = JSON.stringify(next)!==JSON.stringify(S.myFields||[]);
+    S.myFields=next;
+    if(changed && S.view==='games') keepScroll(renderStaff);
+  }).catch(function(){});
+}
 
 function loadBoard(){
   loadStaffMessage();
   loadBulletins();
+  loadMyFields();
   var bb=document.getElementById('bltBtn');
   if(bb) bb.style.display = bltCan() ? 'block' : 'none';
   var nb=document.getElementById('notifyBtn');
@@ -3159,8 +3230,13 @@ function staffVenues(){
 // to press, so neither got paid for the day.
 function showEodFor(role){
   var b=document.getElementById('eodBtn'); if(!b) return;
+  // By capability, not by role name. A referee coach files an end of day
+  // report for their hours the same as a coordinator does, and the role
+  // list here left them out -- so the people this grant pays by the hour
+  // had no way to submit hours.
+  var caps=(S.staff&&S.staff.caps)||{};
   role=String(role||'').toLowerCase();
-  b.style.display=(role==='sc'||role==='coordinator'||
+  b.style.display=(caps.eodReport||role==='sc'||role==='coordinator'||
                    role==='admin'||role==='director')?'block':'none';
 }
 
@@ -3348,10 +3424,30 @@ function renderStaff(){
 
   el.innerHTML += onSiteHtml(staffSlots);
 
+  // A referee coach sees their own fields first.
+  //
+  // Scott gives a coach a pod for a kickoff. When that coach opens the
+  // board they should not have to find those games in a list of 43 --
+  // theirs come first under their own heading, then everything else,
+  // because "still leave feedback on fields you are not on" is the point.
+  var mine=(S.myFields||[]);
+  var html='';
+  if(mine.length){
+    var myGames=live.filter(function(g){
+      return mine.indexOf(String(g.field||'').trim())>=0; })
+      .sort(function(a,b){ return mins(a.time)-mins(b.time); });
+    if(myGames.length){
+      html+='<div class="sec mine"><div class="sec-h"><h3>Your fields</h3>'+
+        '<div class="rule"></div><span class="n">'+myGames.length+'</span></div>'+
+        myGames.map(function(g){ return staffRow(g,caps,false,pastDay); }).join('')+'</div>';
+      live=live.filter(function(g){ return mine.indexOf(String(g.field||'').trim())<0; });
+    }
+  }
+
   var byVenue={};
   live.forEach(function(g){ (byVenue[g.venue]=byVenue[g.venue]||[]).push(g); });
 
-  var html=Object.keys(byVenue).sort().map(function(v){
+  html+=Object.keys(byVenue).sort().map(function(v){
     // Time by default, which is right most of the time. Field order is for
     // a complex like DSGP or Stenger, where a coordinator walks the site
     // rather than the clock -- and where searching "10" for field 10 also
@@ -3363,7 +3459,7 @@ function renderStaff(){
       gs.map(function(g){ return staffRow(g,caps,false,pastDay); }).join('')+'</div>';
   }).join('');
 
-  if(!live.length && !S.noCrewOnly) html='<div class="empty"><b>All caught up</b>Every game today is scored and confirmed.</div>';
+  if(!live.length && !html) html='<div class="empty"><b>All caught up</b>Every game today is scored and confirmed.</div>';
 
   if(spent.length){
     spent.sort(function(a,b){ return mins(b.time)-mins(a.time); });
@@ -3641,6 +3737,19 @@ function hasTool(name){
   var t=(EV.tools||[]);
   if(!t.length) return true;
   return t.indexOf(String(name).toLowerCase())>=0;
+}
+
+function toggleOff(){
+  var b=document.getElementById('offBody');
+  var on=b.classList.toggle('on');
+  var cv=document.getElementById('offCv');
+  if(cv) cv.textContent = on ? '\u25b4' : '\u25be';
+  var btn=document.getElementById('offBtn');
+  if(btn){
+    btn.setAttribute('aria-expanded', on?'true':'false');
+    var t=btn.querySelector('.tap');
+    if(t) t.textContent = on ? 'Tap to hide' : 'Tap to show';
+  }
 }
 
 function toggleSpent(){
@@ -4673,7 +4782,7 @@ try {
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.08.28-a';
+var PAGE_VERSION='2026.09.04-b';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
