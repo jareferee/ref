@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Colorado Cups · Referee rules</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --nv:#1B2F55; --nv3:#0D1525; --nv4:#0A1020;
+  --gold:#C8921A; --glt:#F5C842; --ice:#C5E0F2; --steel:#8FA3BF;
+  --line:rgba(197,224,242,.14); --go:#4FA87A; --golt:#8FE0B4;
+  --warn:#E0A22B; --wlt:#F0C86B; --red:#C4472F; --rlt:#F0A897;
+  --disp:'Bebas Neue',Impact,sans-serif; --body:'DM Sans',sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--nv4);color:#fff;font-family:var(--body);font-size:16px;line-height:1.55}
+.wrap{max-width:680px;margin:0 auto;padding:0 16px 80px}
+header{background:var(--nv3);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.hin{max-width:680px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:12px}
+.crest{width:32px;height:38px;border:2px solid var(--glt);color:var(--glt);
+  border-radius:6px 6px 13px 13px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--disp);font-size:11px;flex:0 0 auto}
+.hin h1{margin:0;font-family:var(--disp);font-size:20px;letter-spacing:.03em;font-weight:400}
+.hin .sub{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--steel)}
+.hin a{margin-left:auto;color:var(--glt);text-decoration:none;font-size:13px;border:1.5px solid rgba(245,200,66,.4);
+  border-radius:9px;padding:9px 13px;white-space:nowrap}
+
+.lede{margin:18px 0 6px;color:var(--ice);font-size:15px}
+.lede b{color:var(--glt);font-weight:500}
+.jump{display:flex;gap:7px;flex-wrap:wrap;margin:14px 0 6px}
+.jump a{color:var(--ice);text-decoration:none;font-size:13px;background:rgba(27,47,85,.45);
+  border:1px solid var(--line);border-radius:99px;padding:8px 13px}
+
+h2{font-family:var(--disp);font-size:24px;letter-spacing:.03em;font-weight:400;
+  margin:30px 0 10px;padding-top:8px;color:var(--glt)}
+h2 small{font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--steel);
+  margin-left:10px;text-transform:uppercase}
+
+table{width:100%;border-collapse:collapse;margin:6px 0 14px;background:rgba(27,47,85,.3);
+  border:1px solid var(--line);border-radius:12px;overflow:hidden}
+th,td{padding:11px 13px;text-align:left;border-bottom:1px solid var(--line);font-size:15px}
+th{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--steel);font-weight:500;background:rgba(9,25,40,.5)}
+td:first-child{font-family:var(--disp);font-size:18px;letter-spacing:.03em;white-space:nowrap}
+td b{font-family:var(--disp);font-size:20px;letter-spacing:.02em;color:#fff;font-weight:400}
+tr:last-child td{border-bottom:0}
+
+.card{background:rgba(27,47,85,.3);border:1px solid var(--line);border-radius:12px;
+  padding:14px 16px;margin-bottom:10px}
+.card b{display:block;font-family:var(--disp);font-size:18px;letter-spacing:.03em;
+  font-weight:400;margin-bottom:4px}
+.card p{margin:0;font-size:14.5px;color:var(--ice)}
+.card.red{border-left:4px solid var(--red)}
+.card.red b{color:var(--rlt)}
+.card.gold{border-left:4px solid var(--glt)}
+ul{margin:6px 0 14px;padding-left:20px;color:var(--ice);font-size:14.5px}
+li{margin-bottom:6px}
+.big{font-family:var(--disp);font-size:32px;color:var(--rlt);letter-spacing:.02em;line-height:1}
+.foot{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);
+  font-family:var(--mono);font-size:10.5px;color:#4A5C74;text-align:center;line-height:1.7}
+.foot a{color:var(--steel)}
+</style>
+</head>
+<body>
+
+<header><div class="hin">
+  <div class="crest">CO</div>
+  <div><h1>Colorado Cups</h1><div class="sub">State · Presidents · Centennial · Referee rules</div></div>
+  <a href="rules-csacups.pdf" target="_blank" rel="noopener">Full rules</a>
+</div></header>
+
+<div class="wrap">
+
+<p class="lede">The parts a referee needs on the field. <b>FIFA Laws of the Game apply</b> with the CSA changes below. Anything else is the Tournament Director's call.</p>
+
+<div class="jump">
+  <a href="#time">Time</a><a href="#players">Players &amp; subs</a><a href="#kit">Kit</a>
+  <a href="#field">Field</a><a href="#cards">Cards &amp; sit-outs</a><a href="#after">After the game</a>
+</div>
+
+<h2 id="time">Duration <small>Law VII</small></h2>
+<table>
+  <tr><th>Age</th><th>Halves</th><th>Half-time</th></tr>
+  <tr><td>U11–U12</td><td><b>2 × 30</b></td><td>5 min</td></tr>
+  <tr><td>U13–U14</td><td><b>2 × 35</b></td><td>5 min</td></tr>
+  <tr><td>U15–U16</td><td><b>2 × 40</b></td><td>5 min</td></tr>
+  <tr><td>U17–U19</td><td><b>2 × 45</b></td><td>5 min</td></tr>
+</table>
+<div class="card gold">
+  <b>Tied at full time</b>
+  <p><strong>Group games:</strong> stays a tie. <strong>Semis, quarters, play-ins:</strong> straight to kicks from the mark, no extra time. <strong>Final only:</strong> extra time first, then kicks.</p>
+</div>
+<table>
+  <tr><th>Final extra time</th><th>Periods</th><th>Break</th></tr>
+  <tr><td>U11–U14</td><td><b>2 × 10</b></td><td>1 min</td></tr>
+  <tr><td>U15–U19</td><td><b>2 × 15</b></td><td>2 min</td></tr>
+</table>
+<div class="card">
+  <b>Added time</b>
+  <p>Do not add time for trifling stoppages. Keep the field on schedule. Add time for a serious injury.</p>
+</div>
+<div class="card">
+  <b>Grace period</b>
+  <p>15 minutes from scheduled kickoff. A team not ready with the minimum players at the end of it forfeits. Forfeit is recorded 3–0.</p>
+</div>
+
+<h2 id="players">Players and substitutions <small>Laws II &amp; III</small></h2>
+<table>
+  <tr><th>Age</th><th>Format</th><th>Min to start</th><th>Ball</th></tr>
+  <tr><td>U9–U10</td><td><b>7v7</b></td><td>5</td><td>not specified</td></tr>
+  <tr><td>U11–U12</td><td><b>9v9</b></td><td>6</td><td>Size 4</td></tr>
+  <tr><td>U13–U19</td><td><b>11v11</b></td><td>7</td><td>Size 5</td></tr>
+</table>
+<ul>
+  <li>Substitute at <strong>any stoppage</strong>, any number, with your permission.</li>
+  <li>A <strong>cautioned player may be substituted at the time of the caution</strong>. The other team may then substitute one player.</li>
+  <li>Subs enter <strong>at the halfway line only</strong>, and only after the player they replace is completely off and you have signalled. Players may leave at any point on the boundary.</li>
+  <li>A team <strong>may not replace a player sent off</strong>. They play short for the rest of the game.</li>
+  <li>One of the players on the field must be designated goalkeeper.</li>
+  <li>Each team supplies you with suitable balls. You choose which is used.</li>
+</ul>
+
+<h2 id="kit">Equipment <small>Law IV</small></h2>
+<ul>
+  <li><strong>Home team is listed first</strong> on the schedule and wears <strong>dark</strong>. Away wears white or light.</li>
+  <li>Goalkeeper distinguishable from both teams and from you.</li>
+  <li><strong>No earrings of any kind.</strong> Not taped, not bandaged over. No jewellery.</li>
+  <li>Religious medals or medical tags are fine if <strong>taped to the body</strong>.</li>
+  <li>Splints, casts and braces at <strong>your judgement</strong>: not inherently dangerous, or padded with pliable material.</li>
+  <li>Shin guards required.</li>
+</ul>
+
+<h2 id="field">The field <small>Laws I &amp; X</small></h2>
+<table>
+  <tr><th></th><th>9v9</th><th>11v11</th></tr>
+  <tr><td>Penalty mark</td><td><b>8 yds</b></td><td><b>12 yds</b></td></tr>
+  <tr><td>Free kick distance</td><td><b>8 yds</b> (U9–U12)</td><td><b>10 yds</b> (U13+)</td></tr>
+</table>
+<ul>
+  <li><strong>Both teams on the same side.</strong> Each team area starts 10 yards from halfway and runs 12 yards toward the goal.</li>
+  <li>Spectators on the <strong>opposite</strong> side, at least 5 feet back from the line. Nobody behind the goals without the Tournament Director's permission. One warning, then ejection.</li>
+  <li>Cameras like Veo on the spectator side, base at least 4 yards from the touchline.</li>
+  <li>No drones, horns, whistles, megaphones or noisemakers.</li>
+  <li>Bench staff stay in the team area except to warm up a sub or when you call them on for an injured player.</li>
+  <li>Maximum <strong>4 coaches or staff</strong> on the sideline.</li>
+</ul>
+
+<h2 id="cards">Cards, sit-outs and dismissals <small>Law XII</small></h2>
+<div class="card red">
+  <b>Send-off for foul or abusive language, or persistent misconduct after a caution</b>
+  <p>Sits out the <strong>next</strong> tournament game.</p>
+</div>
+<div class="card red">
+  <b>Send-off for violent conduct</b>
+  <p>Sits out a <strong>minimum of two</strong> tournament games.</p>
+</div>
+<div class="card red">
+  <b>Ejected coach, manager or spectator</b>
+  <p>Must be <span class="big">100 yards</span> from the field within <strong>5 minutes</strong> of being told, or the match is abandoned. An abandoned game is a forfeit for their team.</p>
+</div>
+<ul>
+  <li>Cards earned in Cup are served in Cup. They do not carry into league play.</li>
+  <li>Before kickoff the <strong>team representative must tell you</strong> the name of anyone sitting out a suspension. <strong>Record that name on your game report.</strong></li>
+  <li>Dismissed bench staff also sit out and cannot take part in any other club's Cup game until served.</li>
+  <li>Harassment of any official by a player, coach or spectator is a disciplinary matter for CSA. Team representatives are responsible for their supporters.</li>
+  <li>Severe misconduct: the Site Director can convene a hearing. Send a full report.</li>
+</ul>
+
+<h2 id="after">After the game</h2>
+<div class="card gold">
+  <b>Complete the game card in detail.</b>
+  <p>Tell CSA tournament staff about anyone ejected. File a supplemental report for anything unusual. Post the score in the hub before you leave the field.</p>
+</div>
+<div class="card">
+  <b>Protests</b>
+  <p>A referee's judgement cannot be protested, only a misapplication of the Laws. A protest is lodged verbally with you and the opposing coach immediately after the game, then in writing with a $200 fee within two hours. Video is not considered.</p>
+</div>
+<div class="card">
+  <b>Weather</b>
+  <p>A siren clears the fields. Everyone to their cars. The siren again means play resumes. A game stopped after one full half stands at the score if it is not restarted.</p>
+</div>
+<div class="card">
+  <b>Suspected concussion</b>
+  <p>The on-site trainer evaluates. If a head injury is suspected the player is done for the day and cannot play again in league or Cup until cleared in writing and CSA has notified the club. USYS concussion protocol applies.</p>
+</div>
+
+<div class="foot">
+  Summary of the referee-facing rules only. The full document governs.<br>
+  <a href="rules-csacups.pdf" target="_blank" rel="noopener">Colorado Cups Rules and Procedures, 2026–27</a><br>
+  Prepared for CREST · Colorado Referee Program
+</div>
+</div>
+</body>
+</html>

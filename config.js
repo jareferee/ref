@@ -447,6 +447,7 @@
       subtitle: t.blurb || 'Colorado Soccer Association',
       accent: t.accent || '#7FB8DE',
       hub: 'jareferee.com/ref?e=' + t.id,
+      rulesUrl: rulesFor(t.id),
       weatherPlace: venues[0] || '',
       dates: dates, daylbl: lbl, venues: venues,
       hqVenues: [], hqFields: [], trim: [], logos: [], refInfo: [],
@@ -478,6 +479,24 @@
   //   path    /skyline/           a tournament's own address
   //   stored  last picked         so a referee picks once, not every load
   //   none    /ref/               ask
+  // Rules documents for events that live in the sheet rather than in a
+  // config block. Keyed by the event's short id. Only real files -- a link
+  // that 404s in front of a referee at half time is worse than no link.
+  //
+  // CSA Cups was opening the shared rules.html, which is not the Colorado
+  // Cups document. Referees were reading the wrong rules mid-tournament.
+  // The .html is a phone-first summary of the referee-facing rules --
+  // durations, subs, sit-outs, kit -- with the full PDF one tap away at
+  // the top. A seven-page document is the wrong thing to hand a referee
+  // at half time on a phone in the sun.
+  var RULES_FOR = {
+    csacups:  'rules-csacups.html',
+    statecup: 'rules-csacups.html'
+  };
+  function rulesFor(id) {
+    return RULES_FOR[String(id || '').toLowerCase()] || '';
+  }
+
   // The TOURNAMENTS row the picker stashed when it was tapped.
   function adopted(id) {
     try {
@@ -561,7 +580,7 @@
   } catch (e) {}
 
   window.JAR = {
-    VERSION: '2026.08.25-e',
+    VERSION: '2026.09.05-b',
 
     // ── CREST, the rest of the programme ──
     // Taken from coloradoreferee.github.io, the site that lists every tool.
