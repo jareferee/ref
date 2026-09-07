@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>(function(){try{var v=localStorage.getItem('crest-theme');if(v==='light'||v==='dark'){document.documentElement.setAttribute('data-theme',v);}else if(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches){document.documentElement.setAttribute('data-theme','light');}}catch(e){}})();</script>
+
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Colorado Referee Hub</title>
@@ -1006,6 +1008,18 @@ textarea.fin{resize:vertical;line-height:1.5}
   body.staffwide .gm{ transition:border-color .15s }
   body.staffwide .gm:hover{ border-color:rgba(127,184,222,.4) }
 }
+
+/* ── light mode, for outdoors ── */
+html[data-theme="light"]{
+  --slate:#F3F5F9; --slate-2:#FFFFFF; --slate-3:#E6EBF3;
+  --ice:#1F5A85; --ice-pale:#24385A; --steel:#556781; --snow:#0E1B33;
+  --caution:#9A6700; --flag:#B03A22; --go:#1F7A4D;
+  --fg:#0E1B33; color-scheme:light;
+}
+html[data-theme="light"] body{background:var(--slate);color:var(--fg)}
+html[data-theme="light"] input,html[data-theme="light"] textarea,html[data-theme="light"] select{
+  background:#fff;color:var(--fg)}
+html[data-theme="light"] input::placeholder,html[data-theme="light"] textarea::placeholder{color:#7A8AA3}
 </style>
 </head>
 <body>
@@ -1278,7 +1292,7 @@ textarea.fin{resize:vertical;line-height:1.5}
       <label class="fl" style="margin-top:13px">Private &mdash; staff only</label>
       <textarea class="fin" id="fbPrivate" rows="3"
         placeholder="Anything staff should know that the referee should not read."></textarea>
-      <div class="hint">Never sent to the referee. Seen by Deanna and the referee coaches.</div>
+      <div class="hint">Never sent to the referee. Seen by the referee office and the referee coaches.</div>
 
       <div class="err" id="fbErr"></div>
     </div>
@@ -1311,7 +1325,7 @@ textarea.fin{resize:vertical;line-height:1.5}
       </div>
       <div class="hint" id="eodHours">Hours are worked out from the two times.</div>
 
-      <label class="fl">Notes for Deanna and Jeff</label>
+      <label class="fl">Notes for the referee office</label>
       <textarea class="fin" id="eodNotes" rows="5"
         placeholder="How did the day go? Anything that needs attention, anyone who stood out, anything to change tomorrow."></textarea>
       <div class="err" id="eodErr"></div>
@@ -2628,7 +2642,7 @@ function loadBoard(){
       document.getElementById('staffBody').innerHTML=
         '<div class="empty"><b>Something went wrong drawing this</b>'+
         esc(String(err&&err.message||err))+
-        '<br><br>The games did load. Reload, and tell Jeff what this says.</div>';
+        '<br><br>The games did load. Reload, and tell the admin what this says.</div>';
       try{ console.error('renderStaff failed', err); }catch(e){}
     }
   }).catch(function(){
@@ -4782,7 +4796,7 @@ try {
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.09.04-b';
+var PAGE_VERSION='2026.09.06-a';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
@@ -4792,6 +4806,42 @@ try{
     'color:rgba(142,155,169,.55)';
   document.body.appendChild(_v);
 }catch(e){}
+</script>
+
+<style>
+/* the light/dark switch. fixed bottom-left, out of the way of Help. */
+#themeBtn{position:fixed;left:14px;bottom:14px;z-index:9000;width:46px;height:46px;border-radius:50%;
+  border:1.5px solid rgba(197,224,242,.35);background:rgba(13,21,37,.85);color:#F5C842;
+  font-size:20px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 18px rgba(0,0,0,.35);backdrop-filter:blur(6px);-webkit-tap-highlight-color:transparent}
+html[data-theme="light"] #themeBtn{background:rgba(255,255,255,.92);border-color:rgba(27,47,85,.3);color:#1B2F55}
+@media print{#themeBtn{display:none}}
+</style>
+<button id="themeBtn" type="button" aria-label="Switch light and dark" title="Light / dark"></button>
+<script>
+(function(){
+  // One key across every page, so the choice follows the person.
+  var KEY='crest-theme';
+  function current(){
+    try{ var v=localStorage.getItem(KEY); if(v==='light'||v==='dark') return v; }catch(e){}
+    // First run: follow the phone. Outdoors it is usually already light.
+    return (window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark';
+  }
+  function apply(t){
+    document.documentElement.setAttribute('data-theme',t);
+    var b=document.getElementById('themeBtn');
+    if(b){ b.textContent = t==='light' ? '\u263E' : '\u2600'; }
+    var m=document.querySelector('meta[name="theme-color"]');
+    if(m) m.setAttribute('content', t==='light' ? '#FFFFFF' : '#0D1525');
+  }
+  apply(current());
+  var b=document.getElementById('themeBtn');
+  if(b) b.onclick=function(){
+    var t=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';
+    try{ localStorage.setItem(KEY,t); }catch(e){}
+    apply(t);
+  };
+})();
 </script>
 </body>
 </html>
