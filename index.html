@@ -369,6 +369,8 @@ body::after{
 /* Cancelled games, folded away. Same shape as the staff Done bar so the
    two read as one idea. */
 .sec.mine .sec-h h3{color:var(--crest,#F5C842)}
+.sec.walk .sec-h h3{color:var(--flag)}
+.walk-lede{margin:-2px 0 10px;font-size:13px;color:var(--flag)}
 .sec.mine .gm{border-left:3px solid rgba(245,200,66,.55)}
 .offhead{display:flex;align-items:center;gap:11px;width:100%;text-align:left;
   appearance:none;cursor:pointer;background:rgba(23,51,75,.4);
@@ -2596,12 +2598,18 @@ function setDay(d){ S.date=d; renderDays(); loadBoard(); }
 
 function loadMyFields(){
   var caps=(S.staff&&S.staff.caps)||{};
-  if(!caps.leaveFeedback){ S.myFields=[]; return; }
+  if(!caps.leaveFeedback){ S.myFields=[]; S.seenToday={}; return; }
   api('coachDay',{pin:S.pin,date:S.date}).then(function(r){
     if(!r||r.status!=='ok') return;
     var next=(r.myFields||[]).map(function(f){ return String(f).trim(); });
-    var changed = JSON.stringify(next)!==JSON.stringify(S.myFields||[]);
-    S.myFields=next;
+    // Who has had a note today, from the same call.
+    var seen={};
+    (r.games||[]).forEach(function(g){ (g.crew||[]).forEach(function(c){ if(c.seen) seen[c.name]=1; }); });
+    // Mark it non-empty even if nobody is seen yet, so the walk list shows.
+    if(!Object.keys(seen).length) seen['\u0000none']=1;
+    var changed = JSON.stringify(next)!==JSON.stringify(S.myFields||[]) ||
+                  JSON.stringify(seen)!==JSON.stringify(S.seenToday||{});
+    S.myFields=next; S.seenToday=seen;
     if(changed && S.view==='games') keepScroll(renderStaff);
   }).catch(function(){});
 }
@@ -3455,6 +3463,25 @@ function renderStaff(){
         '<div class="rule"></div><span class="n">'+myGames.length+'</span></div>'+
         myGames.map(function(g){ return staffRow(g,caps,false,pastDay); }).join('')+'</div>';
       live=live.filter(function(g){ return mine.indexOf(String(g.field||'').trim())<0; });
+    }
+  }
+
+  // The walk list. For a coach: every remaining game where somebody has
+  // had no note today. This is the second half of the job and it sits on
+  // the page, not behind a button. Coaches did their four fields and
+  // stopped because nothing told them what was left.
+  var seenMap=S.seenToday||{};
+  if(caps.leaveFeedback && Object.keys(seenMap).length){
+    var walk=live.filter(function(g){
+      return (g.crew||[]).some(function(c){ return c.name && !seenMap[c.name]; }); });
+    var unseen=0; walk.forEach(function(g){ (g.crew||[]).forEach(function(c){ if(c.name&&!seenMap[c.name]) unseen++; }); });
+    if(walk.length){
+      html+='<div class="sec walk"><div class="sec-h"><h3>'+unseen+' referee'+(unseen===1?'':'s')+' nobody has seen</h3>'+
+        '<div class="rule"></div><span class="n">'+walk.length+'</span></div>'+
+        '<p class="walk-lede">Walk to these between your own games. One note each. The assistants count as much as the centre.</p>'+
+        walk.sort(function(a,b){ return mins(a.time)-mins(b.time); })
+            .map(function(g){ return staffRow(g,caps,false,pastDay); }).join('')+'</div>';
+      live=live.filter(function(g){ return walk.indexOf(g)<0; });
     }
   }
 
@@ -4796,7 +4823,7 @@ try {
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.09.06-a';
+var PAGE_VERSION='2026.09.07-a';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
