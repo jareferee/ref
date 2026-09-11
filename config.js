@@ -447,7 +447,7 @@
       subtitle: t.blurb || 'Colorado Soccer Association',
       accent: t.accent || '#7FB8DE',
       hub: 'jareferee.com/ref?e=' + t.id,
-      rulesUrl: rulesFor(t.id),
+      rulesUrl: rulesFor(t.id, t.prefix),
       weatherPlace: venues[0] || '',
       dates: dates, daylbl: lbl, venues: venues,
       hqVenues: [], hqFields: [], trim: [], logos: [], refInfo: [],
@@ -491,10 +491,24 @@
   // at half time on a phone in the sun.
   var RULES_FOR = {
     csacups:  'rules-csacups.html',
-    statecup: 'rules-csacups.html'
+    statecup: 'rules-csacups.html',
+    n1fall:   'rules-nat1.html',
+    nat1:     'rules-nat1.html',
+    csanat1:  'rules-nat1.html',
+    national1:'rules-nat1.html'
   };
-  function rulesFor(id) {
-    return RULES_FOR[String(id || '').toLowerCase()] || '';
+  // Rules can also follow the GAME_PREFIX, so an event whose id nobody
+  // remembers still gets the right document because its games are NAT-.
+  var RULES_BY_PREFIX = {
+    NAT: 'rules-nat1.html',
+    CUP: 'rules-csacups.html',
+    COS: ''
+  };
+  function rulesFor(id, prefix) {
+    var byId = RULES_FOR[String(id || '').toLowerCase()];
+    if (byId) return byId;
+    var p = String(prefix || '').toUpperCase().replace(/[^A-Z]/g, '');
+    return RULES_BY_PREFIX[p] || '';
   }
 
   // The TOURNAMENTS row the picker stashed when it was tapped.
@@ -580,7 +594,7 @@
   } catch (e) {}
 
   window.JAR = {
-    VERSION: '2026.09.05-b',
+    VERSION: '2026.09.11-b',
 
     // ── CREST, the rest of the programme ──
     // Taken from coloradoreferee.github.io, the site that lists every tool.

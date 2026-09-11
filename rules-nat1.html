@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>(function(){try{var v=localStorage.getItem('crest-theme');if(v==='light'||v==='dark'){document.documentElement.setAttribute('data-theme',v);}else if(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches){document.documentElement.setAttribute('data-theme','light');}}catch(e){}})();</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>National 1 League · Referee rules</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --nv:#1B2F55; --nv3:#0D1525; --nv4:#0A1020;
+  --gold:#C8921A; --glt:#F5C842; --ice:#C5E0F2; --steel:#8FA3BF;
+  --line:rgba(197,224,242,.14); --go:#4FA87A; --golt:#8FE0B4;
+  --warn:#E0A22B; --wlt:#F0C86B; --red:#C4472F; --rlt:#F0A897;
+  --disp:'Bebas Neue',Impact,sans-serif; --body:'DM Sans',sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--nv4);color:#fff;font-family:var(--body);font-size:16px;line-height:1.55}
+.wrap{max-width:680px;margin:0 auto;padding:0 16px 80px}
+header{background:var(--nv3);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.hin{max-width:680px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:12px}
+.crest{width:32px;height:38px;border:2px solid var(--glt);color:var(--glt);
+  border-radius:6px 6px 13px 13px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--disp);font-size:11px;flex:0 0 auto}
+.hin h1{margin:0;font-family:var(--disp);font-size:20px;letter-spacing:.03em;font-weight:400}
+.hin .sub{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--steel)}
+.hin a{margin-left:auto;color:var(--glt);text-decoration:none;font-size:13px;border:1.5px solid rgba(245,200,66,.4);
+  border-radius:9px;padding:9px 13px;white-space:nowrap}
+.lede{margin:18px 0 6px;color:var(--ice);font-size:15px}
+.lede b{color:var(--glt);font-weight:500}
+.jump{display:flex;gap:7px;flex-wrap:wrap;margin:14px 0 6px}
+.jump a{color:var(--ice);text-decoration:none;font-size:13px;background:rgba(27,47,85,.45);
+  border:1px solid var(--line);border-radius:99px;padding:8px 13px}
+h2{font-family:var(--disp);font-size:24px;letter-spacing:.03em;font-weight:400;
+  margin:30px 0 10px;padding-top:8px;color:var(--glt)}
+h2 small{font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--steel);
+  margin-left:10px;text-transform:uppercase}
+table{width:100%;border-collapse:collapse;margin:6px 0 14px;background:rgba(27,47,85,.3);
+  border:1px solid var(--line);border-radius:12px;overflow:hidden}
+th,td{padding:11px 13px;text-align:left;border-bottom:1px solid var(--line);font-size:15px}
+th{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--steel);font-weight:500;background:rgba(9,25,40,.5)}
+td:first-child{font-family:var(--disp);font-size:18px;letter-spacing:.03em;white-space:nowrap}
+td b{font-family:var(--disp);font-size:20px;letter-spacing:.02em;color:#fff;font-weight:400}
+tr:last-child td{border-bottom:0}
+.card{background:rgba(27,47,85,.3);border:1px solid var(--line);border-radius:12px;
+  padding:14px 16px;margin-bottom:10px}
+.card b{display:block;font-family:var(--disp);font-size:18px;letter-spacing:.03em;
+  font-weight:400;margin-bottom:4px}
+.card p{margin:0;font-size:14.5px;color:var(--ice)}
+.card.red{border-left:4px solid var(--red)} .card.red b{color:var(--rlt)}
+.card.gold{border-left:4px solid var(--glt)}
+.card.warn{border-left:4px solid var(--wlt)} .card.warn b{color:var(--wlt)}
+ul{margin:6px 0 14px;padding-left:20px;color:var(--ice);font-size:14.5px}
+li{margin-bottom:6px}
+.big{font-family:var(--disp);font-size:32px;color:var(--rlt);letter-spacing:.02em;line-height:1}
+.foot{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);
+  font-family:var(--mono);font-size:10.5px;color:#4A5C74;text-align:center;line-height:1.7}
+.foot a{color:var(--steel)}
+
+/* ── light mode, for outdoors ── */
+html[data-theme="light"]{
+  --nv:#E6EBF3; --nv3:#FFFFFF; --nv4:#F3F5F9;
+  --gold:#7A4E00; --glt:#8A5A00; --ice:#24385A; --steel:#556781;
+  --line:rgba(27,47,85,.18); --go:#1F7A4D; --golt:#1F7A4D;
+  --warn:#9A6700; --wlt:#9A6700; --red:#B03A22; --rlt:#B03A22;
+  --fg:#0E1B33; color-scheme:light;
+}
+html[data-theme="light"] body{background:var(--nv4);color:var(--fg)}
+html[data-theme="light"] header,html[data-theme="light"] .hin{background:var(--nv3)}
+html[data-theme="light"] input,html[data-theme="light"] textarea,html[data-theme="light"] select{
+  background:#fff;color:var(--fg);border-color:var(--line)}
+html[data-theme="light"] input::placeholder,html[data-theme="light"] textarea::placeholder{color:#7A8AA3}
+html[data-theme="light"] .hero,html[data-theme="light"] .profile{
+  background:#fff;border-color:rgba(138,90,0,.35)}
+html[data-theme="light"] .pri,html[data-theme="light"] .go,html[data-theme="light"] .gate button{
+  color:#fff;background:linear-gradient(135deg,#7A4E00,#8A5A00)}
+html[data-theme="light"] .tg,html[data-theme="light"] .chip{background:rgba(27,47,85,.08);color:var(--fg)}
+html[data-theme="light"] .tabs button[aria-pressed="true"]{color:var(--fg)}
+html[data-theme="light"] .fld.has{background:rgba(31,122,77,.08);border-color:rgba(31,122,77,.5)}
+html[data-theme="light"] .opt.rec .tag{background:rgba(138,90,0,.14)}
+</style>
+</head>
+<body>
+
+<header><div class="hin">
+  <div class="crest">N1</div>
+  <div><h1>National 1 League</h1><div class="sub">Colorado · Referee rules</div></div>
+  <a href="https://national1league.org/about/rules-handbook/" target="_blank" rel="noopener">Full handbook</a>
+</div></header>
+
+<div class="wrap">
+
+<p class="lede">The parts a referee needs on the field. <b>FIFA Laws of the Game apply</b> with the National 1 changes below. Where the Handbook and the Laws differ, the Handbook wins.</p>
+
+<div class="jump">
+  <a href="#time">Time</a><a href="#subs">Subs</a><a href="#kit">Kit &amp; roster</a>
+  <a href="#field">Field</a><a href="#cards">Cards</a><a href="#conduct">Conduct</a><a href="#after">After</a>
+</div>
+
+<h2 id="time">Duration <small>5.2</small></h2>
+<table>
+  <tr><th>Age</th><th>Halves</th><th>Half-time</th></tr>
+  <tr><td>U13–U14</td><td><b>2 × 35</b></td><td>10 min</td></tr>
+  <tr><td>U15–U16</td><td><b>2 × 40</b></td><td>10 min</td></tr>
+  <tr><td>U17–U19</td><td><b>2 × 45</b></td><td>10 min</td></tr>
+</table>
+<div class="card">
+  <b>Kickoff and forfeit</b>
+  <p>A team needs <strong>7 players</strong> ready within <strong>10 minutes</strong> of scheduled kickoff. If not, it is a forfeit. No extra time in league play; a tie is a tie.</p>
+</div>
+<div class="card">
+  <b>Your authority</b>
+  <p>Starts when you arrive at the site. Ends when you leave, or 30 minutes after the final whistle, whichever is first. Anything in that window is yours to deal with and report.</p>
+</div>
+
+<h2 id="subs">Substitutions <small>5.7</small></h2>
+<div class="card warn">
+  <b>Moments, not numbers</b>
+  <p>Any number of players may come on at a stoppage with your permission. What is counted is the <strong>moment</strong>: each time a team substitutes is one moment, whatever the other team does.</p>
+</div>
+<table>
+  <tr><th>Age</th><th>Moments</th><th>Plus</th></tr>
+  <tr><td>U13–U14</td><td><b>3 per half</b></td><td>half-time</td></tr>
+  <tr><td>U15–U19</td><td><b>4 per match</b></td><td>half-time</td></tr>
+</table>
+<ul>
+  <li>Half-time substitutions do not count as a moment.</li>
+  <li><strong>Coaches cannot agree between themselves to change this.</strong> If they try, it is still the Handbook.</li>
+  <li>A sent-off player is not replaced. The team plays short for the rest of the match.</li>
+  <li>The Colorado operator may publish its own substitution rule for this season. If CSA has issued one, that applies instead. Ask the assignor if unsure.</li>
+</ul>
+
+<h2 id="kit">Kit and game day roster <small>6.1 · 5.3 · 6.5</small></h2>
+<ul>
+  <li><strong>Home team is listed first</strong> and wears <strong>light</strong>. Away wears <strong>dark</strong>. Every team must have both kits with them.</li>
+  <li><strong>You decide</strong> what counts as light or dark. If there is a clash, the team causing it changes.</li>
+  <li>Every player needs a shirt number matching the game card. A temporary jersey is fine; <strong>note it on the card</strong>.</li>
+  <li>Goalkeeper distinguishable from every other player and from you.</li>
+  <li>Home team provides at least <strong>two</strong> game balls.</li>
+  <li>Glasses at your discretion. Casts only if you and the trainer (if there is one) approve.</li>
+</ul>
+<div class="card gold">
+  <b>Game day roster: maximum 18</b>
+  <p>You confirm eligibility before kickoff. Digital passcards are the norm; teams should have printed backups. <strong>No passcard, no play</strong>, unless the Commissioner has approved otherwise.</p>
+</div>
+<ul>
+  <li>No more than <strong>four</strong> ECNL Regional League primary players in any match.</li>
+  <li>No more than <strong>two</strong> "trapped U15" players (8th graders) in a U14 match.</li>
+  <li>A player may play for only one team per day. A goalkeeper may appear on two game cards from the same club with the operator's written consent, and must play in goal both times.</li>
+</ul>
+
+<h2 id="field">Field and technical areas <small>6.6</small></h2>
+<ul>
+  <li><strong>Everybody at least 18 yards from the goal lines</strong>: coaches, players, spectators. Nobody behind the goals.</li>
+  <li>No coaching from within 18 yards of the goal line or from behind it, by anyone.</li>
+  <li>Coaches and players on the opposite side from spectators where the ground allows.</li>
+  <li>Coaches and spectators <strong>at least 2 yards</strong> from the touchline.</li>
+  <li>Nobody enters the field during the match unless you invite them.</li>
+</ul>
+<div class="card">
+  <b>Three officials expected</b>
+  <p>A licensed centre referee must be present or the match cannot go ahead. If ARs are short, you may appoint club assistants, limited to <strong>touchline and possession</strong> only.</p>
+</div>
+
+<h2 id="cards">Cards, send-offs and suspensions <small>5.15 · 5.16 · 5.17</small></h2>
+<div class="card gold">
+  <b>No yellow card accumulation</b>
+  <p>Cautions do not carry over between matches in National 1.</p>
+</div>
+<div class="card red">
+  <b>Player sent off</b>
+  <p>Out for the <strong>rest of the day</strong> and the team's <strong>next National 1 match</strong>. Leaves the field of play. May stay in the bench area supervised by a team official <strong>only if no parent is available</strong>. Any further trouble and you may remove them from the whole field area.</p>
+</div>
+<div class="card red">
+  <b>Coach or team official sent off</b>
+  <p><strong>Out of sight and hearing</strong> for the rest of the match. No contact with the team by any means, including phone or text. Rest of the day and the next match. If a suspended coach is present or communicating, the team forfeits.</p>
+</div>
+<div class="card red">
+  <b>Racist, discriminatory or spitting incidents, or a banned word</b>
+  <p><span class="big">4 matches</span> minimum, with review for more. The league keeps a banned-words list in the Handbook. <strong>Report it in full</strong>: exact words, who, when, who heard it. The U.S. Soccer Referee Abuse Policy applies to anything directed at you.</p>
+</div>
+<ul>
+  <li>Cards from other competitions do not carry into National 1.</li>
+  <li>The operator reviews every send-off and may add a match. One added match cannot be appealed.</li>
+  <li>If a player or coach <strong>refuses to leave</strong> after being sent off, you may terminate. Forfeit 3–0 against them, or the actual score if they were already losing by more.</li>
+</ul>
+
+<h2 id="conduct">Spectators and trainers <small>7.1 · 5.13</small></h2>
+<ul>
+  <li>The coach is responsible for their spectators. A coach can be sent off for what their sideline does.</li>
+  <li>You may ask a spectator to leave. If they refuse, you may terminate the match.</li>
+  <li>If a match is abandoned because of a team's coaches, players or spectators, that team forfeits.</li>
+</ul>
+<div class="card warn">
+  <b>Suspected head injury</b>
+  <p>If there is <strong>no certified athletic trainer</strong> at the ground, a player you suspect of a head injury <strong>does not return</strong>. Full stop. With a trainer present, the trainer decides. Either way, no return to any match without medical clearance.</p>
+</div>
+
+<h2 id="after">Weather, protests, after the game <small>5.24 · 8.1 · 6.3</small></h2>
+<div class="card">
+  <b>Weather</b>
+  <p>You may suspend or end a match for lightning, rain, fog or the like, before or during. <strong>Your decision is final.</strong> A match ended for weather counts if the first half is complete.</p>
+</div>
+<div class="card">
+  <b>Protests</b>
+  <p>Your judgement cannot be protested. Only a misapplication of the rules can. Only the two teams may protest, in writing, through the operator.</p>
+</div>
+<div class="card gold">
+  <b>After the whistle</b>
+  <p>Complete the game card. Report every send-off, every discriminatory incident, every temporary jersey. Post the score in the hub before you leave. The home team is fined if the score is not reported within 24 hours, and your report is what protects the referee crew if anything is questioned.</p>
+</div>
+
+<div class="foot">
+  Summary of the referee-facing rules only. The full Handbook governs.<br>
+  <a href="https://national1league.org/about/rules-handbook/" target="_blank" rel="noopener">National 1 League Handbook &amp; Rules of Competition</a><br>
+  Prepared for CREST · Colorado Referee Dept
+</div>
+</div>
+
+<style>
+/* the light/dark switch. fixed bottom-left, out of the way of Help. */
+#themeBtn{position:fixed;left:14px;bottom:14px;z-index:9000;width:46px;height:46px;border-radius:50%;
+  border:1.5px solid rgba(197,224,242,.35);background:rgba(13,21,37,.85);color:#F5C842;
+  font-size:20px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 18px rgba(0,0,0,.35);backdrop-filter:blur(6px);-webkit-tap-highlight-color:transparent}
+html[data-theme="light"] #themeBtn{background:rgba(255,255,255,.92);border-color:rgba(27,47,85,.3);color:#1B2F55}
+@media print{#themeBtn{display:none}}
+</style>
+<button id="themeBtn" type="button" aria-label="Switch light and dark" title="Light / dark"></button>
+<script>
+(function(){
+  // One key across every page, so the choice follows the person.
+  var KEY='crest-theme';
+  function current(){
+    try{ var v=localStorage.getItem(KEY); if(v==='light'||v==='dark') return v; }catch(e){}
+    // First run: follow the phone. Outdoors it is usually already light.
+    return (window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark';
+  }
+  function apply(t){
+    document.documentElement.setAttribute('data-theme',t);
+    var b=document.getElementById('themeBtn');
+    if(b){ b.textContent = t==='light' ? '\u263E' : '\u2600'; }
+    var m=document.querySelector('meta[name="theme-color"]');
+    if(m) m.setAttribute('content', t==='light' ? '#FFFFFF' : '#0D1525');
+  }
+  apply(current());
+  var b=document.getElementById('themeBtn');
+  if(b) b.onclick=function(){
+    var t=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';
+    try{ localStorage.setItem(KEY,t); }catch(e){}
+    apply(t);
+  };
+})();
+</script>
+</body>
+</html>
