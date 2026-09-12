@@ -2643,7 +2643,7 @@ function loadBoard(){
   //
   // A network failure and a broken page need different words, and the
   // broken page needs to say what broke.
-  api('eventBoard',{date:S.date}).then(function(r){
+  api('eventBoard',{date:S.date, venue:(S.site&&S.site!=='all')?S.site:''}).then(function(r){
     if(!(r&&r.status==='ok')){
       document.getElementById('staffBody').innerHTML=
         '<div class="empty"><b>No data</b>Deploy the backend, then reload.</div>';
@@ -4863,7 +4863,7 @@ try {
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.09.12-a';
+var PAGE_VERSION='2026.09.12-b';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
