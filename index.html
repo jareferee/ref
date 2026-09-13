@@ -370,6 +370,20 @@ body::after{
    two read as one idea. */
 .sec.mine .sec-h h3{color:var(--crest,#F5C842)}
 .sec.walk .sec-h h3{color:var(--flag)}
+.fb-hint{font-size:12px;color:var(--steel);margin:6px 0 2px;line-height:1.45}
+.sec.wrote .sec-h h3{color:var(--ice)}
+.wrote-list{display:flex;flex-direction:column;gap:7px}
+.wr{background:rgba(23,51,75,.35);border:1px solid rgba(127,184,222,.2);border-left:3px solid var(--ice);
+  border-radius:10px;padding:10px 13px}
+.wr b{font-family:var(--disp);font-size:16px;letter-spacing:.03em;font-weight:900;display:block}
+.wr i{display:block;font-style:normal;font-family:var(--mono);font-size:10px;color:var(--steel);margin:1px 0 4px}
+.wr span{display:block;font-size:13.5px;line-height:1.45;color:var(--ice-pale)}
+.prior{background:rgba(79,168,122,.08);border:1px solid rgba(79,168,122,.3);border-radius:10px;padding:11px 13px;margin:10px 0 4px}
+.ph2{font-size:12.5px;color:#8FE0B4;margin-bottom:7px}
+.ph2 b{font-family:var(--disp);font-size:16px}
+.pn{border-left:2px solid rgba(197,224,242,.2);padding:0 0 0 10px;margin-bottom:7px}
+.pn i{display:block;font-style:normal;font-family:var(--mono);font-size:10px;color:var(--steel)}
+.pn span{display:block;font-size:13px;color:var(--ice-pale);line-height:1.45;margin-top:2px}
 .cw .sn{display:inline-block;margin-left:6px;font-style:normal;font-family:var(--mono);font-size:10px;
   border-radius:99px;padding:1px 7px;vertical-align:1px}
 .cw .sn.none{background:rgba(196,71,47,.25);color:#F0A897}
@@ -1289,11 +1303,13 @@ html[data-theme="light"] input::placeholder,html[data-theme="light"] textarea::p
     <div class="m-h"><b>Feedback for a referee</b><i id="fbWhen">&mdash;</i></div>
     <div class="m-b">
       <label class="fl">Which official</label>
-      <select id="fbWho" class="fin"></select>
+      <select id="fbWho" class="fin" onchange="fbPrior()"></select>
+      <div id="fbPriorBox"></div>
 
       <label class="fl" style="margin-top:13px">What the referee will read</label>
       <textarea class="fin" id="fbPublic" rows="4"
         placeholder="What they did well, and one thing to work on. Written to them, not about them."></textarea>
+      <div class="fb-hint">Using the mic? Say it in full sentences and pause between thoughts. Names are picked above, so you never have to dictate one. Mistakes are cleaned up before the referee sees it.</div>
       <div class="hint">A referee coach reads and approves this before it is sent. Nothing goes straight out.</div>
 
       <label class="fl" style="margin-top:13px">Private &mdash; staff only</label>
@@ -2619,6 +2635,13 @@ function loadMyFields(){
     S.myFields=next; S.seenToday=seen; S.seenCount=count;
     if(changed && S.view==='games') keepScroll(renderStaff);
   }).catch(function(){});
+  api('myNotesToday',{pin:S.pin,date:S.date}).then(function(r){
+    if(!r||r.status!=='ok') return;
+    var next=r.notes||[];
+    var changed=JSON.stringify(next)!==JSON.stringify(S.myNotesToday||[]);
+    S.myNotesToday=next;
+    if(changed && S.view==='games') keepScroll(renderStaff);
+  }).catch(function(){});
 }
 
 function loadBoard(){
@@ -3473,6 +3496,21 @@ function renderStaff(){
     }
   }
 
+  // What this coach has written today, before the walk list. A coach
+  // given four fields comes back to a crew at full time and wants to say
+  // what they saw, not remember it.
+  if(caps.leaveFeedback && (S.myNotesToday||[]).length){
+    var mn=S.myNotesToday;
+    html+='<div class="sec wrote"><div class="sec-h"><h3>What you wrote today</h3>'+
+      '<div class="rule"></div><span class="n">'+mn.length+'</span></div>'+
+      '<div class="wrote-list">'+mn.map(function(n){
+        return '<div class="wr"><b>'+esc(n.refName)+'</b><i>'+esc(n.position||'')+
+          (n.field?' \u00b7 '+esc(shortField(n.field)):'')+(n.time?' \u00b7 '+esc(n.time):'')+
+          ' \u00b7 '+esc(n.status)+'</i>'+
+          '<span>'+esc(n.raw||n.sent||'')+'</span></div>';
+      }).join('')+'</div></div>';
+  }
+
   // The walk list. For a coach: every remaining game where somebody has
   // had no note today. This is the second half of the job and it sits on
   // the page, not behind a button. Coaches did their four fields and
@@ -4234,6 +4272,28 @@ function openFeedback(gameId){
   document.getElementById('fbPrivate').value='';
   document.getElementById('fbErr').textContent='';
   document.getElementById('fbBg').classList.add('on');
+  fbPrior();
+}
+
+// What this coach has already told the selected official, shown above the
+// form. Loads after the form opens so it never holds the form up. A coach
+// walking back to a crew for the face to face should be able to see
+// "I said the 30th minute" rather than guess.
+function shortField(f){ return String(f||'').replace(/^.*?-\s*/,''); }
+function fbPrior(){
+  var box=document.getElementById('fbPriorBox'); if(!box) return;
+  box.innerHTML='';
+  var who=document.getElementById('fbWho').value; if(!who||!S.pin) return;
+  api('myNotesFor',{pin:S.pin,refName:who}).then(function(r){
+    if(!r||r.status!=='ok'||!r.count) return;
+    if(document.getElementById('fbWho').value!==who) return;   // they moved on
+    box.innerHTML='<div class="prior"><div class="ph2">You have written about '+esc(who)+
+      ' <b>'+r.count+'</b> time'+(r.count>1?'s':'')+' before</div>'+
+      r.notes.slice(0,4).map(function(n){
+        return '<div class="pn"><i>'+esc(n.date)+(n.position?' \u00b7 '+esc(n.position):'')+'</i>'+
+          (n.note?'<span>'+esc(n.note)+'</span>':'')+'</div>';
+      }).join('')+'</div>';
+  }).catch(function(){});
 }
 
 function saveFeedback(btn){
@@ -4401,7 +4461,7 @@ function confirmNow(gameId,btn){
         confirmedBy:(S.staff&&S.staff.name)||'staff',
         homeScore:g.homeScore,awayScore:g.awayScore,date:S.date})
     .then(function(r){
-      if(r&&r.status==='ok'){ g.scoreStatus='Final'; keepScroll(renderStaff); }
+      if(r&&r.status==='ok'){ loadMyFields(); g.scoreStatus='Final'; keepScroll(renderStaff); }
       else { btn.disabled=false; btn.textContent='Confirm'; alert((r&&r.message)||'Could not confirm'); }
     })
     .catch(function(){ btn.disabled=false; btn.textContent='Confirm'; alert('No signal.'); });
@@ -4863,7 +4923,7 @@ try {
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.09.12-b';
+var PAGE_VERSION='2026.09.13-a';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
