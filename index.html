@@ -371,6 +371,18 @@ body::after{
 .sec.mine .sec-h h3{color:var(--crest,#F5C842)}
 .sec.walk .sec-h h3{color:var(--flag)}
 .fb-hint{font-size:12px;color:var(--steel);margin:6px 0 2px;line-height:1.45}
+.csanews{margin:18px 0 6px;background:rgba(23,51,75,.35);border:1px solid rgba(127,184,222,.22);
+  border-radius:14px;padding:14px 16px 8px}
+.csanews-h{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--steel);
+  margin-bottom:10px;display:flex;align-items:center;gap:9px}
+.csanews-mark{display:inline-flex;align-items:center;justify-content:center;width:30px;height:20px;border-radius:5px;
+  background:var(--ice);color:#0b1626;font-family:var(--disp);font-size:12px;letter-spacing:.06em;font-weight:900}
+.csanews-it{display:flex;align-items:baseline;gap:10px;padding:9px 0;border-top:1px solid rgba(127,184,222,.14);
+  color:inherit;text-decoration:none}
+.csanews-it:first-of-type{border-top:0}
+.csanews-it b{font-size:14px;font-weight:600;line-height:1.35;color:var(--snow)}
+.csanews-it i{margin-left:auto;font-style:normal;font-family:var(--mono);font-size:10px;color:var(--steel);white-space:nowrap}
+html[data-theme="light"] .csanews{background:#fff}
 .sec.wrote .sec-h h3{color:var(--ice)}
 .wrote-list{display:flex;flex-direction:column;gap:7px}
 .wr{background:rgba(23,51,75,.35);border:1px solid rgba(127,184,222,.2);border-left:3px solid var(--ice);
@@ -1717,6 +1729,26 @@ function evPickWeather(t){
   }).catch(function(){});
 }
 
+// From CSA. Three headlines from the association's own referee news, so
+// a referee opening the hub sees what the office is saying this week
+// without going looking. Fetched once by the backend, cached an hour,
+// never fetched by the phone.
+function csaNewsCard(){
+  return '<div class="csanews" id="csaNews"></div>';
+}
+function loadCsaNews(){
+  var box=document.getElementById('csaNews'); if(!box) return;
+  api('csaNews',{}).then(function(r){
+    if(!r||r.status!=='ok'||!(r.items||[]).length){ box.style.display='none'; return; }
+    box.innerHTML='<div class="csanews-h"><span class="csanews-mark">CSA</span>From Colorado Soccer</div>'+
+      r.items.map(function(it){
+        return '<a class="csanews-it" href="'+esc(it.link)+'" target="_blank" rel="noopener">'+
+          '<b>'+esc(it.title)+'</b>'+(it.date?'<i>'+esc(it.date)+'</i>':'')+'</a>';
+      }).join('');
+    box.style.display='';
+  }).catch(function(){ box.style.display='none'; });
+}
+
 function evFooter(){
   var rows=[];
   var lib=(window.JAR&&JAR.LIBRARY_URL)||'';
@@ -1804,7 +1836,8 @@ function renderEventPick(list){
     // handed them an empty screen and a full stop.
     box.innerHTML='<div class="empty"><b>Nothing on today</b>'+
       'Nothing is running today.</div>'+
-      evFooter();
+      csaNewsCard()+evFooter();
+    loadCsaNews();
     return;
   }
 
@@ -1868,8 +1901,10 @@ function renderEventPick(list){
   // The page used to stop here, leaving half a screen of nothing with a
   // giant crest floating in it. A referee who opens this on a day with no
   // tournament deserves somewhere to go rather than a dead end.
+  html += csaNewsCard();
   html += evFooter();
   box.innerHTML=html;
+  loadCsaNews();
 
   // Conditions on the front door. A referee standing in a car park at 7:40
   // wants to know it is 62 and the fields are open before they want to know
@@ -4937,7 +4972,7 @@ try {
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.09.25-a';
+var PAGE_VERSION='2026.09.25-b';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
