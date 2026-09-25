@@ -1779,23 +1779,31 @@ function renderEventPick(list){
 
   // Live first, then whatever starts next. A referee opening this is
   // almost always standing at one of the live ones.
-  var live=[], soon=[];
+  // Leagues are listed too, in their own section below the tournaments.
+  // They used to be hidden outright, meant for the ten-week statewide
+  // leagues so the picker stayed short -- and it hid every club league
+  // with them. Arsenal Rec sat on the sheet for two weeks and nobody could
+  // find it. The referee office had to type a league as "tournament" to
+  // make it appear at all.
+  var live=[], soon=[], leagues=[];
   (list||[]).forEach(function(t){
     if(!t.id||!t.startDate) return;
-    if(t.type==='league') return;
     var end=t.endDate||t.startDate;
-    if(today>=t.startDate && today<=end) live.push(t);
+    var running = today>=t.startDate && today<=end;
+    if(t.type==='league'){ if(running) leagues.push(t); return; }
+    if(running) live.push(t);
     else if(t.startDate>today) soon.push(t);
   });
   soon.sort(function(a,b){ return a.startDate.localeCompare(b.startDate); });
   soon=soon.slice(0,3);
+  leagues.sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); });
 
-  if(!live.length && !soon.length){
+  if(!live.length && !soon.length && !leagues.length){
     // Still gets the Anytime links. A blank day is the one time a referee
     // opening this most needs somewhere to go, and returning early here
     // handed them an empty screen and a full stop.
     box.innerHTML='<div class="empty"><b>Nothing on today</b>'+
-      'No tournament is running. If you are here for league play, your games are in Assignr.</div>'+
+      'Nothing is running today.</div>'+
       evFooter();
     return;
   }
@@ -1804,7 +1812,10 @@ function renderEventPick(list){
   // day with something running that is "you are here", not "pick one".
   var t0=document.getElementById('evTitle'), s0=document.getElementById('evSub');
   if(t0 && s0){
-    if(live.length===1){
+    if(live.length===0 && leagues.length===1){
+      t0.textContent='Today at '+ (leagues[0].name||'league play');
+      s0.textContent='Tap to open your day. We will remember it.';
+    } else if(live.length===1){
       t0.textContent='Today at '+ (live[0].name||'the tournament');
       s0.textContent='Tap to open your day. We will remember it.';
     } else if(live.length>1){
@@ -1850,6 +1861,9 @@ function renderEventPick(list){
   }
   if(soon.length){
     html+='<div class="evh">Coming up</div>'+soon.map(function(t){return card(t,false);}).join('');
+  }
+  if(leagues.length){
+    html+='<div class="evh">League play</div>'+leagues.map(function(t){return card(t,true);}).join('');
   }
   // The page used to stop here, leaving half a screen of nothing with a
   // giant crest floating in it. A referee who opens this on a day with no
@@ -4923,7 +4937,7 @@ try {
    cached one from three deploys ago. Printed in the console and shown in
    the footer. If this does not match what was last shipped, the page is
    stale -- hard refresh before reporting a bug. */
-var PAGE_VERSION='2026.09.13-a';
+var PAGE_VERSION='2026.09.25-a';
 try{
   console.log('page '+PAGE_VERSION);
   var _v=document.createElement('div');
