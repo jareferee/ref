@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>UC Health Cup · Referee rules</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --nv:#1B2F55; --nv3:#0D1525; --nv4:#0A1020;
+  --gold:#C8921A; --glt:#F5C842; --ice:#C5E0F2; --steel:#8FA3BF;
+  --line:rgba(197,224,242,.14); --go:#4FA87A; --golt:#8FE0B4;
+  --warn:#E0A22B; --wlt:#F0C86B; --red:#C4472F; --rlt:#F0A897;
+  --disp:'Bebas Neue',Impact,sans-serif; --body:'DM Sans',sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--nv4);color:#fff;font-family:var(--body);font-size:16px;line-height:1.55}
+.wrap{max-width:680px;margin:0 auto;padding:0 16px 80px}
+header{background:var(--nv3);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.hin{max-width:680px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:12px}
+.crest{width:32px;height:38px;border:2px solid var(--glt);color:var(--glt);
+  border-radius:6px 6px 13px 13px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--disp);font-size:11px;flex:0 0 auto}
+.hin h1{margin:0;font-family:var(--disp);font-size:20px;letter-spacing:.03em;font-weight:400}
+.hin .sub{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--steel)}
+.hin a{margin-left:auto;color:var(--glt);text-decoration:none;font-size:13px;border:1.5px solid rgba(245,200,66,.4);
+  border-radius:9px;padding:9px 13px;white-space:nowrap}
+
+.lede{margin:18px 0 6px;color:var(--ice);font-size:15px}
+.lede b{color:var(--glt);font-weight:500}
+.jump{display:flex;gap:7px;flex-wrap:wrap;margin:14px 0 6px}
+.jump a{color:var(--ice);text-decoration:none;font-size:13px;background:rgba(27,47,85,.45);
+  border:1px solid var(--line);border-radius:99px;padding:8px 13px}
+
+h2{font-family:var(--disp);font-size:24px;letter-spacing:.03em;font-weight:400;
+  margin:30px 0 10px;padding-top:8px;color:var(--glt)}
+h2 small{font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--steel);
+  margin-left:10px;text-transform:uppercase}
+
+table{width:100%;border-collapse:collapse;margin:6px 0 14px;background:rgba(27,47,85,.3);
+  border:1px solid var(--line);border-radius:12px;overflow:hidden}
+th,td{padding:11px 13px;text-align:left;border-bottom:1px solid var(--line);font-size:15px}
+th{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--steel);font-weight:500;background:rgba(9,25,40,.5)}
+td:first-child{font-family:var(--disp);font-size:18px;letter-spacing:.03em;white-space:nowrap}
+td b{font-family:var(--disp);font-size:20px;letter-spacing:.02em;color:#fff;font-weight:400}
+tr:last-child td{border-bottom:0}
+
+.card{background:rgba(27,47,85,.3);border:1px solid var(--line);border-radius:12px;
+  padding:14px 16px;margin-bottom:10px}
+.card b{display:block;font-family:var(--disp);font-size:18px;letter-spacing:.03em;
+  font-weight:400;margin-bottom:4px}
+.card p{margin:0;font-size:14.5px;color:var(--ice)}
+.card.red{border-left:4px solid var(--red)}
+.card.red b{color:var(--rlt)}
+.card.gold{border-left:4px solid var(--glt)}
+ul{margin:6px 0 14px;padding-left:20px;color:var(--ice);font-size:14.5px}
+li{margin-bottom:6px}
+.big{font-family:var(--disp);font-size:32px;color:var(--rlt);letter-spacing:.02em;line-height:1}
+.foot{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);
+  font-family:var(--mono);font-size:10.5px;color:#4A5C74;text-align:center;line-height:1.7}
+.foot a{color:var(--steel)}
+
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0 10px}
+.tile{background:rgba(27,47,85,.45);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.tile b{display:block;font-family:var(--disp);font-size:28px;letter-spacing:.02em;font-weight:400;line-height:1.05}
+.tile i{font-style:normal;font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--steel)}
+@media (max-width:360px){.tile b{font-size:24px}}
+</style>
+</head>
+<body>
+
+<header><div class="hin">
+  <div class="crest">UCH</div>
+  <div><h1>UC Health Cup</h1><div class="sub">U9 &amp; U10 recreational · Referee rules</div></div>
+  <a href="./" onclick="if(history.length>1){history.back();return false;}">Back</a>
+</div></header>
+
+<div class="wrap">
+
+<p class="lede"><b>7v7 under FIFA Laws of the Game</b> with the CSA changes below. Anything these rules don't cover goes to the Tournament or Site Director.</p>
+
+<div class="tiles">
+  <div class="tile"><b>7v7</b><i>Format · roster max 14</i></div>
+  <div class="tile"><b>2 &times; 20</b><i>Minute halves</i></div>
+  <div class="tile"><b>5</b><i>Players to start or continue</i></div>
+  <div class="tile"><b>Size 4</b><i>Ball · you pick</i></div>
+  <div class="tile"><b>8 yds</b><i>Penalty mark</i></div>
+  <div class="tile"><b>8 yds</b><i>Free kick distance</i></div>
+</div>
+
+<div class="card gold">
+  <b>No overtime, ever</b>
+  <p><strong>Group games:</strong> a tie stands. <strong>Semifinal or final tied after 40 minutes:</strong> straight to kicks from the mark.</p>
+</div>
+<div class="card gold">
+  <b>15-minute grace period</b>
+  <p>Kick off at the scheduled time. A team without <strong>5 properly uniformed, checked-in players</strong> at the end of the grace period forfeits, recorded <strong>3&ndash;0</strong>.</p>
+</div>
+<div class="card">
+  <b>Added time</b>
+  <p>Only for serious injuries, not trifling stoppages. Keep the field on schedule.</p>
+</div>
+
+<div class="jump">
+  <a href="#subs">Subs</a><a href="#kit">Kit</a><a href="#field">Field &amp; sideline</a>
+  <a href="#cards">Send-offs</a><a href="#weather">Weather &amp; injury</a><a href="#after">After the game</a>
+</div>
+
+<h2 id="subs">Substitutions <small>Law III</small></h2>
+<ul>
+  <li><strong>Unlimited</strong>, at any stoppage, with your permission.</li>
+  <li>A <strong>cautioned player may be subbed at the time of the caution</strong>. The opponent may then sub one player.</li>
+  <li>Players enter <strong>at the halfway line only</strong>, after the outgoing player is fully off and you signal them on. Outgoing players may leave at the nearest boundary.</li>
+  <li>A <strong>sent-off player cannot be replaced</strong>. The team plays short for the rest of the game.</li>
+  <li>If a team drops <strong>below 5 players</strong>, the game cannot continue. One of the 5 must be the goalkeeper.</li>
+  <li><strong>No guest players.</strong> A player can play for only one team in the tournament.</li>
+</ul>
+
+<h2 id="kit">Uniforms and equipment <small>Law IV</small></h2>
+<ul>
+  <li><strong>Home team is listed first</strong> on the schedule and wears <strong>dark</strong>. Visitors wear white or light.</li>
+  <li>Goalkeeper colors must differ from both teams and from you.</li>
+  <li>Shin guards required.</li>
+  <li><strong>No earrings or jewelry.</strong> Taping or bandaging earrings is not allowed.</li>
+  <li>Religious medals and medical tags only if <strong>taped to the body</strong>.</li>
+  <li>Casts, splints and braces are <strong>your call</strong>: allowed if not dangerous or padded with soft material.</li>
+</ul>
+
+<h2 id="field">Field and sideline <small>Law I</small></h2>
+<ul>
+  <li><strong>Both teams on the same side.</strong> Each team area starts 10 yards from halfway and runs 12 yards toward its goal.</li>
+  <li>Maximum <strong>4 coaches or staff</strong> on the sideline. Each must be on the frozen cup roster or have a current PlayMetrics coaching pass.</li>
+  <li>Players and coaches stay in their team area, behind any spectator line or 5+ feet from the touchline. Exceptions: subs warming up, or staff you call on for an injured player.</li>
+  <li>Spectators on the <strong>opposite</strong> side, at least 5 feet from the touchlines and goal lines. Nobody behind the goals without Tournament Director approval. <strong>One warning, then they may be ejected.</strong></li>
+  <li>Cameras like Veo on the spectator side, base at least 4 yards from the touchline.</li>
+  <li>No drones, horns, whistles, large megaphones or noisemakers.</li>
+</ul>
+
+<h2 id="cards">Send-offs and suspensions <small>Law XII</small></h2>
+<p class="lede" style="margin-top:0">You report. Cup staff enforce.</p>
+<div class="card red">
+  <b>Foul or abusive language, or persistent misconduct after a caution</b>
+  <p>Sits out the <strong>next</strong> tournament game.</p>
+</div>
+<div class="card red">
+  <b>Violent conduct</b>
+  <p>Sits out <strong>at least the next 2</strong> tournament games.</p>
+</div>
+<div class="card red">
+  <b>Bench personnel dismissed</b>
+  <p>Sits out that team's next game, and no Cup role with any team until served.</p>
+</div>
+<div class="card red">
+  <b>Ejected coach or spectator</b>
+  <p>Must be <span class="big">100 yards</span> from the field within <strong>5 minutes</strong> of notice. If not, <strong>abandon the match</strong>. Their team forfeits, 3&ndash;0 or the current score, whichever favors the opponent more.</p>
+</div>
+<ul>
+  <li>Unserved suspensions <strong>carry to the player's next CSA league game</strong> or next Cup enrollment.</li>
+  <li>A dismissed coach or spectator may also cost the team 1 standings point. Cup staff decide.</li>
+  <li>If a team tells you about a suspended player or coach, <strong>record the name on your game report</strong>.</li>
+  <li>Harassment or insults toward referees or staff are not tolerated. Coaches are responsible for their supporters. <strong>Report it</strong>; the Tournament Committee and CSA handle discipline.</li>
+</ul>
+
+<h2 id="weather">Weather and injuries</h2>
+<div class="card">
+  <b>Siren</b>
+  <p>Play stops for rain, cold, high wind or lightning. When the siren sounds, clear the field. Play resumes on the next siren. Only the Tournament Director cancels, shortens or moves games.</p>
+</div>
+<div class="card">
+  <b>Stopped games</b>
+  <p>If play doesn't resume and at least one half was completed, the score at the stoppage stands.</p>
+</div>
+<div class="card">
+  <b>Suspected head injury</b>
+  <p>The on-site medical trainer evaluates and reports to Cup staff. The player <strong>cannot return until cleared by a medical professional</strong>.</p>
+</div>
+
+<h2 id="after">After the game</h2>
+<div class="card gold">
+  <b>Complete the game card in full</b>
+  <p>Final score, plus any suspended players or coaches who sat out if the team told you.</p>
+</div>
+<ul>
+  <li>Tell CSA tournament staff about <strong>every send-off</strong>: players, coaches, spectators.</li>
+  <li>Submit a <strong>supplemental report</strong> for any send-off, abandonment or unusual incident.</li>
+  <li><strong>No protests.</strong> Your on-field decisions are final and cannot be appealed.</li>
+  <li>Standings (3 for a win, 1 for a tie) and tiebreakers are handled by tournament staff, not you.</li>
+</ul>
+
+<div class="foot">
+  Referee-facing rules for UC Health Cup, from the CSA Referee Quick Guide (26 Sep 2026).<br>
+  <a href="rules-uchealth.pdf" target="_blank" rel="noopener">UC Health Cup Referee Quick Guide (PDF)</a><br>
+  Prepared for CREST · Colorado Referee Program
+</div>
+</div>
+</body>
+</html>

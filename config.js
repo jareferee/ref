@@ -279,9 +279,9 @@
       hub:      'jareferee.com/uchc',
       // A hand-written block wins over the TOURNAMENTS row, so rulesFor()
       // never ran for UCH and the Rules button fell back to the shared
-      // rules.html. The link has to live here. No summary on purpose --
-      // CSA's event page stays current and carries the rules.
-      rulesUrl: 'https://www.coloradosoccer.org/csacup',
+      // rules.html. The link has to live here. Built from Deanna's
+      // Referee Quick Guide, 26 Sep; the PDF sits beside it.
+      rulesUrl: 'rules-uchealth.html',
       // Arvada, not Denver: the weather lookup keys on the town, and there
       // is no Stenger entry in VENUE_COORDS.
       weatherPlace: 'Arvada',
@@ -299,8 +299,8 @@
           p: 'The pavilion behind the concession stand and restrooms, in the center of the complex. Be there 45 to 60 minutes before your first game each day, before you go to your field.' },
         { h: 'I-70 at Kipling is closed',
           p: 'CDOT has the exit and intersection closed for bridge work. Leave early and use another route to Stenger.' },
-        { h: 'Rules',
-          p: 'U9 and U10 recreational. For anything on your game card you are unsure of, check with the site coordinator at Referee HQ.' },
+        { h: 'Game basics',
+          p: 'U9 and U10, 7v7, two 20-minute halves, 5 players to start or continue. No overtime, ever. Anything the rules do not cover, ask the site coordinator at Referee HQ.' },
         { h: 'Something wrong',
           p: 'Use the red Help button in the corner. It reaches your site coordinator and Deanna at once.' }
       ],
@@ -508,17 +508,16 @@
     n1fall:   'rules-nat1.html',
     nat1:     'rules-nat1.html',
     csanat1:  'rules-nat1.html',
-    national1:'rules-nat1.html'
+    national1:'rules-nat1.html',
+    uchealth: 'rules-uchealth.html'
   };
   // Rules can also follow the GAME_PREFIX, so an event whose id nobody
   // remembers still gets the right document because its games are NAT-.
   var RULES_BY_PREFIX = {
     NAT: 'rules-nat1.html',
     CUP: 'rules-csacups.html',
-    // UC Health Cup. No phone summary on purpose -- CSA pulled the 2024
-    // PDF the Assignr link pointed at, and a guessed summary is worse than
-    // none. CSA's own event page stays current and carries the rules link.
-    UCH: 'https://www.coloradosoccer.org/csacup',
+    // UC Health Cup. From Deanna's Referee Quick Guide, 26 Sep.
+    UCH: 'rules-uchealth.html',
     COS: ''
   };
   function rulesFor(id, prefix) {
@@ -611,7 +610,7 @@
   } catch (e) {}
 
   window.JAR = {
-    VERSION: '2026.09.26-b',
+    VERSION: '2026.09.26-c',
 
     // ── CREST, the rest of the programme ──
     // Taken from coloradoreferee.github.io, the site that lists every tool.
