@@ -277,17 +277,30 @@
       cardSub:  'REFEREE GAME CARD',
       accent:   '#15294B',
       hub:      'jareferee.com/uchc',
-      weatherPlace: 'Denver',
+      // A hand-written block wins over the TOURNAMENTS row, so rulesFor()
+      // never ran for UCH and the Rules button fell back to the shared
+      // rules.html. The link has to live here. No summary on purpose --
+      // CSA's event page stays current and carries the rules.
+      rulesUrl: 'https://www.coloradosoccer.org/csacup',
+      // Arvada, not Denver: the weather lookup keys on the town, and there
+      // is no Stenger entry in VENUE_COORDS.
+      weatherPlace: 'Arvada',
       dates:    ['2026-09-27','2026-10-03','2026-10-04','2026-10-05'],
       daylbl:   { '2026-09-27':['Sun','Sep 27'], '2026-10-03':['Sat','Oct 3'],
                   '2026-10-04':['Sun','Oct 4'],  '2026-10-05':['Mon','Oct 5'] },
-      venues:   ['Fort Logan Soccer Complex'],
+      // Moved from Fort Logan 2026.09.26. This list feeds the bulletin,
+      // notify and Help venue pickers.
+      venues:   ['Stenger Sports Complex'],
       hqVenues: [], hqFields: [],
-      trim:     [' Soccer Complex'],
+      trim:     [' Sports Complex'],
       alertWho: 'your site coordinator and Deanna',
       refInfo:  [
-        { h: 'Recreational',
-          p: 'U8 to U19 recreational. Half lengths vary by age band -- check your game card.' },
+        { h: 'Check in at Referee HQ',
+          p: 'The pavilion behind the concession stand and restrooms, in the center of the complex. Be there 45 to 60 minutes before your first game each day, before you go to your field.' },
+        { h: 'I-70 at Kipling is closed',
+          p: 'CDOT has the exit and intersection closed for bridge work. Leave early and use another route to Stenger.' },
+        { h: 'Rules',
+          p: 'U9 and U10 recreational. For anything on your game card you are unsure of, check with the site coordinator at Referee HQ.' },
         { h: 'Something wrong',
           p: 'Use the red Help button in the corner. It reaches your site coordinator and Deanna at once.' }
       ],
@@ -598,7 +611,7 @@
   } catch (e) {}
 
   window.JAR = {
-    VERSION: '2026.09.26-a',
+    VERSION: '2026.09.26-b',
 
     // ── CREST, the rest of the programme ──
     // Taken from coloradoreferee.github.io, the site that lists every tool.
