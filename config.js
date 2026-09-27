@@ -502,6 +502,10 @@
   var RULES_BY_PREFIX = {
     NAT: 'rules-nat1.html',
     CUP: 'rules-csacups.html',
+    // UC Health Cup. No phone summary on purpose -- CSA pulled the 2024
+    // PDF the Assignr link pointed at, and a guessed summary is worse than
+    // none. CSA's own event page stays current and carries the rules link.
+    UCH: 'https://www.coloradosoccer.org/csacup',
     COS: ''
   };
   function rulesFor(id, prefix) {
@@ -594,7 +598,7 @@
   } catch (e) {}
 
   window.JAR = {
-    VERSION: '2026.09.11-b',
+    VERSION: '2026.09.26-a',
 
     // ── CREST, the rest of the programme ──
     // Taken from coloradoreferee.github.io, the site that lists every tool.
