@@ -5,7 +5,7 @@
 (function () {
   'use strict';
   // The version. Goes up with every change to any file in this folder.
-  var VERSION = '2026.09.30-b';
+  var VERSION = '2026.09.30-d';
   var C = window.HUB, L = window.LANG;
   var sb = window.supabase.createClient(C.supabaseUrl, C.publishableKey);
   var $ = function (id) { return document.getElementById(id); };
@@ -137,6 +137,7 @@
       return '<div class="bulletin"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="9" stroke="currentColor" stroke-width="2"></circle><path d="M11 6v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path><circle cx="11" cy="15.5" r="1.2" fill="currentColor"></circle></svg><div class="text">' + (b.title ? '<b>' + esc(b.title) + '</b> ' : '') + esc(b.body || '') + ' <span>' + esc(t('fromState')) + '.</span></div></div>';
     }).join('');
     $('coachEntry').innerHTML = iCan('coaching') ? '<a class="rowbtn" href="#coach" style="margin-top:14px"><span><span class="t">' + esc(t('coachingEntry')) + '</span><br><span class="s">' + esc(t('coachingEntryHint')) + '</span></span><svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M8 4l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg></a>' : '';
+    $('reviewEntry').innerHTML = iCan('review') ? '<a class="rowbtn" href="#review" style="margin-top:8px"><span><span class="t">' + esc(t('reviewEntry')) + '</span><br><span class="s">' + esc(t('reviewEntryHint')) + '</span></span><svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M8 4l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg></a>' : '';
     var r = rulesFor(g || S.games[0]);
     $('rulesLink').hidden = !r; if (r) $('rulesLink').href = r;
   }
@@ -182,6 +183,21 @@
     var n = await sb.from('observations').select('date,ref_name,observer,rater_role,public_notes,cleaned_note,final_note,cleanup_status,area,field,game_id,created_at')
       .order('created_at', { ascending: false }).limit(100);
     S.coach.notes = (n.data || []).filter(function (x) { return (S.me.nameKeys || []).indexOf(key(x.observer)) >= 0; });
+    // What has already been said about every referee working today (released notes only).
+    var names = {};
+    S.coach.games.forEach(function (g) { ['cr', 'ar1', 'ar2', 'fourth'].forEach(function (k) { if (g[k]) names[g[k]] = 1; }); });
+    var list = Object.keys(names);
+    S.coach.seen = {};
+    if (list.length) {
+      var seen = await sb.from('observations').select('ref_name,date,observer,rater_role,final_note,cleaned_note,area')
+        .in('ref_name', list).in('cleanup_status', ['approved', 'edited']).order('date', { ascending: false }).limit(500);
+      (seen.data || []).forEach(function (o) { var k = key(o.ref_name); (S.coach.seen[k] = S.coach.seen[k] || []).push(o); });
+    }
+  }
+  function seenLine(name) {
+    var arr = (S.coach.seen || {})[key(name)] || [];
+    if (!arr.length) return '<span style="color:var(--red);font-weight:700">' + esc(t('notSeen')) + '</span>';
+    return esc(t('seenTimes').replace('{n}', arr.length)) + ', ' + esc(dayLong(arr[0].date));
   }
   function renderCoach() {
     var venues = [];
@@ -192,9 +208,12 @@
     }).join('') + '</div></div>' : '<div class="card"><div class="hint">' + esc(t('noVenuesToday')) + '</div></div>';
     $('venuePick').querySelectorAll('[data-venue]').forEach(function (b) { b.onclick = function () { S.coach.venue = b.getAttribute('data-venue'); renderCoach(); }; });
     var games = S.coach.games.filter(function (g) { return g.venue === S.coach.venue; });
-    $('coachGames').innerHTML = '<div class="list">' + games.map(function (g) {
-      var crew = ['cr', 'ar1', 'ar2', 'fourth'].map(function (k) { return g[k]; }).filter(Boolean).join(', ');
-      return '<a class="item" href="#coach/game/' + esc(g.game_id) + '"><div><div class="when"><div class="disp">' + esc(clock(g.kickoff)) + '</div><div class="sub">' + esc(g.field || '') + ', ' + esc(g.age_group || '') + '</div></div><div class="hint">' + esc(crew) + '</div></div><svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M8 4l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg></a>';
+    $('coachGames').innerHTML = (games.length ? '<div class="pad hint" style="padding-top:12px">' + esc(t('redMeans')) + '</div>' : '') + '<div class="list">' + games.map(function (g) {
+      var crew = ['cr', 'ar1', 'ar2', 'fourth'].filter(function (k) { return g[k]; }).map(function (k) {
+        var none = !((S.coach.seen || {})[key(g[k])] || []).length;
+        return (none ? '<span style="color:var(--red);font-weight:700">' : '<span>') + esc(g[k]) + '</span>';
+      }).join(', ');
+      return '<a class="item" href="#coach/game/' + esc(g.game_id) + '"><div><div class="when"><div class="disp">' + esc(clock(g.kickoff)) + '</div><div class="sub">' + esc(g.field || '') + ', ' + esc(g.age_group || '') + '</div></div><div class="hint">' + crew + '</div></div><svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M8 4l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg></a>';
     }).join('') + '</div>';
   }
   function renderCoachGame(id) {
@@ -209,8 +228,8 @@
       '<div style="display:flex;justify-content:space-between;align-items:baseline"><div class="disp" style="font-size:48px">' + esc(clock(g.kickoff)) + '</div><div class="disp" style="font-size:48px;color:var(--count)">' + esc(fieldShort(g.field)) + '</div></div>' +
       '<div>' + esc(g.age_group || '') + (g.competition ? ', ' + esc(g.competition) : '') + '. ' + esc(g.home || '') + ' v ' + esc(g.away || '') + '</div></div>' +
       '<div class="disp h2">' + esc(t('crewPick')) + '</div>' +
-      crew.map(function (k) { return '<button class="crewbtn' + (S.coach.ref === k ? ' on' : '') + '" data-crew="' + k + '"><span><span class="t">' + esc(g[k]) + '</span><br><span class="s">' + esc(t('role.' + k)) + '</span></span>' + (S.coach.ref === k ? '<svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="10" fill="var(--navy)"></circle><path d="M6.5 11.5l3 3 6-6.5" stroke="var(--surface)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>' : '') + '</button>'; }).join('') +
-      (S.coach.ref ? '<div class="card" style="gap:12px"><label for="noteText" style="font-weight:700">' + esc(t('noteLabel')) + '</label><textarea id="noteText" placeholder="' + esc(t('notePlaceholder')) + '"></textarea>' +
+      crew.map(function (k) { return '<button class="crewbtn' + (S.coach.ref === k ? ' on' : '') + '" data-crew="' + k + '"><span><span class="t">' + esc(g[k]) + '</span><br><span class="s">' + esc(t('role.' + k)) + '. ' + seenLine(g[k]) + '</span></span>' + (S.coach.ref === k ? '<svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="10" fill="var(--navy)"></circle><path d="M6.5 11.5l3 3 6-6.5" stroke="var(--surface)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>' : '') + '</button>'; }).join('') +
+      (S.coach.ref ? priorNotesHtml(g[S.coach.ref]) + '<div class="card" style="gap:12px"><label for="noteText" style="font-weight:700">' + esc(t('noteLabel')) + '</label><textarea id="noteText" placeholder="' + esc(t('notePlaceholder')) + '"></textarea>' +
         '<div class="hint" style="font-weight:700">' + esc(t('areaLabel')) + '</div><div class="chips">' + AREAS.map(function (a) { return '<button class="chip-btn' + (S.coach.area === a ? ' on' : '') + '" data-area="' + a + '">' + esc(t('areas.' + a)) + '</button>'; }).join('') + '</div>' +
         '<div class="hint">' + esc(t('signedAs')) + ' ' + esc(S.me.first_name + ' ' + S.me.last_name) + ', ' + esc(signed) + '</div>' +
         '<button class="btn primary" id="saveNote">' + esc(t('saveNote')) + '</button><div class="msg" id="noteMsg" hidden></div></div>' : '');
@@ -236,13 +255,93 @@
       }
     };
   }
+  function priorNotesHtml(name) {
+    var arr = ((S.coach.seen || {})[key(name)] || []).slice(0, 3);
+    if (!arr.length) return '<div class="note"><div class="text hint" style="color:var(--red)">' + esc(t('notSeenLong')) + '</div></div>';
+    return '<div class="note"><div class="who">' + esc(t('alreadySaid').replace('{n}', ((S.coach.seen || {})[key(name)] || []).length)) + '</div>' + arr.map(function (o) {
+      return '<div class="text" style="font-size:15px"><span class="hint">' + esc(dayLong(o.date)) + ', ' + esc(o.observer || '') + (o.rater_role ? ', ' + esc(o.rater_role) : '') + ':</span> ' + esc(o.final_note || o.cleaned_note || '') + '</div>';
+    }).join('') + '</div>';
+  }
   function renderMyNotes() {
     $('myNotesList').innerHTML = S.coach.notes.length ? S.coach.notes.map(function (n) {
       var st = n.cleanup_status || 'pending', ok = st === 'approved' || st === 'edited';
       var label = t('status.' + st); if (label === 'status.' + st) label = t('status.pending');
       return '<div class="card" style="gap:8px"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><div><b>' + esc(n.ref_name || '') + '</b> <span class="hint">' + esc(dayLong(n.date)) + (n.field ? ', ' + esc(n.field) : '') + (n.area ? ', ' + esc(t('areas.' + n.area)) : '') + '</span></div><span class="pill' + (ok ? ' ok' : '') + '">' + esc(label) + '</span></div>' +
-        '<div class="side"><div class="col"><b>' + esc(t('rawLabel')) + '</b>' + esc(n.public_notes || '') + '</div><div class="col"><b>' + esc(t('cleanLabel')) + '</b>' + (n.final_note || n.cleaned_note ? esc(n.final_note || n.cleaned_note) : '<span class="hint">' + esc(t('notCleaned')) + '</span>') + '</div></div></div>';
+        '<div class="side three"><div class="col"><b>' + esc(t('rawLabel')) + '</b>' + esc(n.public_notes || '') + '</div><div class="col"><b>' + esc(t('aiLabel')) + '</b>' + (n.cleaned_note ? esc(n.cleaned_note) : '<span class="hint">' + esc(t('notCleaned')) + '</span>') + '</div><div class="col"><b>' + esc(t('releasedLabel')) + '</b>' + (ok ? esc(n.final_note || n.cleaned_note || '') : '<span class="hint">' + esc(t('notReleased')) + '</span>') + '</div></div></div>';
     }).join('') : '<div class="card"><div class="hint">' + esc(t('noMyNotes')) + '</div></div>';
+  }
+
+  // ── Review (Scheduling): clean, read both, approve ───────────────
+  var REV = { filter: 'cleaned', notes: [], busy: false };
+  async function token() { var r = await sb.auth.getSession(); return r.data && r.data.session ? r.data.session.access_token : ''; }
+  async function post(body) {
+    body.token = await token();
+    var res = await fetch(C.backend, { method: 'POST', body: JSON.stringify(body) });
+    var j = await res.json();
+    if (!j || j.status !== 'ok') throw new Error(j && j.message || 'error');
+    return j;
+  }
+  async function loadReview() {
+    var from = new Date(Date.now() - 45 * 86400000);
+    var j = await post({ action: 'pendingNotes', dateFrom: from.toISOString().slice(0, 10) });
+    REV.notes = (j.data || []).filter(function (n) { return n.notesPublic || n.cleanedNote; });
+  }
+  function revStatus(n) {
+    var s = String(n.cleanupStatus || 'pending').toLowerCase();
+    if (s === 'approved' || s === 'edited') return 'approved';
+    if (s === 'cleaned' && n.cleanedNote) return 'cleaned';
+    return 'pending';
+  }
+  function renderReview() {
+    var counts = { pending: 0, cleaned: 0, approved: 0 };
+    REV.notes.forEach(function (n) { counts[revStatus(n)]++; });
+    var lbl = function (k, n) { return t('filter' + k.charAt(0).toUpperCase() + k.slice(1)) + ' ' + n; };
+    var list = REV.notes.filter(function (n) { return revStatus(n) === REV.filter; });
+    $('reviewTools').innerHTML = '<div class="filters">' + ['pending', 'cleaned', 'approved'].map(function (k) {
+      return '<button class="chip-btn' + (REV.filter === k ? ' on' : '') + '" data-filter="' + k + '">' + esc(lbl(k, counts[k])) + '</button>';
+    }).join('') + '</div>' +
+      (REV.filter === 'pending' && counts.pending ? '<div class="pad" style="padding-top:10px"><button class="btn outline small" id="cleanAll">' + esc(t('cleanAll')) + '</button></div>' : '') +
+      (REV.filter === 'cleaned' && counts.cleaned ? '<div class="pad" style="padding-top:10px"><button class="btn go small" id="approveAll">' + esc(t('approveAll')) + '</button></div>' : '') +
+      '<div class="msg bad" id="revMsg" hidden style="margin:10px 20px 0"></div>';
+    $('reviewTools').querySelectorAll('[data-filter]').forEach(function (b) { b.onclick = function () { REV.filter = b.getAttribute('data-filter'); renderReview(); }; });
+    var ca = $('cleanAll'); if (ca) ca.onclick = function () { runOn(list.filter(function (n) { return !n.flagged; }), 'clean'); };
+    var aa = $('approveAll'); if (aa) aa.onclick = function () { runOn(list.filter(function (n) { return !n.flagged; }), 'approve'); };
+    $('reviewList').innerHTML = list.length ? list.map(function (n) {
+      var st = revStatus(n);
+      return '<div class="card' + (n.flagged ? ' flagged' : '') + '" style="gap:8px" id="rev-' + n.rowNum + '">' +
+        '<div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline"><div><b>' + esc(n.refName) + '</b><br><span class="hint">' + esc(n.observer || '') + (n.raterRole ? ', ' + esc(n.raterRole) : '') + '. ' + esc(n.date ? dayLong(n.date) : '') + (n.field ? ', ' + esc(n.field) : '') + (n.officialRole ? ', ' + esc(n.officialRole) : '') + '</span></div>' +
+        (st === 'approved' ? '<span class="pill ok">' + esc(t('approved')) + (n.reviewedBy ? ' ' + esc(t('approvedBy')) + ' ' + esc(n.reviewedBy) : '') + '</span>' : '') + '</div>' +
+        (n.flagged ? '<div class="hint" style="color:var(--red);font-weight:700">' + esc(t('flaggedNote')) + '</div>' : '') +
+        '<div class="side three"><div class="col"><b>' + esc(t('rawLabel')) + '</b>' + esc(n.notesPublic || '') + '</div><div class="col"><b>' + esc(t('aiLabel')) + '</b>' + (n.cleanedNote ? esc(n.cleanedNote) : '<span class="hint">' + esc(t('notCleaned')) + '</span>') + '</div><div class="col"><b>' + esc(t('releasedLabel')) + '</b>' + (st === 'approved' ? esc(n.finalNote || n.cleanedNote || '') : '<span class="hint">' + esc(t('notReleased')) + '</span>') + '</div></div>' +
+        (st === 'pending' ? '<button class="btn outline small" data-clean="' + n.rowNum + '">' + esc(t('cleanBtn')) + '</button>' : '') +
+        (st === 'cleaned' ? '<button class="btn go small" data-approve="' + n.rowNum + '">' + esc(t('approveBtn')) + '</button>' : '') +
+        '</div>';
+    }).join('') : '<div class="card"><div class="hint">' + esc(t('nothingHere')) + '</div></div>';
+    $('reviewList').querySelectorAll('[data-clean]').forEach(function (b) { b.onclick = function () { runOn([byRow(b.getAttribute('data-clean'))], 'clean', b); }; });
+    $('reviewList').querySelectorAll('[data-approve]').forEach(function (b) { b.onclick = function () { runOn([byRow(b.getAttribute('data-approve'))], 'approve', b); }; });
+  }
+  function byRow(r) { return REV.notes.filter(function (n) { return String(n.rowNum) === String(r); })[0]; }
+  async function runOn(notes, what, btn) {
+    notes = notes.filter(Boolean);
+    if (!notes.length || REV.busy) return;
+    REV.busy = true;
+    if (btn) { btn.disabled = true; btn.textContent = t(what === 'clean' ? 'cleaning' : 'approving'); }
+    var m = $('revMsg'); if (m) m.hidden = true;
+    try {
+      if (what === 'approve') {
+        await post({ action: 'approveBatch', reviewedBy: S.me.first_name + ' ' + S.me.last_name, items: notes.map(function (n) { return { rowNum: n.rowNum, use: 'ai' }; }) });
+      } else {
+        for (var i = 0; i < notes.length; i++) await post({ action: 'cleanNote', rowNum: notes[i].rowNum });
+      }
+      await loadReview();
+      if (what === 'approve' && REV.filter === 'cleaned') REV.filter = 'approved';
+      if (what === 'clean' && REV.filter === 'pending') REV.filter = 'cleaned';
+      renderReview();
+    } catch (e) {
+      renderReview();
+      var mm = $('revMsg'); if (mm) { mm.hidden = false; mm.textContent = t('reviewFailed') + ' ' + (e && e.message ? e.message : ''); }
+    }
+    REV.busy = false;
   }
 
   // ── Game card ────────────────────────────────────────────────────
@@ -361,6 +460,7 @@
     if (!S.me) { show('s-signin'); return; }
     var h = location.hash.replace(/^#/, '') || 'day';
     if (h.indexOf('coach') === 0 && !iCan('coaching')) { location.hash = '#day'; return; }
+    if (h === 'review') { if (!iCan('review')) { location.hash = '#day'; return; } $('reviewList').innerHTML = '<div class="card"><div class="hint">' + esc(t('loadingReview')) + '</div></div>'; show('s-review'); loadReview().then(renderReview).catch(function (e) { $('reviewList').innerHTML = '<div class="msg bad">' + esc(t('reviewFailed') + ' ' + (e && e.message || '')) + '</div>'; }); return; }
     if (h === 'coach') { loadCoach().then(function () { renderCoach(); }); show('s-coach'); }
     else if (h.indexOf('coach/game/') === 0) { (S.coach.games.length ? Promise.resolve() : loadCoach()).then(function () { renderCoachGame(h.slice(11)); }); show('s-coachgame'); }
     else if (h === 'coach/notes') { loadCoach().then(function () { renderMyNotes(); }); show('s-mynotes'); }
@@ -389,8 +489,8 @@
     ['themeBtn0', 'themeBtn1', 'themeBtn2'].forEach(function (id) { $(id).onclick = toggleTheme; });
     ['langBtn0', 'langBtn1'].forEach(function (id) { $(id).onclick = function () { setLang(S.lang === 'es' ? 'en' : 'es'); }; });
     $('markSignin').src = C.marks.csa; $('markDay').src = C.marks.csa;
-    ['markGame', 'markNotes', 'markHelp', 'markCoach', 'markCoachGame', 'markMyNotes'].forEach(function (id) { $(id).src = C.marks.program; });
-    ['ja0', 'ja1', 'ja2', 'ja3', 'ja4', 'ja5', 'ja6', 'ja7'].forEach(function (id) { $(id).src = C.marks.ja; });
+    ['markGame', 'markNotes', 'markHelp', 'markCoach', 'markCoachGame', 'markMyNotes', 'markReview'].forEach(function (id) { $(id).src = C.marks.program; });
+    ['ja0', 'ja1', 'ja2', 'ja3', 'ja4', 'ja5', 'ja6', 'ja7', 'ja8'].forEach(function (id) { $(id).src = C.marks.ja; });
     applyWords();
     document.querySelectorAll('.ver').forEach(function (el) { el.textContent = 'v' + VERSION; });
     sb.auth.getSession().then(function (r) { if (r.data && r.data.session) start(); else show('s-signin'); });

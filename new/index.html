@@ -8,7 +8,7 @@
 <title>Colorado Referees</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
-<link rel="stylesheet" href="app.css?v=2026.09.30-b">
+<link rel="stylesheet" href="app.css?v=2026.09.30-d">
 </head>
 <body>
 <div class="app" id="app">
@@ -59,6 +59,7 @@
     <div id="noteBox"></div>
     <div id="bulletins"></div>
     <div id="coachEntry"></div>
+    <div id="reviewEntry"></div>
     <div class="foot">
       <a class="btn outline" style="flex-grow:1" id="rulesLink" href="#" data-t="rules"></a>
       <a class="btn help" href="#help" data-t="help"></a>
@@ -126,6 +127,18 @@
     <div class="credit" style="margin-top:auto"><span class="chip"><img id="ja7" alt=""></span><span class="ver"></span></div>
   </section>
 
+  <!-- ── Review: notes waiting for approval ──────────────────── -->
+  <section class="screen" id="s-review">
+    <div class="top">
+      <a class="backlink" href="#day"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M12 4l-6 6 6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg><span data-t="yourDay"></span></a>
+      <img id="markReview" alt="Colorado Soccer Referee Program" style="width:36px;height:40px;object-fit:contain">
+    </div>
+    <div class="pad" style="padding-top:16px"><div class="disp" style="font-size:44px" data-t="reviewTitle"></div><div class="lead" data-t="reviewLead"></div></div>
+    <div id="reviewTools"></div>
+    <div id="reviewList"></div>
+    <div class="credit" style="margin-top:auto"><span class="chip"><img id="ja8" alt=""></span><span class="ver"></span></div>
+  </section>
+
   <!-- ── Help ────────────────────────────────────────────────── -->
   <section class="screen" id="s-help">
     <div class="top">
@@ -145,7 +158,7 @@
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="config.js"></script>
-<script src="lang.js?v=2026.09.30-b"></script>
-<script src="app.js?v=2026.09.30-b"></script>
+<script src="lang.js?v=2026.09.30-d"></script>
+<script src="app.js?v=2026.09.30-d"></script>
 </body>
 </html>
