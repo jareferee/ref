@@ -49,8 +49,8 @@
 </section>
 
 <section id="stepCode">
-  <label for="code">The 6-digit code we emailed you</label>
-  <input id="code" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" placeholder="000000">
+  <label for="code">The code we emailed you</label>
+  <input id="code" inputmode="numeric" pattern="[0-9]*" maxlength="10" autocomplete="one-time-code" placeholder="000000">
   <button id="verifyBtn">Sign in</button>
   <div id="msgCode" class="msg" hidden></div>
 </section>
@@ -106,13 +106,13 @@
       return;
     }
     show('stepCode');
-    say('msgCode', 'Check your email for a 6-digit code. It is good for 10 minutes.', 'good');
+    say('msgCode', 'Check your email for a code. It is good for 10 minutes.', 'good');
     $('code').focus();
   };
 
   $('verifyBtn').onclick = async function () {
     var code = $('code').value.replace(/\D/g, '');
-    if (code.length !== 6) { say('msgCode', 'The code is 6 digits.', 'bad'); return; }
+    if (code.length < 6 || code.length > 10) { say('msgCode', 'Type the whole code from the email.', 'bad'); return; }
     $('verifyBtn').disabled = true;
     var r = await sb.auth.verifyOtp({ email: email, token: code, type: 'email' });
     $('verifyBtn').disabled = false;
