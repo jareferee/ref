@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign-in test</title>
+<!--
+  SIGN-IN TEST RIG. Not the design. Not the Hub.
+  This page proves three things and nothing more:
+    1. a person can sign in with a 6-digit code emailed to them
+    2. the sign-in is linked to their person record
+    3. row-level security lets them see their own games and feedback, and nothing else
+
+  One thing to fill in below: PUBLISHABLE_KEY. Supabase → Project Settings → API Keys →
+  Publishable key. It is safe to be public (row-level security is what protects the data).
+-->
+<style>
+  html { font: 17px/1.5 system-ui, sans-serif; background: #fff; color: #111; }
+  body { margin: 0; padding: 24px 16px 48px; max-width: 520px; margin-inline: auto; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .note { color: #555; font-size: 14px; margin: 0 0 24px; }
+  label { display: block; font-weight: 600; margin: 18px 0 6px; }
+  input { font: inherit; width: 100%; box-sizing: border-box; padding: 12px; border: 1px solid #999; border-radius: 6px; }
+  input[inputmode=numeric] { letter-spacing: .3em; font-size: 24px; text-align: center; }
+  button { font: inherit; font-weight: 600; margin-top: 12px; padding: 12px 18px; border: 0; border-radius: 6px; background: #111; color: #fff; cursor: pointer; }
+  button:disabled { opacity: .5; cursor: default; }
+  .msg { margin-top: 14px; padding: 12px; border-radius: 6px; background: #f2f2f2; white-space: pre-wrap; }
+  .msg.bad { background: #fde8e8; }
+  .msg.good { background: #e6f5ea; }
+  section { display: none; }
+  section.on { display: block; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; margin-top: 8px; }
+  td, th { text-align: left; padding: 6px 4px; border-bottom: 1px solid #e5e5e5; vertical-align: top; }
+  th { color: #555; font-weight: 600; }
+  .links { margin-top: 24px; font-size: 14px; }
+  .links a { color: #111; }
+</style>
+</head>
+<body>
+
+<h1>Sign-in test</h1>
+<p class="note">A test rig for the new sign-in. Plain on purpose. The real screens come with the design pass.</p>
+
+<section id="stepEmail" class="on">
+  <label for="email">Your email address</label>
+  <input id="email" type="email" autocomplete="email" placeholder="the address on your referee record">
+  <button id="sendBtn">Email me a code</button>
+  <div id="msgEmail" class="msg" hidden></div>
+</section>
+
+<section id="stepCode">
+  <label for="code">The 6-digit code we emailed you</label>
+  <input id="code" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" placeholder="000000">
+  <button id="verifyBtn">Sign in</button>
+  <div id="msgCode" class="msg" hidden></div>
+</section>
+
+<section id="stepIn">
+  <div id="hello"></div>
+  <table id="facts"></table>
+  <h2 style="font-size:17px;margin:24px 0 0">Your games</h2>
+  <div id="games" class="note" style="margin:6px 0 0"></div>
+  <table id="gamesTable"></table>
+  <h2 style="font-size:17px;margin:24px 0 0">Your feedback</h2>
+  <div id="feedback" class="note" style="margin:6px 0 0"></div>
+  <table id="feedbackTable"></table>
+  <h2 style="font-size:17px;margin:24px 0 0">Doors that must stay shut</h2>
+  <table id="shut"></table>
+  <div class="links"><a href="#" id="signOut">Sign out</a></div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+(function () {
+  var SUPABASE_URL    = 'https://dtjnwdlzxzvwsccwcmkw.supabase.co';
+  var PUBLISHABLE_KEY = 'PASTE_PUBLISHABLE_KEY_HERE';
+
+  var sb = window.supabase.createClient(SUPABASE_URL, PUBLISHABLE_KEY);
+  var $ = function (id) { return document.getElementById(id); };
+  var email = '';
+
+  function show(id) {
+    ['stepEmail', 'stepCode', 'stepIn'].forEach(function (s) { $(s).classList.toggle('on', s === id); });
+  }
+  function say(id, text, kind) {
+    var el = $(id); el.hidden = false; el.textContent = text; el.className = 'msg ' + (kind || '');
+  }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  $('sendBtn').onclick = async function () {
+    email = $('email').value.trim().toLowerCase();
+    if (!email) { say('msgEmail', 'Type the email address on your referee record.', 'bad'); return; }
+    $('sendBtn').disabled = true;
+    say('msgEmail', 'Sending your code...');
+    var r = await sb.auth.signInWithOtp({ email: email });
+    $('sendBtn').disabled = false;
+    if (r.error) {
+      var m = r.error.message || '';
+      if (/No referee record|Database error/i.test(m)) {
+        say('msgEmail', 'We could not find a referee record with that email. Use the address on your Learning Center account, or ask at Referee HQ.', 'bad');
+      } else if (/rate limit|too many/i.test(m)) {
+        say('msgEmail', 'Too many codes sent just now. Wait a few minutes and try again.', 'bad');
+      } else {
+        say('msgEmail', 'Could not send a code: ' + m, 'bad');
+      }
+      return;
+    }
+    show('stepCode');
+    say('msgCode', 'Check your email for a 6-digit code. It is good for 10 minutes.', 'good');
+    $('code').focus();
+  };
+
+  $('verifyBtn').onclick = async function () {
+    var code = $('code').value.replace(/\D/g, '');
+    if (code.length !== 6) { say('msgCode', 'The code is 6 digits.', 'bad'); return; }
+    $('verifyBtn').disabled = true;
+    var r = await sb.auth.verifyOtp({ email: email, token: code, type: 'email' });
+    $('verifyBtn').disabled = false;
+    if (r.error) { say('msgCode', 'That code did not work: ' + r.error.message, 'bad'); return; }
+    await signedIn();
+  };
+
+  $('signOut').onclick = async function (e) {
+    e.preventDefault();
+    await sb.auth.signOut();
+    $('email').value = ''; $('code').value = '';
+    $('msgEmail').hidden = true; $('msgCode').hidden = true;
+    show('stepEmail');
+  };
+
+  async function signedIn() {
+    show('stepIn');
+    var who = await sb.rpc('whoami');
+    if (who.error || !who.data) {
+      $('hello').innerHTML = '<div class="msg bad">Signed in, but no person record is linked to this sign-in. ' + esc(who.error ? who.error.message : '') + '</div>';
+      return;
+    }
+    var w = who.data;
+    $('hello').innerHTML = '<div class="msg good">Hi ' + esc(w.first_name) + '. You are signed in.</div>';
+    $('facts').innerHTML =
+      '<tr><th>Person id</th><td>' + esc(w.person_id) + '</td></tr>' +
+      '<tr><th>Org</th><td>' + esc(w.org_id) + '</td></tr>' +
+      '<tr><th>Titles</th><td>' + esc((w.titles || []).join(', ') || 'none') + '</td></tr>' +
+      '<tr><th>Sections open</th><td>' + esc((w.unlocks || []).join(', ') || 'none') + '</td></tr>' +
+      '<tr><th>Green badge</th><td>' + (w.green_badge ? 'yes (under 18)' : 'no') + '</td></tr>' +
+      '<tr><th>Language</th><td>' + esc(w.language) + '</td></tr>';
+
+    var g = await sb.from('games').select('date,game_num,kickoff,venue,field,cr,ar1,ar2', { count: 'exact' })
+      .order('date', { ascending: false }).limit(5);
+    $('games').textContent = g.error ? 'Error: ' + g.error.message : (g.count + ' games on your record. Latest five:');
+    $('gamesTable').innerHTML = (g.data || []).map(function (x) {
+      return '<tr><td>' + esc(x.date) + '</td><td>' + esc(x.game_num) + '</td><td>' + esc(x.venue) + '<br>' + esc(x.field) + '</td></tr>';
+    }).join('');
+
+    var f = await sb.from('observations').select('date,final_note,cleaned_note', { count: 'exact' })
+      .order('date', { ascending: false }).limit(3);
+    $('feedback').textContent = f.error ? 'Error: ' + f.error.message : (f.count + ' pieces of feedback sent to you. Latest three:');
+    $('feedbackTable').innerHTML = (f.data || []).map(function (x) {
+      return '<tr><td>' + esc(x.date) + '</td><td>' + esc(x.final_note || x.cleaned_note) + '</td></tr>';
+    }).join('');
+
+    // Tables a referee must not be able to read. Each should say 0 rows or an error.
+    var shut = ['people_private', 'guardians', 'lc_export', 'checkins', 'scores', 'emergencies', 'feedback_reports'];
+    var rows = [];
+    for (var i = 0; i < shut.length; i++) {
+      var t = shut[i];
+      var r = await sb.from(t).select('*', { count: 'exact', head: true });
+      var ok = r.error || !r.count;
+      rows.push('<tr><td>' + t + '</td><td>' + (ok ? 'shut' : 'OPEN: ' + r.count + ' rows visible') + '</td></tr>');
+    }
+    var all = await sb.from('people').select('*', { count: 'exact', head: true });
+    rows.push('<tr><td>people (should be exactly 1: you)</td><td>' + (all.error ? 'error' : all.count + ' visible') + '</td></tr>');
+    $('shut').innerHTML = rows.join('');
+  }
+
+  // Already signed in from a previous visit?
+  sb.auth.getSession().then(function (r) { if (r.data && r.data.session) signedIn(); });
+})();
+</script>
+</body>
+</html>
