@@ -5,7 +5,7 @@
 (function () {
   'use strict';
   // The version. Goes up with every change to any file in this folder.
-  var VERSION = '2026.09.30-d';
+  var VERSION = '2026.09.30-g';
   var C = window.HUB, L = window.LANG;
   var sb = window.supabase.createClient(C.supabaseUrl, C.publishableKey);
   var $ = function (id) { return document.getElementById(id); };
@@ -93,7 +93,7 @@
     var ci = await sb.from('checkins').select('game_id,created_at').eq('date', today);
     S.checkins = {};
     (ci.data || []).forEach(function (r) { if (r.game_id) S.checkins[String(r.game_id)] = r.created_at; });
-    var n = await sb.from('observations').select('date,observer,rater_role,final_note,cleaned_note,game_id,field').order('date', { ascending: false }).limit(50);
+    var n = await sb.from('observations').select('id,date,observer,rater_role,final_note,cleaned_note,game_id,field').order('date', { ascending: false }).limit(50);
     S.notes = n.data || [];
     var b = await sb.from('announcements').select('title,body,severity,created_at,venue,event_id,start_date,end_date').lte('start_date', today).gte('end_date', today).order('created_at', { ascending: false }).limit(5);
     S.bulletins = b.data || [];
@@ -131,6 +131,7 @@
         (inAt ? '<div class="state in"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true"><circle cx="9" cy="9" r="8" fill="currentColor"></circle><path d="M5.5 9.5l2.3 2.3L12.8 6.8" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>' + esc(t('checkedIn').charAt(0) + t('checkedIn').slice(1).toLowerCase()) + '</div>' : '') + '</a>';
     }).join('') : '';
     var note = S.notes[0];
+    if (note) markRead([note]);
     $('noteBox').innerHTML = note ? '<div class="note"><div class="who">' + esc(note.observer || '') + (note.rater_role ? ', ' + esc(note.rater_role) : '') + (note.date ? ', ' + esc(t('noteFrom')) + ' ' + esc(dayLong(note.date)) : '') + '</div><div class="text">' + esc(note.final_note || note.cleaned_note || '') + '</div><a href="#notes">' + esc(t('allNotes')) + '</a></div>'
       : '<div class="note"><div class="text hint">' + esc(t('noNotes')) + '</div></div>';
     $('bulletins').innerHTML = S.bulletins.slice(0, 2).map(function (b) {
@@ -138,6 +139,7 @@
     }).join('');
     $('coachEntry').innerHTML = iCan('coaching') ? '<a class="rowbtn" href="#coach" style="margin-top:14px"><span><span class="t">' + esc(t('coachingEntry')) + '</span><br><span class="s">' + esc(t('coachingEntryHint')) + '</span></span><svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M8 4l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg></a>' : '';
     $('reviewEntry').innerHTML = iCan('review') ? '<a class="rowbtn" href="#review" style="margin-top:8px"><span><span class="t">' + esc(t('reviewEntry')) + '</span><br><span class="s">' + esc(t('reviewEntryHint')) + '</span></span><svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M8 4l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg></a>' : '';
+    $('centerEntry').innerHTML = iCan('review') ? '<a class="rowbtn" href="#center" style="margin-top:8px"><span><span class="t">' + esc(t('centerEntry')) + '</span><br><span class="s">' + esc(t('centerEntryHint')) + '</span></span><svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M8 4l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg></a>' : '';
     var r = rulesFor(g || S.games[0]);
     $('rulesLink').hidden = !r; if (r) $('rulesLink').href = r;
   }
@@ -180,9 +182,15 @@
     var g = await sb.from('games').select('game_id,date,game_num,kickoff,field,age_group,gender,competition,home,away,cr,ar1,ar2,fourth,venue,status')
       .eq('date', today).neq('status', 'C').order('venue').order('kickoff');
     S.coach.games = g.data || [];
-    var n = await sb.from('observations').select('date,ref_name,observer,rater_role,public_notes,cleaned_note,final_note,cleanup_status,area,field,game_id,created_at')
+    var n = await sb.from('observations').select('id,date,ref_name,observer,rater_role,public_notes,cleaned_note,final_note,cleanup_status,area,field,game_id,created_at')
       .order('created_at', { ascending: false }).limit(100);
     S.coach.notes = (n.data || []).filter(function (x) { return (S.me.nameKeys || []).indexOf(key(x.observer)) >= 0; });
+    var mine = S.coach.notes.map(function (x) { return x.id; }).filter(Boolean);
+    S.coach.reads = {};
+    if (mine.length) {
+      var rd = await sb.from('note_reads').select('observation_id,read_at').in('observation_id', mine);
+      (rd.data || []).forEach(function (r) { S.coach.reads[String(r.observation_id)] = r.read_at; });
+    }
     // What has already been said about every referee working today (released notes only).
     var names = {};
     S.coach.games.forEach(function (g) { ['cr', 'ar1', 'ar2', 'fourth'].forEach(function (k) { if (g[k]) names[g[k]] = 1; }); });
@@ -266,6 +274,8 @@
     $('myNotesList').innerHTML = S.coach.notes.length ? S.coach.notes.map(function (n) {
       var st = n.cleanup_status || 'pending', ok = st === 'approved' || st === 'edited';
       var label = t('status.' + st); if (label === 'status.' + st) label = t('status.pending');
+      var readAt = (S.coach.reads || {})[String(n.id)];
+      if (ok && readAt) label = t('readBy') + ' ' + dayLong(readAt.slice(0, 10));
       return '<div class="card" style="gap:8px"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><div><b>' + esc(n.ref_name || '') + '</b> <span class="hint">' + esc(dayLong(n.date)) + (n.field ? ', ' + esc(n.field) : '') + (n.area ? ', ' + esc(t('areas.' + n.area)) : '') + '</span></div><span class="pill' + (ok ? ' ok' : '') + '">' + esc(label) + '</span></div>' +
         '<div class="side three"><div class="col"><b>' + esc(t('rawLabel')) + '</b>' + esc(n.public_notes || '') + '</div><div class="col"><b>' + esc(t('aiLabel')) + '</b>' + (n.cleaned_note ? esc(n.cleaned_note) : '<span class="hint">' + esc(t('notCleaned')) + '</span>') + '</div><div class="col"><b>' + esc(t('releasedLabel')) + '</b>' + (ok ? esc(n.final_note || n.cleaned_note || '') : '<span class="hint">' + esc(t('notReleased')) + '</span>') + '</div></div></div>';
     }).join('') : '<div class="card"><div class="hint">' + esc(t('noMyNotes')) + '</div></div>';
@@ -344,6 +354,82 @@
     REV.busy = false;
   }
 
+  // ── Command Center: referee development ──────────────────────────
+  var CC = { tab: 'coverage', cov: [], obs: [], reads: {}, drafts: null, from: '', to: '' };
+  function iso(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  async function loadCenter() {
+    var cov = await sb.from('referee_coverage').select('name,name_key,person_id,games,last_game,notes,released,read,last_seen').order('games', { ascending: false }).limit(2000);
+    CC.cov = cov.data || [];
+    var since = iso(new Date(Date.now() - 30 * 86400000));
+    var obs = await sb.from('observations').select('id,observer,rater_role,ref_name,date,cleanup_status').gte('date', since).limit(2000);
+    CC.obs = obs.data || [];
+    var ids = CC.obs.map(function (o) { return o.id; });
+    CC.reads = {};
+    for (var i = 0; i < ids.length; i += 200) {
+      var rd = await sb.from('note_reads').select('observation_id').in('observation_id', ids.slice(i, i + 200));
+      (rd.data || []).forEach(function (r) { CC.reads[String(r.observation_id)] = 1; });
+    }
+    if (!CC.from) { var d = new Date(); var dow = d.getDay(); var sat = new Date(d.getTime() - ((dow + 1) % 7) * 86400000); CC.from = iso(sat); CC.to = iso(new Date(sat.getTime() + 86400000)); }
+  }
+  function renderCenter() {
+    var tabs = ['coverage', 'coaches', 'ai', 'queue'];
+    var head = '<div class="tabs">' + tabs.map(function (k) { return '<button class="chip-btn' + (CC.tab === k ? ' on' : '') + '" data-tab="' + k + '">' + esc(t('tab' + k.charAt(0).toUpperCase() + k.slice(1))) + '</button>'; }).join('') + '</div>';
+    var body = '';
+    if (CC.tab === 'coverage') {
+      var worked = CC.cov.length, seen = CC.cov.filter(function (r) { return r.notes > 0; }).length, never = worked - seen;
+      var rel = 0, read = 0; CC.cov.forEach(function (r) { rel += r.released; read += r.read; });
+      var list = CC.cov.filter(function (r) { return r.notes === 0; }).slice(0, 40);
+      body = '<div class="stats"><div class="stat"><b>' + worked + '</b><i>' + esc(t('stWorked')) + '</i></div><div class="stat green"><b>' + seen + '</b><i>' + esc(t('stSeen')) + '</i></div><div class="stat red"><b>' + never + '</b><i>' + esc(t('stNever')) + '</i></div></div>' +
+        '<div class="pad" style="padding-top:12px"><div class="hint">' + esc(t('stRead')) + ': ' + read + ' / ' + rel + '</div><div class="bar"><i style="width:' + (rel ? Math.round(100 * read / rel) : 0) + '%"></i></div></div>' +
+        '<div class="disp h2">' + esc(t('neverSeenTitle')) + '</div><div class="pad">' + list.map(function (r) {
+          return '<div class="rowline"><div><b>' + esc(r.name) + '</b><br><span class="hint">' + esc(t('lastGame')) + ' ' + esc(r.last_game ? dayLong(r.last_game) : '') + '</span></div><div class="n">' + r.games + '</div></div>';
+        }).join('') + '</div>';
+    } else if (CC.tab === 'coaches') {
+      var by = {};
+      CC.obs.forEach(function (o) {
+        var k = key(o.observer) || '(unknown)'; var b = by[k] = by[k] || { name: o.observer, role: o.rater_role, notes: 0, refs: {}, released: 0, read: 0 };
+        b.notes++; b.refs[key(o.ref_name)] = 1;
+        if (o.cleanup_status === 'approved' || o.cleanup_status === 'edited') { b.released++; if (CC.reads[String(o.id)]) b.read++; }
+      });
+      var rows = Object.keys(by).map(function (k) { return by[k]; }).sort(function (a, b) { return b.notes - a.notes; });
+      body = '<div class="disp h2">' + esc(t('coachesTitle')) + '</div><div class="pad">' + (rows.length ? rows.map(function (b) {
+        return '<div class="rowline"><div><b>' + esc(b.name) + '</b>' + (b.role ? ' <span class="hint">' + esc(b.role) + '</span>' : '') + '<br><span class="hint">' + Object.keys(b.refs).length + ' ' + esc(t('coachRefs')) + ', ' + b.released + ' ' + esc(t('coachReleased')) + ', ' + b.read + ' ' + esc(t('coachRead')) + '</span></div><div class="n">' + b.notes + '</div></div>';
+      }).join('') : '<div class="hint">' + esc(t('noCoachActivity')) + '</div>') + '</div>';
+    } else if (CC.tab === 'ai') {
+      body = '<div class="card" style="gap:10px"><div style="font-size:15px;line-height:1.45">' + esc(t('aiLead')) + '</div>' +
+        '<div class="grid2"><div><label for="aiFrom" class="hint" style="font-weight:700">' + esc(t('aiFrom')) + '</label><input id="aiFrom" type="date" value="' + esc(CC.from) + '" style="font:inherit;width:100%;padding:10px;border:1px solid var(--muted);border-radius:8px;background:var(--surface);color:var(--ink)"></div><div><label for="aiTo" class="hint" style="font-weight:700">' + esc(t('aiTo')) + '</label><input id="aiTo" type="date" value="' + esc(CC.to) + '" style="font:inherit;width:100%;padding:10px;border:1px solid var(--muted);border-radius:8px;background:var(--surface);color:var(--ink)"></div></div>' +
+        '<button class="btn primary" id="aiRun">' + esc(t('aiRun')) + '</button><div class="msg" id="aiMsg" hidden></div></div><div id="aiDrafts">' + draftsHtml() + '</div>';
+    } else {
+      var w = REV.notes.filter(function (n) { return revStatus(n) === 'pending'; }).length, cl = REV.notes.filter(function (n) { return revStatus(n) === 'cleaned'; }).length;
+      body = '<div class="stats" style="grid-template-columns:1fr 1fr"><div class="stat' + (w ? ' red' : '') + '"><b>' + w + '</b><i>' + esc(t('queueWaiting')) + '</i></div><div class="stat' + (cl ? ' green' : '') + '"><b>' + cl + '</b><i>' + esc(t('queueCleaned')) + '</i></div></div><div class="pad" style="padding-top:12px"><a class="btn go" href="#review">' + esc(t('openReview')) + '</a></div>';
+    }
+    $('centerBody').innerHTML = head + body;
+    $('centerBody').querySelectorAll('[data-tab]').forEach(function (b) { b.onclick = function () { CC.tab = b.getAttribute('data-tab'); if (CC.tab === 'queue' && !REV.notes.length) loadReview().then(renderCenter); else renderCenter(); }; });
+    var run = $('aiRun');
+    if (run) run.onclick = async function () {
+      CC.from = $('aiFrom').value; CC.to = $('aiTo').value;
+      run.disabled = true; run.textContent = t('aiRunning');
+      try { var j = await post({ action: 'coachDrafts', from: CC.from, to: CC.to }); CC.drafts = j.drafts || []; }
+      catch (e) { var m = $('aiMsg'); m.hidden = false; m.className = 'msg bad'; m.textContent = t('aiFailed') + ' ' + (e.message || ''); }
+      renderCenter();
+    };
+    $('centerBody').querySelectorAll('[data-send]').forEach(function (b) {
+      b.onclick = async function () {
+        var d = CC.drafts[parseInt(b.getAttribute('data-send'), 10)];
+        b.disabled = true; b.textContent = t('aiSending');
+        try { await post({ action: 'sendCoachEmail', rowNum: d.rowNum, coach: d.coach, email: d.email, text: d.draft }); b.textContent = t('aiSent'); }
+        catch (e) { b.disabled = false; b.textContent = t('aiSend') + ' ' + d.coach; }
+      };
+    });
+  }
+  function draftsHtml() {
+    if (CC.drafts === null) return '';
+    if (!CC.drafts.length) return '<div class="card"><div class="hint">' + esc(t('aiNone')) + '</div></div>';
+    return CC.drafts.map(function (d, i) {
+      return '<div class="card" style="gap:8px"><div><b>' + esc(d.coach) + '</b>' + (d.grade ? ' <span class="pill">' + esc(d.grade) + '</span>' : '') + (d.email ? '<br><span class="hint">' + esc(d.email) + '</span>' : '<br><span class="hint" style="color:var(--red)">' + esc(t('aiNoEmail')) + '</span>') + '</div><div class="draft">' + esc(d.draft || '') + '</div>' + (d.email ? '<button class="btn outline small" data-send="' + i + '">' + esc(t('aiSend')) + ' ' + esc(d.coach) + '</button>' : '') + '</div>';
+    }).join('');
+  }
+
   // ── Game card ────────────────────────────────────────────────────
   function renderGame(id) {
     var g = S.games.filter(function (x) { return String(x.game_id) === String(id); })[0];
@@ -370,7 +456,13 @@
   }
 
   // ── Notes ────────────────────────────────────────────────────────
+  function markRead(notes) {
+    var ids = (notes || []).map(function (n) { return n.id; }).filter(Boolean);
+    if (!ids.length) return;
+    sb.rpc('mark_read', { ids: ids }).then(function () {}, function () {});
+  }
   function renderNotes() {
+    markRead(S.notes);
     $('notesList').innerHTML = S.notes.length ? S.notes.map(function (n) {
       return '<div class="note"><div class="who">' + esc(n.observer || '') + (n.rater_role ? ', ' + esc(n.rater_role) : '') + (n.date ? ', ' + esc(dayLong(n.date)) : '') + (n.field ? ', ' + esc(n.field) : '') + '</div><div class="text">' + esc(n.final_note || n.cleaned_note || '') + '</div></div>';
     }).join('') : '<div class="note"><div class="text hint">' + esc(t('noNotes')) + '</div></div>';
@@ -460,6 +552,7 @@
     if (!S.me) { show('s-signin'); return; }
     var h = location.hash.replace(/^#/, '') || 'day';
     if (h.indexOf('coach') === 0 && !iCan('coaching')) { location.hash = '#day'; return; }
+    if (h === 'center') { if (!iCan('review')) { location.hash = '#day'; return; } $('centerBody').innerHTML = '<div class="card"><div class="hint">' + esc(t('loadingReview')) + '</div></div>'; show('s-center'); loadCenter().then(renderCenter).catch(function (e) { $('centerBody').innerHTML = '<div class="msg bad">' + esc(t('reviewFailed') + ' ' + (e && e.message || '')) + '</div>'; }); return; }
     if (h === 'review') { if (!iCan('review')) { location.hash = '#day'; return; } $('reviewList').innerHTML = '<div class="card"><div class="hint">' + esc(t('loadingReview')) + '</div></div>'; show('s-review'); loadReview().then(renderReview).catch(function (e) { $('reviewList').innerHTML = '<div class="msg bad">' + esc(t('reviewFailed') + ' ' + (e && e.message || '')) + '</div>'; }); return; }
     if (h === 'coach') { loadCoach().then(function () { renderCoach(); }); show('s-coach'); }
     else if (h.indexOf('coach/game/') === 0) { (S.coach.games.length ? Promise.resolve() : loadCoach()).then(function () { renderCoachGame(h.slice(11)); }); show('s-coachgame'); }
@@ -489,8 +582,8 @@
     ['themeBtn0', 'themeBtn1', 'themeBtn2'].forEach(function (id) { $(id).onclick = toggleTheme; });
     ['langBtn0', 'langBtn1'].forEach(function (id) { $(id).onclick = function () { setLang(S.lang === 'es' ? 'en' : 'es'); }; });
     $('markSignin').src = C.marks.csa; $('markDay').src = C.marks.csa;
-    ['markGame', 'markNotes', 'markHelp', 'markCoach', 'markCoachGame', 'markMyNotes', 'markReview'].forEach(function (id) { $(id).src = C.marks.program; });
-    ['ja0', 'ja1', 'ja2', 'ja3', 'ja4', 'ja5', 'ja6', 'ja7', 'ja8'].forEach(function (id) { $(id).src = C.marks.ja; });
+    ['markGame', 'markNotes', 'markHelp', 'markCoach', 'markCoachGame', 'markMyNotes', 'markReview', 'markCenter'].forEach(function (id) { $(id).src = C.marks.program; });
+    ['ja0', 'ja1', 'ja2', 'ja3', 'ja4', 'ja5', 'ja6', 'ja7', 'ja8', 'ja9'].forEach(function (id) { $(id).src = C.marks.ja; });
     applyWords();
     document.querySelectorAll('.ver').forEach(function (el) { el.textContent = 'v' + VERSION; });
     sb.auth.getSession().then(function (r) { if (r.data && r.data.session) start(); else show('s-signin'); });
