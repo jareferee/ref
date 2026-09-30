@@ -92,7 +92,7 @@
     (ci.data || []).forEach(function (r) { if (r.game_id) S.checkins[String(r.game_id)] = r.created_at; });
     var n = await sb.from('observations').select('date,observer,rater_role,final_note,cleaned_note,game_id,field').order('date', { ascending: false }).limit(50);
     S.notes = n.data || [];
-    var b = await sb.from('announcements').select('title,body,severity,created_at,venue,event_id').order('created_at', { ascending: false }).limit(5);
+    var b = await sb.from('announcements').select('title,body,severity,created_at,venue,event_id,start_date,end_date').lte('start_date', today).gte('end_date', today).order('created_at', { ascending: false }).limit(5);
     S.bulletins = b.data || [];
   }
 
@@ -134,7 +134,7 @@
       return '<div class="bulletin"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="9" stroke="currentColor" stroke-width="2"></circle><path d="M11 6v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path><circle cx="11" cy="15.5" r="1.2" fill="currentColor"></circle></svg><div class="text">' + (b.title ? '<b>' + esc(b.title) + '</b> ' : '') + esc(b.body || '') + ' <span>' + esc(t('fromState')) + '.</span></div></div>';
     }).join('');
     var r = rulesFor(g || S.games[0]);
-    $('rulesLink').href = r || '../rules.html';
+    $('rulesLink').hidden = !r; if (r) $('rulesLink').href = r;
   }
   function cardHtml(g) {
     var inAt = S.checkins[String(g.game_id)];
@@ -207,13 +207,25 @@
     { id: 'fight', urgent: true, backend: 'Fight or threat' },
     { id: 'injury', urgent: true, backend: 'Injury, trainer needed' }
   ];
+  var IS_PHONE = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  function reasonBtn(r) {
+    var sel = S.reason === r.id;
+    return '<button class="reason' + (r.urgent ? ' urgent' : '') + (sel ? ' selected' : '') + '" data-reason="' + r.id + '" aria-pressed="' + (sel ? 'true' : 'false') + '">' + esc(t('reasons.' + r.id)) +
+      (sel ? '<svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="10" fill="currentColor"></circle><path d="M6.5 11.5l3 3 6-6.5" stroke="var(--surface)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>' : '') + '</button>';
+  }
   function renderHelp() {
-    var sms = 'sms:' + C.hotline + '?&body=' + encodeURIComponent((S.me ? S.me.first_name + ' ' + S.me.last_name : '') + (S.game ? ', ' + S.game.venue + ' ' + S.game.field : '') + ': ');
-    $('reasons').innerHTML = REASONS.map(function (r) {
-      return '<button class="reason' + (r.urgent ? ' urgent' : '') + '" data-reason="' + r.id + '">' + esc(t('reasons.' + r.id)) + '</button>';
-    }).join('') + '<a class="reason" href="' + sms + '">' + esc(t('hotline')) + ' <small>' + esc(C.hotlineShown) + '</small></a><div class="hint" style="color:var(--ink);padding:0 4px">' + esc(t('hotlineNote')) + '</div>';
-    $('reasons').querySelectorAll('[data-reason]').forEach(function (b) { b.onclick = function () { S.reason = b.getAttribute('data-reason'); renderConfirm(); }; });
-    $('helpConfirm').innerHTML = '';
+    var body = (S.me ? S.me.first_name + ' ' + S.me.last_name : '') + (S.game ? ', ' + S.game.venue + ' ' + S.game.field : '') + ': ';
+    var sms = 'sms:' + C.hotline + '?&body=' + encodeURIComponent(body);
+    var urgent = REASONS.filter(function (r) { return r.urgent; }), queue = REASONS.filter(function (r) { return !r.urgent; });
+    $('reasons').innerHTML =
+      '<div class="grouplbl urgent">' + esc(t('groupUrgent')) + '</div>' + urgent.map(reasonBtn).join('') +
+      '<div class="grouplbl">' + esc(t('groupQueue')) + '</div>' + queue.map(reasonBtn).join('') +
+      '<div class="grouplbl">' + esc(t('groupHotline')) + '</div>' +
+      (IS_PHONE ? '<a class="reason" href="' + sms + '">' + esc(t('hotline')) + ' <small>' + esc(C.hotlineShown) + '</small></a>'
+                : '<div class="reason" style="cursor:default">' + esc(t('hotlineDesktop')) + ' <small><b>' + esc(C.hotlineShown) + '</b></small></div>') +
+      '<div class="hint" style="color:var(--ink);padding:0 4px">' + esc(t('hotlineNote')) + '</div>';
+    $('reasons').querySelectorAll('[data-reason]').forEach(function (b) { b.onclick = function () { S.reason = b.getAttribute('data-reason'); renderHelp(); renderConfirm(); }; });
+    if (!S.reason) $('helpConfirm').innerHTML = '';
   }
   function renderConfirm() {
     var r = REASONS.filter(function (x) { return x.id === S.reason; })[0];
@@ -224,7 +236,7 @@
       '<div style="font-size:15px;line-height:1.4">' + esc(S.me.first_name + ' ' + S.me.last_name) + (where ? ', ' + esc(where) : '') + '. ' + esc(t(r.urgent ? 'goesTo' : 'goesToQueue')) + '</div>' +
       '<button class="send" id="sendHelp">' + esc(t('sendIt')) + '</button><button class="cancel" id="cancelHelp">' + esc(t('neverMind')) + '</button><div class="msg" id="helpMsg" hidden></div></div>';
     $('helpConfirm').scrollIntoView({ behavior: 'smooth', block: 'center' });
-    $('cancelHelp').onclick = function () { S.reason = null; $('helpConfirm').innerHTML = ''; };
+    $('cancelHelp').onclick = function () { S.reason = null; renderHelp(); $('helpConfirm').innerHTML = ''; };
     $('sendHelp').onclick = async function () {
       var b = $('sendHelp'); b.disabled = true; b.textContent = t('sendingHelp');
       var ev = g ? eventFor(g) : S.events[0];
@@ -276,6 +288,7 @@
     else { renderDay(); show('s-day'); }
   }
   function renderAll() { if (S.me) route(); }
+  window.addEventListener('hashchange', function () { if (location.hash !== '#help') S.reason = null; });
   window.addEventListener('hashchange', route);
 
   async function start() {

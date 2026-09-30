@@ -65,6 +65,10 @@ window.LANG = {
       injury: 'Injury, I need the trainer'
     },
     hotline: 'Text the Referee Hotline',
+    groupUrgent: 'Texts the Site Coordinator and staff at your site right now',
+    groupQueue: 'A message to Referee HQ',
+    groupHotline: 'No staff where you are, or something else',
+    hotlineDesktop: 'Text the Referee Hotline from your phone:',
     hotlineNote: 'A Referee Coach watches the hotline all day, every day. Use it when there is no Site Coordinator where you are, or for anything not on this list.',
     youPicked: 'You picked',
     goesTo: 'Texts the Site Coordinator and everyone who can respond at your site right now.',
@@ -145,6 +149,10 @@ window.LANG = {
       injury: 'Lesión, necesito al entrenador médico'
     },
     hotline: 'Enviar texto a la línea de árbitros',
+    groupUrgent: 'Envía un texto ahora mismo al coordinador de sede y al personal de tu sede',
+    groupQueue: 'Un mensaje a la carpa de árbitros',
+    groupHotline: 'Sin personal donde estás, u otra cosa',
+    hotlineDesktop: 'Escribe a la línea de árbitros desde tu teléfono:',
     hotlineNote: 'Un Referee Coach vigila la línea todo el día, todos los días. Úsala cuando no haya coordinador de sede donde estás, o para cualquier cosa que no esté en esta lista.',
     youPicked: 'Elegiste',
     goesTo: 'Envía un texto al coordinador de sede y a todos los que puedan responder en tu sede ahora mismo.',
