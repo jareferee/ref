@@ -170,4 +170,6 @@ textarea { font: inherit; width: 100%; min-height: 140px; padding: 12px; border:
 .crewline { font-size: 14px; }
 .crewline .in { color: var(--green); font-weight: 700; }
 .crewline .out { color: var(--muted); }
+.chip-btn.avail { border-color: var(--green); }
+.mine { border-left: 0; outline: 2px solid var(--gold); outline-offset: -2px; border-radius: 8px; padding-left: 8px; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
