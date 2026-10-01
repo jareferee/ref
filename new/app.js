@@ -5,7 +5,7 @@
 (function () {
   'use strict';
   // The version. Goes up with every change to any file in this folder.
-  var VERSION = '2026.09.30-k';
+  var VERSION = '2026.10.01-a';
   var C = window.HUB, L = window.LANG;
   var sb = window.supabase.createClient(C.supabaseUrl, C.publishableKey);
   var $ = function (id) { return document.getElementById(id); };
@@ -87,12 +87,13 @@
     var today = todayStr();
     var g = await sb.from('games').select('game_id,date,game_num,kickoff,field,age_group,gender,competition,home,away,cr,ar1,ar2,fourth,venue,status,home_club,away_club')
       .eq('date', today).neq('status', 'C').order('kickoff');
-    S.games = g.data || [];
+    var keys = S.me.nameKeys || [];
+    S.games = (g.data || []).filter(function (x) { return ['cr', 'ar1', 'ar2', 'fourth'].some(function (k) { return keys.indexOf(key(x[k])) >= 0; }); });
     var ev = await sb.from('events').select('id,name,game_prefix,venues,blurb,tools');
     S.events = ev.data || [];
-    var ci = await sb.from('checkins').select('game_id,created_at').eq('date', today);
+    var ci = await sb.from('checkins').select('game_id,created_at,ref_name').eq('date', today);
     S.checkins = {};
-    (ci.data || []).forEach(function (r) { if (r.game_id) S.checkins[String(r.game_id)] = r.created_at; });
+    (ci.data || []).forEach(function (r) { if (r.game_id && keys.indexOf(key(r.ref_name)) >= 0) S.checkins[String(r.game_id)] = r.created_at; });
     var n = await sb.from('observations').select('id,date,observer,rater_role,final_note,cleaned_note,game_id,field').order('date', { ascending: false }).limit(50);
     S.notes = n.data || [];
     var b = await sb.from('announcements').select('title,body,severity,created_at,venue,event_id,start_date,end_date').lte('start_date', today).gte('end_date', today).order('created_at', { ascending: false }).limit(5);
@@ -146,7 +147,7 @@
     $('opsEntry').innerHTML = iCan('command_center') ? '<a class="rowbtn" href="#ops" style="margin-top:8px"><span><span class="t">' + esc(t('opsEntry')) + '</span><br><span class="s">' + esc(t('opsEntryHint')) + '</span></span><svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M8 4l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg></a>' : '';
     $('peopleEntry').innerHTML = iCan('people') ? '<a class="rowbtn" href="#people" style="margin-top:8px"><span><span class="t">' + esc(t('peopleEntry')) + '</span><br><span class="s">' + esc(t('peopleEntryHint')) + '</span></span><svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M8 4l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg></a>' : '';
     var r = rulesFor(g || S.games[0]);
-    $('rulesLink').hidden = !r; if (r) $('rulesLink').href = r;
+    $('rulesLink').style.display = r ? '' : 'none'; if (r) $('rulesLink').href = r;
   }
   function cardHtml(g) {
     var inAt = S.checkins[String(g.game_id)];
@@ -239,8 +240,8 @@
         return '<div>' + esc(t(m.block === 'am' ? 'blockAm' : m.block === 'pm' ? 'blockPm' : 'blockAll')) + ', ' + esc(m.venue) + ((m.fields || []).length ? ', ' + esc(m.fields.map(fieldShort).join(', ')) : '') + (m.note ? '. ' + esc(m.note) : '') + '<br><span class="hint">' + esc(t('blockJob')) + ' ' + esc(t('debriefed').replace('{d}', done).replace('{n}', total)) + '</span></div>';
       }).join('') + '</div>' : '';
     var availability = (S.coach.days || []).length ? '<div class="card" style="gap:6px"><div class="hint" style="font-weight:700">' + esc(t('whenFree')) + '</div>' + S.coach.days.map(function (d) {
-        return '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><span>' + esc(dayLong(d)) + '</span><span class="chips"><button class="chip-btn' + (S.coach.avail[d + 'am'] ? ' on' : '') + '" data-av="' + d + '|am">' + esc(t('blockAm')) + '</button><button class="chip-btn' + (S.coach.avail[d + 'pm'] ? ' on' : '') + '" data-av="' + d + '|pm">' + esc(t('blockPm')) + '</button></span></div>';
-      }).join('') + '</div>' : '';
+        return '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 0"><span style="min-width:0">' + esc(dayLong(d)) + '</span><span class="chips" style="flex-shrink:0"><button class="chip-btn' + (S.coach.avail[d + 'am'] ? ' on' : '') + '" data-av="' + d + '|am">' + esc(t('blockAm')) + '</button><button class="chip-btn' + (S.coach.avail[d + 'pm'] ? ' on' : '') + '" data-av="' + d + '|pm">' + esc(t('blockPm')) + '</button></span></div>';
+      }).join('') + '<div class="msg" id="avMsg" hidden></div></div>' : '';
     expected = expected + availability;
     $('venuePick').innerHTML = expected + (venues.length ? '<div class="pad" style="padding-top:14px"><div class="hint" style="font-weight:700;padding-bottom:8px">' + esc(t('venue')) + '</div><div class="chips">' + venues.map(function (v) {
       return '<button class="chip-btn' + (v === S.coach.venue ? ' on' : '') + '" data-venue="' + esc(v) + '">' + esc(v) + '</button>';
@@ -249,10 +250,15 @@
     $('venuePick').querySelectorAll('[data-av]').forEach(function (b) {
       b.onclick = async function () {
         var p = b.getAttribute('data-av').split('|'), on = !!S.coach.avail[p[0] + p[1]];
-        b.disabled = true;
-        if (on) { await sb.from('coach_availability').delete().eq('date', p[0]).eq('block', p[1]).eq('person_id', S.me.person_id); delete S.coach.avail[p[0] + p[1]]; }
-        else { var r = await sb.from('coach_availability').insert({ org_id: S.me.org_id, date: p[0], person_id: S.me.person_id, block: p[1] }); if (!r.error) S.coach.avail[p[0] + p[1]] = 1; }
-        renderCoach();
+        if (on) delete S.coach.avail[p[0] + p[1]]; else S.coach.avail[p[0] + p[1]] = 1;
+        b.classList.toggle('on', !on);
+        var r = on ? await sb.from('coach_availability').delete().eq('date', p[0]).eq('block', p[1]).eq('person_id', S.me.person_id)
+                   : await sb.from('coach_availability').insert({ org_id: S.me.org_id, date: p[0], person_id: S.me.person_id, block: p[1] });
+        if (r.error) {
+          if (on) S.coach.avail[p[0] + p[1]] = 1; else delete S.coach.avail[p[0] + p[1]];
+          b.classList.toggle('on', on);
+          var m = $('avMsg'); if (m) { m.hidden = false; m.className = 'msg bad'; m.textContent = t('reviewFailed') + ' ' + (r.error.message || ''); }
+        }
       };
     });
     var games = S.coach.games.filter(function (g) { return g.venue === S.coach.venue; });
